@@ -1,6 +1,6 @@
 import { GoogleGenAI } from '@google/genai'
 
-export const GEMINI_MODEL = 'gemini-2.5-flash'
+export const GEMINI_MODEL = 'gemini-3.6-flash'
 export const gemini = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY })
 
 export async function generateGeminiText(prompt: string, systemInstruction?: string, maxOutputTokens = 1024) {

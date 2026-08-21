@@ -1,0 +1,224 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Domain {
+  id       String    @id @default(cuid())
+  name     String    // "Workout", "Study", "Coding", "Reading", "Business", "Faith"
+  color    String    // hex color
+  icon     String    @default("circle")
+  weight   Float     @default(1.0)
+  sessions Session[]
+  habits   Habit[]
+  lessons  Lesson[]
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  domainId  String
+  domain    Domain   @relation(fields: [domainId], references: [id])
+  startedAt DateTime
+  minutes   Int
+  note      String?
+  xpEarned  Int
+}
+
+model Habit {
+  id              String     @id @default(cuid())
+  domainId        String
+  domain          Domain     @relation(fields: [domainId], references: [id])
+  name            String
+  active          Boolean    @default(true)
+  streakCount     Int        @default(0)
+  streakStartedAt DateTime?
+  lastCompletedAt DateTime?
+  logs            HabitLog[]
+}
+
+model HabitLog {
+  id        String   @id @default(cuid())
+  habitId   String
+  habit     Habit    @relation(fields: [habitId], references: [id])
+  date      DateTime
+  completed Boolean
+}
+
+model Lesson {
+  id       String  @id @default(cuid())
+  domainId String
+  domain   Domain  @relation(fields: [domainId], references: [id])
+  track    String
+  title    String
+  content  String
+  order    Int
+  quiz     Quiz?
+}
+
+model Quiz {
+  id        String         @id @default(cuid())
+  lessonId  String         @unique
+  lesson    Lesson         @relation(fields: [lessonId], references: [id])
+  questions QuizQuestion[]
+  attempts  QuizAttempt[]
+}
+
+model QuizQuestion {
+  id           String @id @default(cuid())
+  quizId       String
+  quiz         Quiz   @relation(fields: [quizId], references: [id])
+  prompt       String
+  options      String // JSON array
+  correctIndex Int
+}
+
+model QuizAttempt {
+  id      String   @id @default(cuid())
+  quizId  String
+  quiz    Quiz     @relation(fields: [quizId], references: [id])
+  score   Int
+  takenAt DateTime @default(now())
+  passed  Boolean  @default(false)
+}
+
+model UserProfile {
+  id            String   @id @default("singleton")
+  totalXp       Int      @default(0)
+  level         Int      @default(1)
+  examDate      DateTime
+  planStartDate DateTime
+  calorieTarget Int      @default(2500)
+  proteinTarget Float    @default(180)
+  carbTarget    Float    @default(300)
+  fatTarget     Float    @default(70)
+}
+
+model DailyPlan {
+  id            String     @id @default(cuid())
+  date          DateTime   @unique
+  generatedByAI Boolean    @default(true)
+  tasks         PlanTask[]
+  createdAt     DateTime   @default(now())
+}
+
+model PlanTask {
+  id            String    @id @default(cuid())
+  dailyPlanId   String
+  dailyPlan     DailyPlan @relation(fields: [dailyPlanId], references: [id])
+  domainId      String
+  description   String
+  minutesTarget Int
+  completed     Boolean   @default(false)
+  googleEventId String?
+}
+
+model Meal {
+  id            String     @id @default(cuid())
+  eatenAt       DateTime
+  label         String
+  items         FoodItem[]
+  totalCalories Int        @default(0)
+  totalProtein  Float      @default(0)
+  totalCarbs    Float      @default(0)
+  totalFat      Float      @default(0)
+}
+
+model FoodItem {
+  id       String @id @default(cuid())
+  mealId   String
+  meal     Meal   @relation(fields: [mealId], references: [id])
+  name     String
+  quantity String
+  calories Int
+  protein  Float
+  carbs    Float
+  fat      Float
+}
+
+model Book {
+  id          String        @id @default(cuid())
+  title       String
+  author      String?
+  sourceFile  String?
+  chunks      String?       // JSON array of text chunks indexed by chapter
+  order       Int
+  status      String        @default("queued") // queued | reading | finished
+  currentPage Int           @default(0)
+  checkIns    BookCheckIn[]
+}
+
+model BookCheckIn {
+  id           String   @id @default(cuid())
+  bookId       String
+  book         Book     @relation(fields: [bookId], references: [id])
+  askedAt      DateTime @default(now())
+  question     String
+  userAnswer   String?
+  aiAssessment String?
+  chunkIndex   Int      @default(0)
+  gapDetected  Boolean  @default(false)
+}
+
+model ScripturePlanItem {
+  id        String             @id @default(cuid())
+  order     Int
+  reference String
+  status    String             @default("queued") // queued | done
+  readAt    DateTime?
+  checkIns  ScriptureCheckIn[]
+}
+
+model ScriptureCheckIn {
+  id           String            @id @default(cuid())
+  planItemId   String
+  planItem     ScripturePlanItem @relation(fields: [planItemId], references: [id])
+  askedAt      DateTime          @default(now())
+  question     String
+  userAnswer   String?
+  aiAssessment String?
+  gapDetected  Boolean           @default(false)
+}
+
+model ChatMessage {
+  id          String   @id @default(cuid())
+  role        String   // "user" | "agent"
+  content     String
+  createdAt   DateTime @default(now())
+  actionTaken String?
+}
+
+model Reflection {
+  id          String   @id @default(cuid())
+  date        DateTime @unique
+  whatWorked  String
+  tomorrowKey String
+  createdAt   DateTime @default(now())
+}
+
+model PushSubscription {
+  id        String   @id @default(cuid())
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+}
+
+model NotificationPreference {
+  id              String  @id @default("singleton")
+  habitReminderAt String  @default("20:00")
+  streakWarningAt String  @default("21:00")
+  planReadyAt     String  @default("07:00")
+  enabled         Boolean @default(true)
+}
+
+model GoogleCalendarToken {
+  id           String   @id @default("singleton")
+  accessToken  String
+  refreshToken String
+  expiresAt    DateTime
+}

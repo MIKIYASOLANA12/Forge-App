@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import Anthropic from '@anthropic-ai/sdk'
+import type { Content, Part } from '@google/genai'
 import { prisma } from '@/lib/prisma'
 import { AGENT_TOOLS, handleToolCall } from '@/lib/agentTools'
 import { getDaysToExam, getTaperStage } from '@/lib/taperCurve'
+import { GEMINI_MODEL, gemini } from '@/lib/gemini'
 
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
 const SYSTEM_PROMPT = `You are the FORGE schedule agent — a direct, no-nonsense AI assistant that manages Mikiyas's daily plan and habits.
 
@@ -24,10 +24,10 @@ Rules:
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
-    const { messages: clientMessages } = body
+    const clientMessages = body.history || body.messages
 
-    if (!Array.isArray(clientMessages)) {
-      return NextResponse.json({ error: 'messages array required' }, { status: 400 })
+    if (!Array.isArray(clientMessages) || clientMessages.length === 0) {
+      return NextResponse.json({ error: 'message and history are required' }, { status: 400 })
     }
 
     // Get context for the agent
@@ -47,83 +47,42 @@ Current context:
 - Today's plan: ${todayPlan?.tasks.map(t => `${t.description} (${t.minutesTarget}min, ${t.completed ? 'done' : 'pending'})`).join('; ') || 'no plan yet'}
 ` : ''
 
-    // Build messages for Claude
-    const messages: Anthropic.MessageParam[] = [
-      {
-        role: 'user',
-        content: `${contextNote}\n\n${clientMessages[clientMessages.length - 1].content}`,
-      },
-    ]
-
-    // Add previous messages (skip the last one we just added)
+    const lastMessage = clientMessages[clientMessages.length - 1]
     const history = clientMessages.slice(0, -1).map((m: { role: string; content: string }) => ({
-      role: m.role as 'user' | 'assistant',
-      content: m.content,
+      role: m.role === 'assistant' ? 'model' : 'user',
+      parts: [{ text: m.content }],
     }))
-
-    const fullMessages: Anthropic.MessageParam[] = [...history, messages[0]]
+    const fullMessages: Content[] = [...history, { role: 'user', parts: [{ text: `${contextNote}\n\n${lastMessage.content}` }] }]
+    const config = { systemInstruction: SYSTEM_PROMPT, tools: [{ functionDeclarations: AGENT_TOOLS }] }
 
     // Agentic loop
-    let response = await anthropic.messages.create({
-      model: 'claude-sonnet-4-5',
-      max_tokens: 2048,
-      system: SYSTEM_PROMPT,
-      tools: AGENT_TOOLS,
-      messages: fullMessages,
-    })
+    let response = await gemini.models.generateContent({ model: GEMINI_MODEL, contents: fullMessages, config })
 
     const actionsTaken: string[] = []
-    const loopMessages: Anthropic.MessageParam[] = [...fullMessages]
+    const loopMessages = [...fullMessages]
 
     // Handle tool use loop
-    while (response.stop_reason === 'tool_use') {
-      const toolUses = response.content.filter(b => b.type === 'tool_use')
-      
-      loopMessages.push({ role: 'assistant', content: response.content })
+    while (response.functionCalls?.length) {
+      loopMessages.push({ role: 'model', parts: response.candidates?.[0]?.content?.parts || [] })
+      const toolResults: Part[] = []
 
-      const toolResults: Anthropic.ToolResultBlockParam[] = []
-
-      for (const toolUse of toolUses) {
-        if (toolUse.type !== 'tool_use') continue
-
-        const result = await handleToolCall(toolUse.name, toolUse.input as Record<string, unknown>)
+      for (const toolUse of response.functionCalls) {
+        const result = await handleToolCall(toolUse.name || '', (toolUse.args || {}) as Record<string, unknown>)
 
         if (result.actionTaken) {
           actionsTaken.push(result.actionTaken)
 
-          // Log to ChatMessage
-          await prisma.chatMessage.create({
-            data: {
-              role: 'agent',
-              content: `[Tool: ${toolUse.name}]`,
-              actionTaken: result.actionTaken,
-            },
-          })
         }
 
-        toolResults.push({
-          type: 'tool_result',
-          tool_use_id: toolUse.id,
-          content: JSON.stringify(result.success ? result.data || { success: true } : { error: result.error }),
-          is_error: !result.success,
-        })
+        const toolResponse = result.success ? result.data || { success: true } : { error: result.error }
+        toolResults.push({ functionResponse: { name: toolUse.name || '', response: toolResponse as Record<string, unknown> } })
       }
 
-      loopMessages.push({ role: 'user', content: toolResults })
-
-      response = await anthropic.messages.create({
-        model: 'claude-sonnet-4-5',
-        max_tokens: 2048,
-        system: SYSTEM_PROMPT,
-        tools: AGENT_TOOLS,
-        messages: loopMessages,
-      })
+      loopMessages.push({ role: 'user', parts: toolResults })
+      response = await gemini.models.generateContent({ model: GEMINI_MODEL, contents: loopMessages, config })
     }
 
-    const agentText = response.content
-      .filter(b => b.type === 'text')
-      .map(b => (b as Anthropic.TextBlock).text)
-      .join('\n')
+    const agentText = response.text || ''
 
     // Save user and agent messages
     const userContent = clientMessages[clientMessages.length - 1].content
@@ -147,7 +106,7 @@ Current context:
 export async function GET() {
   const messages = await prisma.chatMessage.findMany({
     orderBy: { createdAt: 'asc' },
-    take: 100,
+    take: 50,
   })
   return NextResponse.json(messages)
 }

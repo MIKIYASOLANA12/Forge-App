@@ -1,9 +1,7 @@
-import Anthropic from '@anthropic-ai/sdk'
 import { prisma } from './prisma'
+import { generateGeminiJson } from './gemini'
 import { getStudyWeight, getTaperStage, getDaysToExam } from './taperCurve'
 import { subDays, startOfDay, format } from 'date-fns'
-
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
 export interface PlanTask {
   domainId: string
@@ -138,25 +136,25 @@ Generate today's plan. Return JSON only in this exact shape:
   ]
 }`
 
-  const response = await anthropic.messages.create({
-    model: 'claude-sonnet-4-5',
-    max_tokens: 1024,
-    system: systemPrompt,
-    messages: [{ role: 'user', content: userPrompt }],
-  })
-
-  const rawResponse = response.content[0].type === 'text' ? response.content[0].text : ''
-
-  // Parse and validate
-  let parsed: { tasks: PlanTask[] }
-  try {
-    parsed = JSON.parse(rawResponse)
-  } catch {
-    // Try to extract JSON if model added any wrapping text
-    const match = rawResponse.match(/\{[\s\S]*\}/)
-    if (!match) throw new Error('Model returned non-JSON response')
-    parsed = JSON.parse(match[0])
-  }
+  const { parsed, raw: rawResponse } = await generateGeminiJson<{ tasks: PlanTask[] }>(userPrompt, {
+    type: 'object',
+    properties: {
+      tasks: {
+        type: 'array',
+        items: {
+          type: 'object',
+          properties: {
+            domainId: { type: 'string' },
+            domainName: { type: 'string' },
+            description: { type: 'string' },
+            minutesTarget: { type: 'integer' },
+          },
+          required: ['domainId', 'domainName', 'description', 'minutesTarget'],
+        },
+      },
+    },
+    required: ['tasks'],
+  }, systemPrompt)
 
   if (!Array.isArray(parsed.tasks) || parsed.tasks.length === 0) {
     throw new Error('Invalid plan structure')

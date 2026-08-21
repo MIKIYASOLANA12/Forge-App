@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import Anthropic from '@anthropic-ai/sdk'
-
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+import { generateGeminiText } from '@/lib/gemini'
 
 export async function GET() {
   const [currentItem, totalItems, doneItems] = await Promise.all([
@@ -58,15 +56,7 @@ The question should test whether they understood what happened or what was taugh
 Be specific to the content of ${item.reference}, not general Bible knowledge.
 Return ONLY the question text.`
 
-      const response = await anthropic.messages.create({
-        model: 'claude-sonnet-4-5',
-        max_tokens: 150,
-        messages: [{ role: 'user', content: prompt }],
-      })
-
-      question = response.content[0].type === 'text'
-        ? response.content[0].text.trim()
-        : `What stood out to you in ${item.reference}?`
+      question = await generateGeminiText(prompt, undefined, 150) || `What stood out to you in ${item.reference}?`
     }
 
     const checkIn = await prisma.scriptureCheckIn.create({

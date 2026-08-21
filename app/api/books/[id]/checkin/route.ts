@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import Anthropic from '@anthropic-ai/sdk'
-
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+import { generateGeminiText } from '@/lib/gemini'
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -51,13 +49,7 @@ Generate ONE comprehension question about the content. The question should:
 
 Return ONLY the question text, nothing else.`
 
-      const response = await anthropic.messages.create({
-        model: 'claude-sonnet-4-5',
-        max_tokens: 200,
-        messages: [{ role: 'user', content: prompt }],
-      })
-
-      question = response.content[0].type === 'text' ? response.content[0].text.trim() : 'What was the main idea covered in what you just read?'
+      question = await generateGeminiText(prompt, undefined, 200) || 'What was the main idea covered in what you just read?'
     }
 
     const checkIn = await prisma.bookCheckIn.create({

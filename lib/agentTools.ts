@@ -1,18 +1,18 @@
-import { Tool } from '@anthropic-ai/sdk/resources/messages'
+import { Type, type FunctionDeclaration } from '@google/genai'
 import { prisma } from './prisma'
 import { countActiveHabits, MAX_ACTIVE_HABITS } from './streak'
 
 // ── Tool Definitions ───────────────────────────────────────────────────────
 
-export const AGENT_TOOLS: Tool[] = [
+export const AGENT_TOOLS: FunctionDeclaration[] = [
   {
     name: 'createHabit',
     description: 'Create a new active habit. Will fail if 4 habits are already active — the cap cannot be bypassed.',
-    input_schema: {
-      type: 'object' as const,
+    parameters: {
+      type: Type.OBJECT,
       properties: {
-        domainId: { type: 'string', description: 'Domain ID for the habit' },
-        name: { type: 'string', description: 'Habit name — specific and measurable' },
+        domainId: { type: Type.STRING, description: 'Domain ID for the habit' },
+        name: { type: Type.STRING, description: 'Habit name — specific and measurable' },
       },
       required: ['domainId', 'name'],
     },
@@ -20,12 +20,12 @@ export const AGENT_TOOLS: Tool[] = [
   {
     name: 'updateHabit',
     description: 'Rename or retire an active habit. Retiring frees a slot for a new one.',
-    input_schema: {
-      type: 'object' as const,
+    parameters: {
+      type: Type.OBJECT,
       properties: {
-        habitId: { type: 'string' },
-        name: { type: 'string', description: 'New name (optional)' },
-        retire: { type: 'boolean', description: 'Set true to retire (deactivate) the habit' },
+        habitId: { type: Type.STRING },
+        name: { type: Type.STRING, description: 'New name (optional)' },
+        retire: { type: Type.BOOLEAN, description: 'Set true to retire (deactivate) the habit' },
       },
       required: ['habitId'],
     },
@@ -33,11 +33,11 @@ export const AGENT_TOOLS: Tool[] = [
   {
     name: 'deleteHabit',
     description: 'Permanently delete a habit. REQUIRES explicit confirmation if the habit has an active streak > 0. Ask the user before calling this.',
-    input_schema: {
-      type: 'object' as const,
+    parameters: {
+      type: Type.OBJECT,
       properties: {
-        habitId: { type: 'string' },
-        confirmed: { type: 'boolean', description: 'Must be true if the habit has an active streak' },
+        habitId: { type: Type.STRING },
+        confirmed: { type: Type.BOOLEAN, description: 'Must be true if the habit has an active streak' },
       },
       required: ['habitId', 'confirmed'],
     },
@@ -45,12 +45,12 @@ export const AGENT_TOOLS: Tool[] = [
   {
     name: 'addPlanTask',
     description: 'Add a task to today\'s plan.',
-    input_schema: {
-      type: 'object' as const,
+    parameters: {
+      type: Type.OBJECT,
       properties: {
-        domainId: { type: 'string' },
-        description: { type: 'string' },
-        minutesTarget: { type: 'number' },
+        domainId: { type: Type.STRING },
+        description: { type: Type.STRING },
+        minutesTarget: { type: Type.NUMBER },
       },
       required: ['domainId', 'description', 'minutesTarget'],
     },
@@ -58,10 +58,10 @@ export const AGENT_TOOLS: Tool[] = [
   {
     name: 'removePlanTask',
     description: 'Remove a task from today\'s plan.',
-    input_schema: {
-      type: 'object' as const,
+    parameters: {
+      type: Type.OBJECT,
       properties: {
-        taskId: { type: 'string' },
+        taskId: { type: Type.STRING },
       },
       required: ['taskId'],
     },
@@ -69,12 +69,12 @@ export const AGENT_TOOLS: Tool[] = [
   {
     name: 'rescheduleTask',
     description: 'Update a plan task description or time target.',
-    input_schema: {
-      type: 'object' as const,
+    parameters: {
+      type: Type.OBJECT,
       properties: {
-        taskId: { type: 'string' },
-        description: { type: 'string' },
-        minutesTarget: { type: 'number' },
+        taskId: { type: Type.STRING },
+        description: { type: Type.STRING },
+        minutesTarget: { type: Type.NUMBER },
       },
       required: ['taskId'],
     },

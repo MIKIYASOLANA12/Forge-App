@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import Anthropic from '@anthropic-ai/sdk'
-
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+import { generateGeminiJson } from '@/lib/gemini'
 
 export async function POST(
   req: NextRequest,
@@ -34,21 +32,11 @@ Assess whether they genuinely engaged with the passage. Return ONLY a JSON objec
 Note: For reflection questions, 'understood' means they gave a genuine, thoughtful personal response. 
 A superficial or generic answer should be 'gap detected'.`
 
-    const response = await anthropic.messages.create({
-      model: 'claude-sonnet-4-5',
-      max_tokens: 250,
-      messages: [{ role: 'user', content: assessPrompt }],
+    const { parsed: assessment } = await generateGeminiJson<{ verdict: string; feedback: string }>(assessPrompt, {
+      type: 'object',
+      properties: { verdict: { type: 'string', enum: ['understood', 'gap detected'] }, feedback: { type: 'string' } },
+      required: ['verdict', 'feedback'],
     })
-
-    const raw = response.content[0].type === 'text' ? response.content[0].text : ''
-    let assessment: { verdict: string; feedback: string }
-
-    try {
-      assessment = JSON.parse(raw)
-    } catch {
-      const match = raw.match(/\{[\s\S]*\}/)
-      assessment = match ? JSON.parse(match[0]) : { verdict: 'gap detected', feedback: 'Could not assess.' }
-    }
 
     const gapDetected = assessment.verdict === 'gap detected'
 

@@ -6,21 +6,47 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "next lint",
+    "db:push": "prisma db push",
+    "db:seed": "ts-node --project tsconfig.seed.json prisma/seed.ts",
+    "db:studio": "prisma studio",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev"
+  },
+  "prisma": {
+    "seed": "ts-node --project tsconfig.seed.json prisma/seed.ts"
   },
   "dependencies": {
+    "@ai-sdk/anthropic": "^4.0.40",
+    "@anthropic-ai/sdk": "^0.120.0",
+    "@ducanh2912/next-pwa": "^10.2.9",
+    "@prisma/client": "6.19.0",
+    "ai": "^7.0.73",
+    "clsx": "^2.1.1",
+    "date-fns": "^4.4.0",
+    "googleapis": "^176.0.0",
+    "lucide-react": "^1.33.0",
     "next": "16.3.2",
+    "pdf-parse": "^2.4.5",
     "react": "19.2.8",
-    "react-dom": "19.2.8"
+    "react-dom": "19.2.8",
+    "recharts": "^3.10.1",
+    "tailwind-merge": "^3.6.0",
+    "web-push": "^3.6.7",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
+    "@types/pdf-parse": "^1.1.5",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/web-push": "^3.6.4",
     "eslint": "^9",
     "eslint-config-next": "16.3.2",
+    "prisma": "6.19.0",
     "tailwindcss": "^4",
+    "ts-node": "^10.9.2",
     "typescript": "^5"
   }
 }

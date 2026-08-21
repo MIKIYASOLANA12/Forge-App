@@ -2,9 +2,10 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { countActiveHabits, MAX_ACTIVE_HABITS } from '@/lib/streak'
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  const includeInactive = req.nextUrl.searchParams.get('includeInactive') === '1'
   const habits = await prisma.habit.findMany({
-    where: { active: true },
+    where: includeInactive ? undefined : { active: true },
     include: { domain: true },
     orderBy: { streakCount: 'desc' },
   })

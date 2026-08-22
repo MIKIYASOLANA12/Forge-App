@@ -65,7 +65,7 @@ export async function sendTelegramMessage(
     body: JSON.stringify(payload),
   });
 
-  return res.json();
+  return (await res.json()) as TelegramApiResponse<any>;
 }
 
 export async function getTelegramMe(): Promise<TelegramApiResponse<TelegramUser>> {
@@ -76,7 +76,7 @@ export async function getTelegramMe(): Promise<TelegramApiResponse<TelegramUser>
     method: 'GET',
   });
 
-  return res.json();
+  return (await res.json()) as TelegramApiResponse<TelegramUser>;
 }
 
 export async function getTelegramWebhookInfo(): Promise<TelegramApiResponse<TelegramWebhookInfo>> {
@@ -87,7 +87,7 @@ export async function getTelegramWebhookInfo(): Promise<TelegramApiResponse<Tele
     method: 'GET',
   });
 
-  return res.json();
+  return (await res.json()) as TelegramApiResponse<TelegramWebhookInfo>;
 }
 
 export async function setTelegramWebhook(
@@ -120,7 +120,7 @@ export async function setTelegramWebhook(
     body: JSON.stringify(body),
   });
 
-  return res.json();
+  return (await res.json()) as TelegramApiResponse<boolean>;
 }
 
 export async function deleteTelegramWebhook(): Promise<TelegramApiResponse<boolean>> {
@@ -131,5 +131,5 @@ export async function deleteTelegramWebhook(): Promise<TelegramApiResponse<boole
     method: 'POST',
   });
 
-  return res.json();
+  return (await res.json()) as TelegramApiResponse<boolean>;
 }

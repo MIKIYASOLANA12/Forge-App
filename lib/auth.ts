@@ -145,7 +145,19 @@ export async function getSessionUserFromCookie(): Promise<SessionPayload | null>
     const cookieStore = await cookies();
     const sessionCookie = cookieStore.get(SESSION_COOKIE_NAME);
     if (!sessionCookie?.value) return null;
-    return await verifySessionToken(sessionCookie.value);
+    const session = await verifySessionToken(sessionCookie.value);
+    if (!session) return null;
+
+    if (session.sessionId) {
+      const dbSession = await prisma.userSession.findUnique({
+        where: { sessionToken: session.sessionId },
+      });
+      if (dbSession?.revoked) {
+        return null;
+      }
+    }
+
+    return session;
   } catch {
     return null;
   }
@@ -157,7 +169,19 @@ export async function getSessionUserFromRequest(req: NextRequest | Request): Pro
     const match = cookieHeader.match(new RegExp(`(?:^|; )${SESSION_COOKIE_NAME}=([^;]*)`));
     if (!match?.[1]) return null;
     const token = decodeURIComponent(match[1]);
-    return await verifySessionToken(token);
+    const session = await verifySessionToken(token);
+    if (!session) return null;
+
+    if (session.sessionId) {
+      const dbSession = await prisma.userSession.findUnique({
+        where: { sessionToken: session.sessionId },
+      });
+      if (dbSession?.revoked) {
+        return null;
+      }
+    }
+
+    return session;
   } catch {
     return null;
   }

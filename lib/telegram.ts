@@ -123,6 +123,66 @@ export async function setTelegramWebhook(
   return (await res.json()) as TelegramApiResponse<boolean>;
 }
 
+export async function answerTelegramCallbackQuery(
+  callbackQueryId: string,
+  text?: string,
+  showAlert: boolean = false
+): Promise<TelegramApiResponse<boolean>> {
+  const token = getBotToken();
+  const url = `${TELEGRAM_API_BASE}/bot${token}/answerCallbackQuery`;
+
+  const payload: Record<string, any> = {
+    callback_query_id: callbackQueryId,
+    show_alert: showAlert,
+  };
+
+  if (text) {
+    payload.text = text;
+  }
+
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+
+  return (await res.json()) as TelegramApiResponse<boolean>;
+}
+
+export async function editTelegramMessageText(
+  chatId: string | number,
+  messageId: number,
+  text: string,
+  options?: {
+    parse_mode?: 'HTML' | 'MarkdownV2' | 'Markdown';
+    reply_markup?: any;
+  }
+): Promise<TelegramApiResponse<any>> {
+  const token = getBotToken();
+  const url = `${TELEGRAM_API_BASE}/bot${token}/editMessageText`;
+
+  const payload: Record<string, any> = {
+    chat_id: chatId,
+    message_id: messageId,
+    text: text,
+  };
+
+  if (options?.parse_mode) {
+    payload.parse_mode = options.parse_mode;
+  }
+  if (options?.reply_markup) {
+    payload.reply_markup = options.reply_markup;
+  }
+
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+
+  return (await res.json()) as TelegramApiResponse<any>;
+}
+
 export async function deleteTelegramWebhook(): Promise<TelegramApiResponse<boolean>> {
   const token = getBotToken();
   const url = `${TELEGRAM_API_BASE}/bot${token}/deleteWebhook`;

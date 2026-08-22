@@ -4,6 +4,7 @@ export interface SessionPayload {
   userId: string;
   email: string;
   name?: string;
+  sessionId?: string;
   exp: number; // Unix epoch seconds
 }
 
@@ -61,7 +62,8 @@ function base64UrlToUint8Array(str: string): Uint8Array {
 export async function createSessionToken(
   userId: string,
   email: string,
-  name?: string
+  name?: string,
+  sessionId?: string
 ): Promise<string> {
   const secret = getAuthSecret();
   const exp = Math.floor(Date.now() / 1000) + 30 * 24 * 60 * 60; // 30 days
@@ -69,6 +71,7 @@ export async function createSessionToken(
     userId,
     email: email.trim().toLowerCase(),
     name: name || 'Mikiyas Olana',
+    sessionId,
     exp,
   };
 

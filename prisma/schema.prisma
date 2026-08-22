@@ -280,6 +280,7 @@ model User {
   createdAt     DateTime         @default(now())
   updatedAt     DateTime         @updatedAt
   tokens        AuthToken[]
+  sessions      UserSession[]
   telegram      TelegramAccount?
 }
 
@@ -306,5 +307,33 @@ model TelegramAccount {
   active       Boolean  @default(true)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+}
+
+model TelegramVerification {
+  id          String   @id @default(cuid())
+  chatId      String   @unique
+  telegramId  String
+  phoneNumber String?
+  email       String?
+  otpCode     String?
+  otpExpiresAt DateTime?
+  step        String   @default("AWAITING_PHONE") // "AWAITING_PHONE" | "AWAITING_EMAIL" | "AWAITING_OTP" | "VERIFIED"
+  attempts    Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model UserSession {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sessionToken String   @unique
+  ipAddress   String?
+  userAgent   String?
+  location    String?
+  revoked     Boolean   @default(false)
+  revokedAt   DateTime?
+  createdAt   DateTime  @default(now())
+  lastActiveAt DateTime @default(now())
 }
 

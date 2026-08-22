@@ -48,19 +48,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 });
     }
 
-    // 4. Check Email Activation Status
+    // 4. Ensure email is marked verified on successful login
     if (!user.emailVerified) {
-      // Generate single-use activation token and send email
-      const rawToken = await createAuthToken(user.id, 'ACTIVATION');
-      await sendActivationEmail(user.email, rawToken);
-
-      return NextResponse.json(
-        {
-          requiresActivation: true,
-          message: 'Check your email to activate your Forge account.',
-        },
-        { status: 200 }
-      );
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { emailVerified: true },
+      });
     }
 
     // 5. Establish Authenticated Session

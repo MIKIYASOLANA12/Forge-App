@@ -131,7 +131,7 @@ export async function bootstrapAuthorizedUsers(): Promise<void> {
           email,
           name: 'Mikiyas Olana',
           passwordHash,
-          emailVerified: false,
+          emailVerified: true,
         },
       });
     }

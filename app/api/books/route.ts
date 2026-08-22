@@ -11,7 +11,10 @@ export async function GET() {
       },
     },
   })
-  return NextResponse.json(books)
+  return NextResponse.json(books.map(({ checkIns, ...book }) => ({
+    ...book,
+    lastCheckIn: checkIns[0] ? { question: checkIns[0].question, aiAssessment: checkIns[0].aiAssessment } : null,
+  })))
 }
 
 export async function POST(req: NextRequest) {

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { generateGeminiJson } from '@/lib/gemini'
+import { assessAnswer } from '@/lib/checkin'
 
 export async function POST(
   req: NextRequest,
@@ -22,33 +22,10 @@ export async function POST(
     if (!checkIn || !book) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
     const chunks = book.chunks ? JSON.parse(book.chunks) : []
-    const contextChunk = chunks.length > 0
-      ? chunks[checkIn.chunkIndex]?.slice(0, 2000) || ''
-      : `Book: "${book.title}" by ${book.author || 'unknown'}`
-
-    const assessPrompt = `You are assessing a reader's comprehension of "${book.title}".
-
-Question asked: ${checkIn.question}
-
-Source material context:
-${contextChunk}
-
-User's answer: ${answer}
-
-Assess the answer. Return ONLY a JSON object:
-{
-  "verdict": "understood" | "gap detected",
-  "feedback": "<1-2 sentences — blunt and specific. If gap detected, say exactly what was missing.>"
-}`
-
-    const { parsed: assessment } = await generateGeminiJson<{ verdict: string; feedback: string }>(assessPrompt, {
-      type: 'object',
-      properties: { verdict: { type: 'string', enum: ['understood', 'gap detected'] }, feedback: { type: 'string' } },
-      required: ['verdict', 'feedback'],
-    })
-
-    const gapDetected = assessment.verdict === 'gap detected'
-    const aiAssessment = `${assessment.verdict}: ${assessment.feedback}`
+    const contextChunk = chunks[checkIn.chunkIndex]?.slice(0, 2000) || `Book: "${book.title}" by ${book.author || 'unknown'}`
+    const assessment = await assessAnswer(checkIn.question, answer, contextChunk)
+    const gapDetected = assessment.assessment === 'gap detected'
+    const aiAssessment = `${assessment.assessment}: ${assessment.note}`
 
     const updated = await prisma.bookCheckIn.update({
       where: { id: checkinId },
@@ -71,8 +48,8 @@ Assess the answer. Return ONLY a JSON object:
 
     return NextResponse.json({
       checkIn: updated,
-      verdict: assessment.verdict,
-      feedback: assessment.feedback,
+      verdict: assessment.assessment,
+      feedback: assessment.note,
       gapDetected,
     })
   } catch (error) {

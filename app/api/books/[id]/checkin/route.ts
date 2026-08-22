@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { generateGeminiText } from '@/lib/gemini'
+import { generateCheckIn } from '@/lib/checkin'
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -15,47 +15,14 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
     if (!book) return NextResponse.json({ error: 'Book not found' }, { status: 404 })
 
-    // Check if the last check-in had a gap detected — if so, re-test same concept
-    const lastCheckIn = book.checkIns[0]
-    const retest = lastCheckIn?.gapDetected && !lastCheckIn.userAnswer
-
-    let contextChunk = ''
-    let question = ''
-
-    if (retest && lastCheckIn) {
-      // Re-test the same passage
-      question = lastCheckIn.question
-      contextChunk = `Re-testing comprehension from previous check-in.`
-    } else {
-      // Generate new question based on book content or general knowledge
-      const chunks = book.chunks ? JSON.parse(book.chunks) : []
-      const chunkIndex = Math.min(book.currentPage, chunks.length - 1)
-      contextChunk = chunks.length > 0
-        ? chunks[chunkIndex]
-        : `The book "${book.title}" by ${book.author || 'unknown author'}. General comprehension questions about the content and themes.`
-
-      const prompt = `You are reviewing "${book.title}" by ${book.author || 'unknown'}. 
-
-Context from the book:
-${contextChunk.slice(0, 2000)}
-
-Recent check-in history:
-${book.checkIns.map(c => `Q: ${c.question}\nA: ${c.userAnswer || 'unanswered'}`).join('\n\n')}
-
-Generate ONE comprehension question about the content. The question should:
-- Test genuine understanding, not surface recall
-- Be specific to the content (not "what did you think of this chapter?")
-- Be answerable in 2-5 sentences
-
-Return ONLY the question text, nothing else.`
-
-      question = await generateGeminiText(prompt, undefined, 200) || 'What was the main idea covered in what you just read?'
-    }
+    const chunks = book.chunks ? JSON.parse(book.chunks) : []
+    const passage = chunks[Math.min(book.currentPage, Math.max(chunks.length - 1, 0))] || `The book "${book.title}" by ${book.author || 'unknown author'}.`
+    const generated = await generateCheckIn('book', passage, book.checkIns.map((checkIn) => ({ question: checkIn.question, answer: checkIn.userAnswer || '', assessment: checkIn.aiAssessment || (checkIn.gapDetected ? 'gap detected' : '') })))
 
     const checkIn = await prisma.bookCheckIn.create({
       data: {
         bookId,
-        question,
+        question: generated.question,
         chunkIndex: book.currentPage,
       },
     })

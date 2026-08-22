@@ -1,5 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sendTelegramMessage } from '@/lib/telegram';
+import {
+  getTodaySummary,
+  getProgressSummary,
+  getWorkoutSummary,
+  getPlanSummary,
+  getMissedSummary,
+} from '@/lib/telegramCommands';
 
 const START_REPLY = `Welcome to FORGE, Mikiyas.
 
@@ -36,16 +43,44 @@ export async function POST(req: NextRequest) {
     }
 
     // 2. Parse Telegram Update
-    const update = await req.json();
+    const update = (await req.json()) as any;
 
     // 3. Process Message
     const message = update?.message;
     if (message && message.chat && message.text) {
       const chatId = message.chat.id;
       const text = message.text.trim();
+      const command = text.split(' ')[0].toLowerCase().split('@')[0];
 
-      if (text === '/start' || text.startsWith('/start ')) {
-        await sendTelegramMessage(chatId, START_REPLY);
+      switch (command) {
+        case '/start':
+          await sendTelegramMessage(chatId, START_REPLY);
+          break;
+        case '/today': {
+          const reply = await getTodaySummary();
+          await sendTelegramMessage(chatId, reply);
+          break;
+        }
+        case '/progress': {
+          const reply = await getProgressSummary();
+          await sendTelegramMessage(chatId, reply);
+          break;
+        }
+        case '/workout': {
+          const reply = await getWorkoutSummary();
+          await sendTelegramMessage(chatId, reply);
+          break;
+        }
+        case '/plan': {
+          const reply = await getPlanSummary();
+          await sendTelegramMessage(chatId, reply);
+          break;
+        }
+        case '/missed': {
+          const reply = await getMissedSummary();
+          await sendTelegramMessage(chatId, reply);
+          break;
+        }
       }
     }
 

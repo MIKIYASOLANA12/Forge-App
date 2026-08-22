@@ -213,27 +213,39 @@ export async function getWorkoutSummary(): Promise<string> {
     exerciseListStr = targetDay.exercises
       .map((ex, idx) => {
         const prev = lastByExercise.get(ex.id);
-        const prevStr = prev?.weightKg ? ` (last: ${prev.weightKg}kg × ${prev.repsCompleted}r)` : '';
-        return `${idx + 1}. ${ex.name}${prevStr}`;
+        const prevStr = prev?.weightKg ? ` (last: ${prev.weightKg}kg × ${prev.repsCompleted} reps)` : '';
+        return `  ${idx + 1}. ${ex.name} — ${phase.sets} sets × ${phase.reps} reps${prevStr}`;
       })
       .join('\n');
   }
 
-  const statusHeader = todayLog
-    ? `✅ COMPLETED TODAY (${todayLog.workoutDay.type})`
-    : `⏳ SCHEDULED TODAY: ${targetDay.type} (Gym / Home)`;
+  const nextWorkoutDate = new Date();
+  nextWorkoutDate.setDate(nextWorkoutDate.getDate() + 1);
+  const nextDateFormatted = nextWorkoutDate.toLocaleDateString('en-US', {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+  });
 
-  return `🏋️ WORKOUT TRACKER
+  const locationType = targetDay.type === 'LegsCore' ? '🏠 HOME / GYM' : '🏋️‍♂️ GYM';
+
+  const statusHeader = todayLog
+    ? `✅ COMPLETED TODAY (${todayLog.workoutDay.type})\n⏳ Next Workout: ${nextDateFormatted} (${targetType} - ${locationType})`
+    : `⏳ TODAY'S SCHEDULED WORKOUT: ${targetDay.type}`;
+
+  return `🏋️ FORGE WORKOUT TRACKER
 
 ${statusHeader}
-• Week: ${week} of 24
+• Location: ${locationType}
+• Program: Week ${week} of 24
 • Phase: ${phase.goal}
 • Target Volume: ${phase.sets} sets × ${phase.reps} reps
 
-📋 Exercises for ${targetDay.type}:
+📋 Planned Exercises (${targetDay.type}):
 ${exerciseListStr || 'No exercises configured for this day.'}
 
-💡 Tip: Log sets & weights in Forge → Workout when finished.`;
+💡 Tip: Mark checkboxes and submit on the website or log sets when finished.`;
 }
 
 export async function getPlanSummary(): Promise<string> {

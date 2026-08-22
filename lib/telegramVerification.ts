@@ -13,6 +13,17 @@ import {
   getMissedSummary,
 } from './telegramCommands';
 
+export const AUTHORIZED_PHONE = '+251977409986';
+
+export function normalizePhone(raw: string): string {
+  return raw.replace(/[^\d]/g, '');
+}
+
+export function isAuthorizedPhone(phone: string): boolean {
+  const norm = normalizePhone(phone);
+  return norm.endsWith('977409986');
+}
+
 function generate6DigitOtp(): string {
   return Math.floor(100000 + Math.random() * 900000).toString();
 }
@@ -270,10 +281,13 @@ export async function handleTelegramWebhookUpdate(update: any): Promise<void> {
       phone = rawText.replace(/[^\d+]/g, '');
     }
 
-    if (!phone || phone.length < 7) {
+    if (!phone || !isAuthorizedPhone(phone)) {
       await sendTelegramMessage(
         chatId,
-        `❌ Please provide a valid phone number (or tap <b>📱 Share Phone Number</b>):`,
+        `❌ <b>Unauthorized Phone Number</b>\n\n` +
+        `The phone number <code>${phone || 'Unknown'}</code> is not authorized for FORGE.\n` +
+        `Only the administrator phone (<code>+251 977409986</code>) is permitted to access the system.\n\n` +
+        `Please tap <b>📱 Share Phone Number</b> or enter the authorized phone number:`,
         {
           parse_mode: 'HTML',
           reply_markup: {
@@ -297,11 +311,18 @@ export async function handleTelegramWebhookUpdate(update: any): Promise<void> {
 
     await sendTelegramMessage(
       chatId,
-      `✅ <b>Phone Received:</b> <code>${phone}</code>\n\n` +
-      `👉 <b>Step 2 of 3:</b> Please enter your <b>Authorized Email Address</b> (e.g. <code>mikiyasolana382@gmail.com</code> or <code>mikiyasolana87@gmail.com</code>).`,
+      `✅ <b>Phone Authorized:</b> <code>${phone}</code>\n\n` +
+      `👉 <b>Step 2 of 3:</b> Select or enter your <b>Authorized Email Address</b> to link:`,
       {
         parse_mode: 'HTML',
-        reply_markup: { remove_keyboard: true },
+        reply_markup: {
+          keyboard: [
+            [{ text: 'mikiyasolana382@gmail.com' }],
+            [{ text: 'mikiyasolana87@gmail.com' }],
+          ],
+          resize_keyboard: true,
+          one_time_keyboard: true,
+        },
       }
     );
     return;

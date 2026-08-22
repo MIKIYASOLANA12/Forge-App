@@ -66,7 +66,7 @@ async function main() {
     },
   });
 
-  // 3. Reset habit streaks to 0
+  // 3. Reset habit streaks to 0 and clear habit logs
   console.log('🎯 Resetting habit streak counts to 0...');
   await prisma.habit.updateMany({
     data: {
@@ -76,7 +76,35 @@ async function main() {
     },
   });
 
-  console.log('\n✨ Zero starting progress initialized successfully!');
+  // 4. Purge all activity logs and history
+  console.log('🧹 Purging historical activity and workout logs...');
+  await prisma.exerciseLog.deleteMany({});
+  await prisma.workoutLog.deleteMany({});
+  await prisma.session.deleteMany({});
+  await prisma.foodItem.deleteMany({});
+  await prisma.meal.deleteMany({});
+  await prisma.habitLog.deleteMany({});
+  await prisma.planTask.deleteMany({});
+  await prisma.dailyPlan.deleteMany({});
+  await prisma.reflection.deleteMany({});
+  await prisma.quizAttempt.deleteMany({});
+
+  // 5. Reset Workout Program to start fresh Week 1
+  console.log('🏋️ Resetting WorkoutProgram to Week 1...');
+  await prisma.workoutProgram.upsert({
+    where: { id: 'singleton' },
+    create: {
+      id: 'singleton',
+      startDate: new Date(),
+      currentWeek: 1,
+    },
+    update: {
+      startDate: new Date(),
+      currentWeek: 1,
+    },
+  });
+
+  console.log('\n✨ COMPLETE ZERO PROGRESSION RESET APPLIED SUCCESSFULLY!');
 }
 
 main()

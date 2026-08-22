@@ -15,7 +15,9 @@ import {
   Calendar,
   Sparkles,
   Award,
-  ChevronRight
+  ChevronRight,
+  Unlock,
+  AlertCircle
 } from "lucide-react";
 import {
   AreaChart,
@@ -24,8 +26,6 @@ import {
   YAxis,
   Tooltip,
   ResponsiveContainer,
-  BarChart,
-  Bar
 } from "recharts";
 
 type Exercise = {
@@ -54,6 +54,11 @@ type NextWorkout = {
 };
 
 type TodayData = {
+  currentDayName?: string;
+  currentDateFormatted?: string;
+  isWeekendPreLaunch?: boolean;
+  launchMondayFormatted?: string;
+  launchUnlockTimestamp?: number;
   completedToday: boolean;
   todayLog: {
     id: string;
@@ -108,6 +113,7 @@ export default function WorkoutPage() {
   const [restRunning, setRestRunning] = useState(false);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
+  const [manualOverride, setManualOverride] = useState(false);
 
   const loadTodayData = () => {
     fetch("/api/workout/today")
@@ -189,16 +195,16 @@ export default function WorkoutPage() {
 
   return (
     <div className="mx-auto w-full max-w-[1200px] animate-fade-in pb-16">
-      {/* Header */}
+      {/* Real-Time Header */}
       <section className="mb-6 flex flex-col justify-between gap-5 border-b border-[var(--border)] pb-6 md:flex-row md:items-end">
         <div>
-          <div className="flex items-center gap-2 mb-2">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider bg-orange-500/10 text-orange-400 border border-orange-500/20">
-              <Dumbbell size={13} /> Training Protocol
+          <div className="flex flex-wrap items-center gap-2 mb-2">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-orange-500/10 text-orange-400 border border-orange-500/20">
+              <Calendar size={13} /> {today?.currentDateFormatted || "Live Schedule"}
             </span>
             {today?.day?.location && (
-              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/20">
-                {today.day.location.includes("GYM") ? "🏋️‍♂️ GYM" : "🏠 HOME"}
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                {today.day.location.includes("GYM") ? "🏋️‍♂️ GYM PROTOCOL" : "🏠 HOME PROTOCOL"}
               </span>
             )}
           </div>
@@ -256,6 +262,8 @@ export default function WorkoutPage() {
           restRunning={restRunning}
           saving={saving}
           message={message}
+          manualOverride={manualOverride}
+          onToggleOverride={() => setManualOverride(!manualOverride)}
           onToggle={toggle}
           onWeight={(id, val) =>
             setWeights((c) => ({ ...c, [id]: val }))
@@ -302,21 +310,21 @@ function CountdownTimer({ targetTimestamp }: { targetTimestamp: number }) {
 
   return (
     <div className="flex items-center gap-3">
-      <div className="flex flex-col items-center bg-slate-900/80 border border-orange-500/30 rounded-xl px-4 py-2.5 shadow-inner">
+      <div className="flex flex-col items-center bg-slate-900/90 border border-orange-500/30 rounded-xl px-4 py-2.5 shadow-inner">
         <span className="font-mono text-2xl md:text-3xl font-extrabold text-orange-400">
           {String(timeLeft.hours).padStart(2, "0")}
         </span>
         <span className="text-[10px] uppercase font-bold text-slate-400">Hours</span>
       </div>
       <span className="text-xl font-bold text-orange-400/50">:</span>
-      <div className="flex flex-col items-center bg-slate-900/80 border border-orange-500/30 rounded-xl px-4 py-2.5 shadow-inner">
+      <div className="flex flex-col items-center bg-slate-900/90 border border-orange-500/30 rounded-xl px-4 py-2.5 shadow-inner">
         <span className="font-mono text-2xl md:text-3xl font-extrabold text-orange-400">
           {String(timeLeft.minutes).padStart(2, "0")}
         </span>
         <span className="text-[10px] uppercase font-bold text-slate-400">Mins</span>
       </div>
       <span className="text-xl font-bold text-orange-400/50">:</span>
-      <div className="flex flex-col items-center bg-slate-900/80 border border-orange-500/30 rounded-xl px-4 py-2.5 shadow-inner">
+      <div className="flex flex-col items-center bg-slate-900/90 border border-orange-500/30 rounded-xl px-4 py-2.5 shadow-inner">
         <span className="font-mono text-2xl md:text-3xl font-extrabold text-orange-400 animate-pulse">
           {String(timeLeft.seconds).padStart(2, "0")}
         </span>
@@ -326,7 +334,7 @@ function CountdownTimer({ targetTimestamp }: { targetTimestamp: number }) {
   );
 }
 
-// ── Today Workout View (Active & Completed Countdown Blur States) ───────────────
+// ── Today Workout View ────────────────────────────────────────────────────────
 
 function TodayWorkoutView({
   today,
@@ -337,6 +345,8 @@ function TodayWorkoutView({
   restRunning,
   saving,
   message,
+  manualOverride,
+  onToggleOverride,
   onToggle,
   onWeight,
   onNotes,
@@ -352,6 +362,8 @@ function TodayWorkoutView({
   restRunning: boolean;
   saving: boolean;
   message: string;
+  manualOverride: boolean;
+  onToggleOverride: () => void;
   onToggle: (id: string) => void;
   onWeight: (id: string, value: string) => void;
   onNotes: (value: string) => void;
@@ -368,7 +380,123 @@ function TodayWorkoutView({
     );
   }
 
-  // ── CASE 1: TODAY'S WORKOUT IS ALREADY COMPLETED (Countdown & Blurry Preview) ──
+  // ── CASE 1: PRE-LAUNCH COUNTDOWN (Today is Saturday/Sunday before Monday Launch) ──
+  if (today.isWeekendPreLaunch && !manualOverride) {
+    const nextWk = today.nextWorkout;
+    return (
+      <div className="space-y-6 animate-fade-in">
+        {/* Pre-Launch Announcement Banner */}
+        <section className="relative overflow-hidden rounded-2xl border border-orange-500/40 bg-gradient-to-br from-orange-950/30 via-slate-900/90 to-slate-950 p-6 md:p-8 shadow-2xl">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-orange-500/20 text-orange-300 border border-orange-500/40">
+                  <Flame size={14} /> Official Program Kickoff
+                </span>
+                <span className="text-xs text-slate-400">
+                  Today is <strong className="text-white">{today.currentDayName}</strong>
+                </span>
+              </div>
+              <h2 className="text-3xl md:text-4xl font-extrabold text-white">
+                Starting on Monday, {today.launchMondayFormatted?.split(",")[1]}
+              </h2>
+              <p className="mt-2 text-sm text-slate-300 max-w-xl">
+                The FORGE 24-week progressive overload protocol officially launches on{" "}
+                <strong className="text-orange-400">{today.launchMondayFormatted}</strong>. The system will unlock Day 1 (Push Day — 🏋️‍♂️ GYM) automatically on Monday morning.
+              </p>
+            </div>
+
+            {/* Countdown Badge */}
+            <div className="flex flex-col items-start md:items-end gap-2 bg-slate-950/80 p-5 rounded-2xl border border-orange-500/30 shadow-lg">
+              <span className="text-xs font-bold uppercase tracking-wider text-orange-400 flex items-center gap-1.5">
+                <Clock3 size={14} /> Unlocks In
+              </span>
+              <CountdownTimer targetTimestamp={today.launchUnlockTimestamp || nextWk.unlockTimestamp} />
+              <span className="text-xs text-slate-400 flex items-center gap-1 mt-1 font-semibold">
+                <Calendar size={13} /> {today.launchMondayFormatted} (06:00 AM)
+              </span>
+            </div>
+          </div>
+        </section>
+
+        {/* Upcoming Day 1 Workout Card with Blurry Effect */}
+        <section className="relative rounded-2xl border border-slate-800 bg-slate-900/50 p-6 md:p-8 overflow-hidden">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4 border-b border-slate-800 pb-4">
+            <div>
+              <span className="text-xs font-bold uppercase tracking-wider text-orange-400">
+                Week 1 · Day 1 Preview · 🏋️‍♂️ GYM
+              </span>
+              <h3 className="text-2xl font-bold text-white mt-1">
+                PUSH DAY (Chest, Shoulders & Triceps)
+              </h3>
+              <p className="text-xs text-slate-400 mt-1">
+                Phase 1 Prescription: <strong className="text-white">3 sets × 8-10 reps</strong>
+              </p>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-orange-500/10 border border-orange-500/20 text-orange-400 text-xs font-bold">
+                <Lock size={14} /> Locked Until Monday
+              </div>
+              <button
+                onClick={onToggleOverride}
+                className="btn btn-ghost btn-xs text-slate-400 hover:text-white flex items-center gap-1"
+                title="Early Preview Mode"
+              >
+                <Unlock size={12} /> Test Mode
+              </button>
+            </div>
+          </div>
+
+          {/* Frosted Glassmorphism Blur Container */}
+          <div className="relative rounded-xl border border-slate-800/80 bg-slate-950/40 p-6 overflow-hidden">
+            {/* Blurry Filter Backdrop */}
+            <div className="filter blur-[6px] select-none pointer-events-none opacity-40">
+              <div className="space-y-4">
+                {nextWk.exercises.map((ex, i) => (
+                  <div
+                    key={ex.id}
+                    className="flex items-center justify-between py-3 border-b border-slate-800/50"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="text-xs font-mono text-slate-500">
+                        0{i + 1}
+                      </span>
+                      <span className="text-sm font-semibold text-slate-300">
+                        {ex.name}
+                      </span>
+                    </div>
+                    <span className="text-xs text-slate-500">
+                      3 sets × 8-10 reps
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Overlay Focus Badge */}
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-950/60 backdrop-blur-sm p-6 text-center">
+              <div className="h-12 w-12 rounded-full bg-orange-500/10 border border-orange-500/30 flex items-center justify-center text-orange-400 mb-3 shadow-lg">
+                <Lock size={22} />
+              </div>
+              <h4 className="text-lg font-bold text-white">
+                Dashboard Starts on Monday
+              </h4>
+              <p className="text-xs text-slate-300 max-w-sm mt-1 mb-4">
+                Enjoy your rest weekend! Your exercises, sets, and weights for{" "}
+                <strong className="text-orange-400">Push Day</strong> will unlock automatically on{" "}
+                <strong className="text-white">{today.launchMondayFormatted}</strong>.
+              </p>
+              <div className="flex items-center gap-2 text-xs font-semibold px-3.5 py-1.5 rounded-full bg-slate-900 border border-slate-700 text-slate-300">
+                <Sparkles size={13} className="text-orange-400" /> Countdown Active
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    );
+  }
+
+  // ── CASE 2: TODAY'S WORKOUT COMPLETED (Live Countdown to Next Day) ────────────
   if (today.completedToday) {
     const nextWk = today.nextWorkout;
     return (
@@ -382,14 +510,14 @@ function TodayWorkoutView({
                   <Check size={14} className="stroke-[3]" /> Session Completed
                 </span>
                 <span className="text-xs text-slate-400">
-                  Today's target volume achieved
+                  Today is <strong className="text-white">{today.currentDayName}</strong>
                 </span>
               </div>
               <h2 className="text-3xl md:text-4xl font-extrabold text-white">
                 Workout Done for Today!
               </h2>
               <p className="mt-2 text-sm text-slate-300 max-w-lg">
-                Great job showing up. Recovery is active. The system will unlock your next session on schedule.
+                Great job showing up and finishing your sets. Recovery is active. The system will unlock your next session on schedule.
               </p>
             </div>
 
@@ -399,7 +527,7 @@ function TodayWorkoutView({
                 <Flame size={14} /> Next Session Unlocks In
               </span>
               <CountdownTimer targetTimestamp={nextWk.unlockTimestamp} />
-              <span className="text-xs text-slate-400 flex items-center gap-1 mt-1">
+              <span className="text-xs text-slate-400 flex items-center gap-1 mt-1 font-semibold">
                 <Calendar size={13} /> {nextWk.dateFormatted}
               </span>
             </div>
@@ -427,7 +555,6 @@ function TodayWorkoutView({
 
           {/* Frosted Glassmorphism Blur Container */}
           <div className="relative rounded-xl border border-slate-800/80 bg-slate-950/40 p-6 overflow-hidden">
-            {/* Blurry Filter Backdrop */}
             <div className="filter blur-[5px] select-none pointer-events-none opacity-40">
               <div className="space-y-4">
                 {nextWk.exercises.map((ex, i) => (
@@ -451,7 +578,6 @@ function TodayWorkoutView({
               </div>
             </div>
 
-            {/* Overlay Focus Badge */}
             <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-950/60 backdrop-blur-sm p-6 text-center">
               <div className="h-12 w-12 rounded-full bg-orange-500/10 border border-orange-500/30 flex items-center justify-center text-orange-400 mb-3 shadow-lg">
                 <Lock size={22} />
@@ -474,7 +600,7 @@ function TodayWorkoutView({
     );
   }
 
-  // ── CASE 2: WORKOUT IS PENDING TODAY ──────────────────────────────────────────
+  // ── CASE 3: ACTIVE WORKOUT DAY ────────────────────────────────────────────────
   const completed = Object.values(checked).filter(Boolean).length;
   const total = today.day.exercises.length;
   const allChecked = total > 0 && completed === total;
@@ -673,8 +799,7 @@ function TodayWorkoutView({
 // ── Workout Progress Graph View ───────────────────────────────────────────────
 
 function WorkoutProgressView({ history }: { history: HistoryLog[] }) {
-  // Aggregate history for visual charts
-  const chartData = history.slice(0, 14).reverse().map((log, index) => {
+  const chartData = history.slice(0, 14).reverse().map((log) => {
     const totalSets = log.exerciseLogs.reduce((acc, el) => acc + el.setsCompleted, 0);
     const dateStr = new Date(log.completedAt).toLocaleDateString("en-US", {
       month: "short",
@@ -690,7 +815,6 @@ function WorkoutProgressView({ history }: { history: HistoryLog[] }) {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* Progress Chart Hero */}
       <section className="card p-6 border-slate-800 bg-slate-900/60 shadow-xl">
         <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-4">
           <div>

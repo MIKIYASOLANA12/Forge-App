@@ -6,6 +6,7 @@ const ORDER = ['Push', 'Pull', 'LegsCore'];
 
 export async function GET() {
   const now = new Date();
+  const currentDayOfWeek = now.getDay(); // 0 is Sunday, 6 is Saturday
   const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
   const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
 
@@ -26,7 +27,7 @@ export async function GET() {
   const week = getCurrentWeek(program.startDate);
   const phase = getPhase(week);
 
-  // Determine current scheduled workout
+  // Determine scheduled workout
   const lastIndex = lastLog ? ORDER.indexOf(lastLog.workoutDay.type) : -1;
   const type = ORDER[(lastIndex + 1) % ORDER.length];
   const day = days.find((item) => item.type === type) ?? days[0];
@@ -45,16 +46,41 @@ export async function GET() {
     if (!lastByExercise.has(log.exerciseId)) lastByExercise.set(log.exerciseId, log);
   }
 
-  // Next workout details (for countdown & blurred preview)
+  // Calculate Next Monday Launch Date
+  // If today is Sunday (0), next Monday is +1 day. If Saturday (6), +2 days.
+  const daysUntilMonday = currentDayOfWeek === 0 ? 1 : currentDayOfWeek === 6 ? 2 : (8 - currentDayOfWeek) % 7;
+  const nextMonday = new Date(now);
+  nextMonday.setDate(nextMonday.getDate() + (daysUntilMonday === 0 ? 7 : daysUntilMonday));
+  nextMonday.setHours(6, 0, 0, 0); // 6:00 AM unlock
+
+  const nextMondayFormatted = nextMonday.toLocaleDateString('en-US', {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+  });
+
+  // Next workout unlock for completed sessions
   const tomorrow = new Date(now);
   tomorrow.setDate(tomorrow.getDate() + 1);
-  tomorrow.setHours(6, 0, 0, 0); // 6:00 AM unlock
+  tomorrow.setHours(6, 0, 0, 0);
 
-  const nextType = todayLog ? type : ORDER[(ORDER.indexOf(type) + 1) % ORDER.length];
+  const nextType = todayLog ? ORDER[(ORDER.indexOf(todayLog.workoutDay.type) + 1) % ORDER.length] : ORDER[(ORDER.indexOf(type) + 1) % ORDER.length];
   const nextDay = days.find((item) => item.type === nextType) ?? days[0];
   const nextLocation = nextDay.type === 'LegsCore' ? 'HOME / GYM' : 'GYM';
 
-  const nextDateFormatted = tomorrow.toLocaleDateString('en-US', {
+  const isWeekendPreLaunch = (currentDayOfWeek === 0 || currentDayOfWeek === 6) && !lastLog;
+
+  const targetUnlockTime = isWeekendPreLaunch ? nextMonday.getTime() : tomorrow.getTime();
+  const targetDateFormatted = isWeekendPreLaunch ? nextMondayFormatted : tomorrow.toLocaleDateString('en-US', {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+  });
+
+  const currentDayName = now.toLocaleDateString('en-US', { weekday: 'long' });
+  const currentDateFormatted = now.toLocaleDateString('en-US', {
     weekday: 'long',
     month: 'long',
     day: 'numeric',
@@ -62,6 +88,11 @@ export async function GET() {
   });
 
   return NextResponse.json({
+    currentDayName,
+    currentDateFormatted,
+    isWeekendPreLaunch,
+    launchMondayFormatted: nextMondayFormatted,
+    launchUnlockTimestamp: nextMonday.getTime(),
     completedToday: Boolean(todayLog),
     todayLog: todayLog ? {
       id: todayLog.id,
@@ -79,12 +110,12 @@ export async function GET() {
       })),
     },
     nextWorkout: {
-      dateFormatted: nextDateFormatted,
-      unlockTimestamp: tomorrow.getTime(),
-      type: nextDay.type,
-      location: nextLocation,
+      dateFormatted: targetDateFormatted,
+      unlockTimestamp: targetUnlockTime,
+      type: isWeekendPreLaunch ? 'Push' : nextDay.type,
+      location: isWeekendPreLaunch ? 'GYM' : nextLocation,
       phase,
-      exercises: nextDay.exercises,
+      exercises: isWeekendPreLaunch ? (days.find(d => d.type === 'Push')?.exercises ?? day.exercises) : nextDay.exercises,
     },
     weekNumber: week,
     phase,

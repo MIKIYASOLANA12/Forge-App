@@ -88,7 +88,7 @@ export default function Home() {
   const [running, setRunning] = useState(false);
   const [nextWorkout, setNextWorkout] = useState<WorkoutToday | null>(null);
   const [profile, setProfile] = useState<ProfileStats>({ totalXp: 0, level: 1 });
-  const [weeklyBalance, setWeeklyBalance] = useState<any[]>([]);
+  const [weeklyBalance, setWeeklyBalance] = useState<any>(null);
 
   // AI Nutrition Coach State
   const [mealInput, setMealInput] = useState("");
@@ -133,7 +133,7 @@ export default function Home() {
 
         if (analyticsRes.ok) {
           const analytics = await analyticsRes.json();
-          if (Array.isArray(analytics)) {
+          if (analytics) {
             setWeeklyBalance(analytics);
           }
         }
@@ -224,16 +224,18 @@ export default function Home() {
     ? `${nextWorkout.day.type} (${nextWorkout.day.location || "GYM"}) · ${nextWorkout.day.exercises?.length ?? 0} exercises`
     : "Active Recovery";
 
-  // Mock initial chart curve for clean aesthetics if empty
-  const domainChartData = [
-    { name: "Mon", workout: 45, study: 90, coding: 60 },
-    { name: "Tue", workout: 50, study: 120, coding: 90 },
-    { name: "Wed", workout: 40, study: 75, coding: 110 },
-    { name: "Thu", workout: 55, study: 100, coding: 80 },
-    { name: "Fri", workout: 60, study: 110, coding: 95 },
-    { name: "Sat", workout: 30, study: 60, coding: 120 },
-    { name: "Sun", workout: 0, study: 45, coding: 40 },
-  ];
+  // Real-time weekly analytics from database
+  const domainChartData = (weeklyBalance?.days || ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']).map((dayName: string, idx: number) => {
+    const item: Record<string, any> = { name: dayName, focusMinutes: 0 };
+    if (weeklyBalance?.domains && Array.isArray(weeklyBalance.domains)) {
+      weeklyBalance.domains.forEach((dom: any) => {
+        const mins = Number(dom.minutes?.[idx]) || 0;
+        item[dom.name] = mins;
+        item.focusMinutes += mins;
+      });
+    }
+    return item;
+  });
 
   return (
     <div className="mx-auto w-full max-w-[1500px] animate-fade-in pb-16 space-y-6">
@@ -545,11 +547,11 @@ export default function Home() {
                   />
                   <Area
                     type="monotone"
-                    dataKey="study"
+                    dataKey="focusMinutes"
                     stroke="#3b82f6"
                     strokeWidth={2}
                     fill="url(#progXpGrad)"
-                    name="Focus Mins"
+                    name="Focus Minutes"
                   />
                 </AreaChart>
               </ResponsiveContainer>

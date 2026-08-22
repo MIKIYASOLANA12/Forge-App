@@ -74,6 +74,25 @@ const NT_PLAN = [
   ...Array.from({ length: 22 }, (_, i) => `Revelation ${i + 1}`),
 ]
 
+const WORKOUT_DAYS = [
+  { id: 'workout-push', type: 'Push', exercises: ['Dumbbell Shoulder Press', 'Cable Lateral Raises (cable crossover)', 'Barbell Bench Press', 'Pec Deck Machine', 'Cable Tricep Pushdown (cable crossover)', 'Overhead Tricep Extension (EZ-bar or cable)'] },
+  { id: 'workout-pull', type: 'Pull', exercises: ['Lat Pulldown (wide grip)', 'Cable Row', 'Hammer Strength Row', 'Face Pulls (cable crossover)', 'EZ-Bar Bicep Curl', 'Hammer Curl'] },
+  { id: 'workout-legs-core', type: 'LegsCore', exercises: ['Barbell Squat', 'Hammer Strength Leg Press', 'Ab Crunch Machine', 'Hanging Knee Raises (pull-up bar)', 'Dip Bar L-Sit Hold', 'Cable Woodchop (cable crossover)'] },
+]
+
+async function seedWorkout() {
+  const startDate = new Date()
+  startDate.setDate(startDate.getDate() - 14)
+  startDate.setHours(startDate.getHours() + 1)
+  await prisma.workoutProgram.upsert({ where: { id: 'singleton' }, update: { startDate, currentWeek: 2 }, create: { id: 'singleton', startDate, currentWeek: 2 } })
+  for (const day of WORKOUT_DAYS) {
+    await prisma.workoutDay.upsert({ where: { id: day.id }, update: { type: day.type }, create: { id: day.id, type: day.type } })
+    for (const [index, name] of day.exercises.entries()) {
+      await prisma.workoutExercise.upsert({ where: { id: `${day.id}-${index + 1}` }, update: { name, order: index + 1, workoutDayId: day.id }, create: { id: `${day.id}-${index + 1}`, workoutDayId: day.id, name, order: index + 1 } })
+    }
+  }
+}
+
 async function seedLessons(domainMap: Record<string, string>) {
   const lessons = [
     // ── BUSINESS BASICS ───────────────────────────────────────────────────────
@@ -692,6 +711,9 @@ async function main() {
   // Lessons + quizzes
   await seedLessons(domainMap)
   console.log('  ✓ Lessons and quizzes seeded')
+
+  await seedWorkout()
+  console.log('  ✓ Workout program seeded')
 
   console.log('\n✅ FORGE database seeded successfully!')
   console.log('   Remember to update your exam date in /settings')

@@ -29,6 +29,50 @@ model Session {
   xpEarned  Int
 }
 
+model WorkoutProgram {
+  id          String   @id @default("singleton")
+  startDate   DateTime
+  currentWeek Int      @default(1)
+}
+
+model WorkoutDay {
+  id        String           @id @default(cuid())
+  type      String
+  exercises WorkoutExercise[]
+  logs      WorkoutLog[]
+}
+
+model WorkoutExercise {
+  id           String         @id @default(cuid())
+  workoutDayId String
+  workoutDay   WorkoutDay     @relation(fields: [workoutDayId], references: [id])
+  name         String
+  order        Int
+  logs         ExerciseLog[]
+}
+
+model WorkoutLog {
+  id           String        @id @default(cuid())
+  workoutDayId String
+  workoutDay   WorkoutDay    @relation(fields: [workoutDayId], references: [id])
+  completedAt  DateTime      @default(now())
+  weekNumber   Int
+  notes        String?
+  exerciseLogs ExerciseLog[]
+}
+
+model ExerciseLog {
+  id            String          @id @default(cuid())
+  workoutLogId  String
+  workoutLog    WorkoutLog      @relation(fields: [workoutLogId], references: [id])
+  exerciseId    String
+  exercise      WorkoutExercise @relation(fields: [exerciseId], references: [id])
+  setsCompleted Int
+  repsCompleted Int
+  weightKg      Float?
+  checked       Boolean         @default(false)
+}
+
 model Habit {
   id              String     @id @default(cuid())
   domainId        String

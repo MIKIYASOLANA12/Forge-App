@@ -12,6 +12,7 @@ import {
   getPlanSummary,
   getMissedSummary,
 } from './telegramCommands';
+import { sendSmsOtp } from './sms';
 
 export const AUTHORIZED_PHONE = '+251977409986';
 
@@ -358,13 +359,17 @@ export async function handleTelegramWebhookUpdate(update: any): Promise<void> {
       },
     });
 
+    // Send real SMS OTP to user's physical SIM card phone number
+    const targetPhone = session.phoneNumber || AUTHORIZED_PHONE;
+    await sendSmsOtp(targetPhone, otp);
+
     await sendTelegramMessage(
       chatId,
-      `🔑 <b>SECURITY OTP CODE GENERATED</b>\n\n` +
-      `Your 6-digit Forge Verification OTP is:\n\n` +
-      `👉 <code>${otp}</code> 👈\n\n` +
-      `<i>(Valid for 10 minutes)</i>\n\n` +
-      `👉 <b>Step 3 of 3:</b> Please type and send this <b>6-digit code</b> below to verify:`,
+      `📱 <b>SMS OTP SENT TO YOUR SIM CARD</b>\n\n` +
+      `We have sent a 6-digit security verification code via SMS to your phone SIM card:\n` +
+      `👉 <code>${targetPhone}</code>\n\n` +
+      `<i>(Check your phone's SMS messages. Code expires in 10 minutes)</i>\n\n` +
+      `👉 <b>Step 3 of 3:</b> Please type and send the <b>6-digit SMS code</b> here to verify:`,
       { parse_mode: 'HTML' }
     );
     return;

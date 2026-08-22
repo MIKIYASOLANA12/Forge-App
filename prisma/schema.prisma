@@ -96,6 +96,10 @@ model UserProfile {
   proteinTarget Float    @default(180)
   carbTarget    Float    @default(300)
   fatTarget     Float    @default(70)
+  targetCalories Int     @default(2500)
+  targetProtein  Int     @default(150)
+  targetCarbs    Int     @default(300)
+  targetFat      Int     @default(80)
 }
 
 model DailyPlan {

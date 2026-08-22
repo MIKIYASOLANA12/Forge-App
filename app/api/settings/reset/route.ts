@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
     await transaction.bookCheckIn.deleteMany()
     await transaction.scriptureCheckIn.deleteMany()
     await transaction.quizAttempt.deleteMany()
-    await transaction.userProfile.update({ where: { id: 'singleton' }, data: { totalXp: 0, level: 0 } })
+    await transaction.userProfile.update({ where: { id: 'singleton' }, data: { totalXp: 0, level: 1 } })
   })
   return NextResponse.json({ success: true })
 }

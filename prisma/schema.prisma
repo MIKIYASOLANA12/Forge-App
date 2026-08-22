@@ -270,3 +270,41 @@ model GoogleCalendarToken {
   refreshToken String
   expiresAt    DateTime
 }
+
+model User {
+  id            String           @id @default(cuid())
+  email         String           @unique
+  name          String?
+  passwordHash  String
+  emailVerified Boolean          @default(false)
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+  tokens        AuthToken[]
+  telegram      TelegramAccount?
+}
+
+model AuthToken {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash   String    @unique
+  type        String    // "ACTIVATION" | "PASSWORD_RESET"
+  expiresAt   DateTime
+  usedAt      DateTime?
+  createdAt   DateTime  @default(now())
+}
+
+model TelegramAccount {
+  id           String   @id @default(cuid())
+  userId       String   @unique
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  telegramId   String   @unique
+  chatId       String?
+  username     String?
+  phoneNumber  String?
+  verifiedAt   DateTime @default(now())
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+

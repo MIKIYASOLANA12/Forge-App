@@ -409,3 +409,17 @@ model TelegramNotificationLog {
   @@unique([date, type])
 }
 
+model PhysiqueCheckin {
+  id              String   @id @default(cuid())
+  monthNumber     Int      @unique // 0 = Baseline, 1..7 = Months 1 to 7
+  date            DateTime @default(now())
+  weightKg        Float?
+  notes           String?
+  frontRelaxedUrl String?  // Pose 1: Front Relaxed (Chest, Neck, Abs)
+  frontBicepsUrl  String?  // Pose 2: Front Double Biceps (Biceps, Forearms, Delts)
+  backWingsUrl    String?  // Pose 3: Back Lat Spread / Wings (Lats, Traps)
+  backBicepsUrl   String?  // Pose 4: Back Double Biceps (Upper Back, Triceps Long Head)
+  sideTricepsUrl  String?  // Pose 5: Side Chest & Triceps (Triceps Horseshoe, Chest Thickness)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}

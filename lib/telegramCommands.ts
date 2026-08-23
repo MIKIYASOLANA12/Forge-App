@@ -441,3 +441,40 @@ Legend:
 🟢 Excellent (≥80%) | 🔵 Good (60-79%)
 🟡 Partial (40-59%) | 🔴 Missed (<40%) | ⚪ No Activity`;
 }
+
+/**
+ * /physique command: 7-month physical progression status and 5-pose stand instructions
+ */
+export async function getPhysiqueSummary(): Promise<string> {
+  const checkins = await prisma.physiqueCheckin.findMany({
+    orderBy: { monthNumber: 'asc' },
+  });
+
+  const completed = checkins.filter(
+    (c) => c.frontRelaxedUrl || c.frontBicepsUrl || c.backWingsUrl || c.backBicepsUrl || c.sideTricepsUrl
+  );
+
+  const latest = checkins[checkins.length - 1];
+  const weightStr = latest?.weightKg ? ` (Latest: ${latest.weightKg} kg)` : '';
+
+  return `📸 FORGE 7-MONTH PHYSIQUE TRACKER
+
+🏆 Roadmap Progress: ${completed.length}/8 Checkpoints Completed${weightStr}
+Target Muscle Focus: Chest, Back, Triceps, Biceps, Neck, Abs & Wings
+
+📐 5 MANDATORY UPPER BODY POSES:
+1️⃣ Front Relaxed — Chest, Neck posture, Abs & Core alignment
+2️⃣ Front Double Biceps — Biceps peak, Forearms, Front Delts
+3️⃣ Back Lat Spread (Wings) — Lats width flare, Upper Back & Traps
+4️⃣ Back Double Biceps — Triceps long head, Rear Delts & Traps
+5️⃣ Side Chest & Triceps — Triceps horseshoe flare & Chest depth
+
+📷 STAND & CAMERA GUIDANCE:
+• Tripod Height: Chest level (~1.2m)
+• Distance: 2.5–3.0 meters
+• Lighting: 45° overhead or frontal light
+
+Upload your monthly photos on Forge:
+https://forge-app-eight-kappa.vercel.app/physique`;
+}
+

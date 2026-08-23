@@ -14,6 +14,7 @@ import {
   getReportSummary,
   getNutritionSummary,
   getCalendarSummary,
+  getPhysiqueSummary,
 } from './telegramCommands';
 
 export const AUTHORIZED_PHONE = '+251977409986';
@@ -86,6 +87,7 @@ export async function handleTelegramWebhookUpdate(update: any): Promise<void> {
 /report — Daily performance analysis & monthly summary
 /nutrition — Daily calories, protein intake & meal logs
 /calendar — 7-day consistency calendar with colors
+/physique — 7-month upper body progression & 5-pose stand instructions
 /resetpassword — Generate an instant secure password reset link`;
       await sendTelegramMessage(chatId, helpMsg);
       return;
@@ -135,6 +137,12 @@ export async function handleTelegramWebhookUpdate(update: any): Promise<void> {
 
     if (cmd === '/calendar') {
       const msg = await getCalendarSummary();
+      await sendTelegramMessage(chatId, msg);
+      return;
+    }
+
+    if (cmd === '/physique') {
+      const msg = await getPhysiqueSummary();
       await sendTelegramMessage(chatId, msg);
       return;
     }

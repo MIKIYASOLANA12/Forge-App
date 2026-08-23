@@ -102,6 +102,30 @@ export async function sendDailyAccountabilityReminder(force: boolean = false) {
     ? pendingTasks.slice(0, 3).map((t) => `• ${formatTaskText(t.description)} (${t.minutesTarget}m)`).join('\n')
     : 'None pending';
 
+  // Check if end of month physique check-in is pending
+  const dayOfMonth = addisNow.getDate();
+  let physiquePrompt = '';
+  if (dayOfMonth >= 26 || dayOfMonth <= 2) {
+    const existingCheckin = await prisma.physiqueCheckin.findFirst({
+      where: {
+        date: {
+          gte: new Date(addisNow.getFullYear(), addisNow.getMonth(), 1),
+        },
+      },
+    });
+
+    const isDone = Boolean(
+      existingCheckin &&
+      (existingCheckin.frontRelaxedUrl || existingCheckin.frontBicepsUrl || existingCheckin.backWingsUrl)
+    );
+
+    if (!isDone) {
+      physiquePrompt = `\n\n📸 MONTHLY PHYSIQUE PROGRESS CHECK-IN DUE:
+• End of Month Checkpoint: Take your 5 upper body photos (Chest, Back, Triceps, Biceps, Neck, Abs, Wings).
+• Review pose guides & upload: https://forge-app-eight-kappa.vercel.app/physique`;
+    }
+  }
+
   const reminderMessage = `⚡ FORGE DAILY ACCOUNTABILITY REMINDER
 Timezone: Africa/Addis_Ababa • Day Rollover: 05:00 AM
 
@@ -116,7 +140,7 @@ ${missedTasksStr}
 • Active Consistency Streak: ${activeStreak} Days
 • Today's Consistency Score: ${breakdown.consistencyScore}% [${breakdown.color}]
 
-🎯 Next Action: ${nextTask}
+🎯 Next Action: ${nextTask}${physiquePrompt}
 ⏳ Complete and log your activities before 05:00 AM to protect your streak!`;
 
   // Send to all linked chats

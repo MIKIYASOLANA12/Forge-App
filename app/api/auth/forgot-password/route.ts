@@ -28,7 +28,17 @@ export async function POST(req: NextRequest) {
 
       if (user) {
         const rawToken = await createAuthToken(user.id, 'PASSWORD_RESET');
-        await sendPasswordResetEmail(user.email, rawToken);
+        const sent = await sendPasswordResetEmail(user.email, rawToken);
+
+        // If the provider rejected the message, surface a failure so callers
+        // know the email delivery failed. This avoids returning a misleading
+        // success when the external provider (Resend) rejects the request.
+        if (!sent) {
+          return NextResponse.json({
+            success: false,
+            message: 'Failed to dispatch password reset email. Please try again later.',
+          }, { status: 502 });
+        }
       }
     }
 

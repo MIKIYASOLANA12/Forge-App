@@ -361,7 +361,8 @@ export async function handleTelegramWebhookUpdate(update: any): Promise<void> {
 
     // Send real SMS OTP to user's physical SIM card phone number
     const targetPhone = session.phoneNumber || AUTHORIZED_PHONE;
-    await sendSmsOtp(targetPhone, otp);
+    const rawFormatType = contact && contact.phone_number ? 'Telegram contact' : 'typed input';
+    await sendSmsOtp(targetPhone, otp, { rawFormatType });
 
     await sendTelegramMessage(
       chatId,

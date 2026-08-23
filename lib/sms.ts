@@ -1,18 +1,71 @@
-export interface SendSmsResult {
+﻿export interface SendSmsResult {
   success: boolean;
   provider?: string;
   messageId?: string;
   error?: string;
 }
 
+function maskPhone(phone: string): string {
+  const digits = phone.replace(/\D/g, '');
+  if (!digits) return '***';
+
+  if (digits.startsWith('251')) {
+    return `+251${'*'.repeat(Math.max(digits.length - 3, 3))}`;
+  }
+
+  return `+${'*'.repeat(Math.max(digits.length, 3))}`;
+}
+
+function sanitizeProviderResponse(raw: string | null): string {
+  if (!raw) return 'No provider response body.';
+
+  const compact = raw.replace(/\s+/g, ' ').trim();
+
+  try {
+    const parsed = JSON.parse(compact);
+    const errors = parsed?.response?.errors;
+    if (Array.isArray(errors) && errors.length) {
+      return String(errors[0]);
+    }
+    if (parsed?.response?.message) return String(parsed.response.message);
+    if (parsed?.message) return String(parsed.message);
+    if (parsed?.error) return String(parsed.error);
+    if (typeof parsed?.acknowledge === 'string') {
+      return String(parsed.acknowledge);
+    }
+  } catch {
+    // Fall through to simple text sanitization.
+  }
+
+  return compact.length > 200 ? `${compact.slice(0, 197)}...` : compact;
+}
+
 export async function sendSmsOtp(
   phoneNumber: string,
-  otpCode: string
+  otpCode: string,
+  options?: { rawFormatType?: 'Telegram contact' | 'typed input' }
 ): Promise<SendSmsResult> {
   const formattedPhone = phoneNumber.startsWith('+') ? phoneNumber : `+${phoneNumber}`;
   const messageText = `[FORGE OS] Your verification security code is: ${otpCode}. Valid for 10 minutes. Do not share this code.`;
+  const rawFormatType = options?.rawFormatType || 'typed input';
+  const safePhone = maskPhone(formattedPhone);
 
-  // 1. Check for AfroMessage (Ethiopian SMS Gateway)
+  const logDiagnostic = (
+    provider: string,
+    requestAttempted: boolean,
+    httpStatus: number | null,
+    providerResponse: string | null
+  ) => {
+    console.warn('[SMS diagnostic]', {
+      rawFormatType,
+      normalizedPhone: safePhone,
+      provider,
+      requestAttempted,
+      httpStatus,
+      providerResponse: providerResponse ? providerResponse.slice(0, 200) : null,
+    });
+  };
+
   const afroKey = process.env.AFROMESSAGE_API_KEY;
   if (afroKey) {
     try {
@@ -29,17 +82,30 @@ export async function sendSmsOtp(
         }),
       });
 
+      const bodyText = await res.text();
+      const parsedBody = bodyText ? JSON.parse(bodyText) : {};
+      const sanitizedResponse = sanitizeProviderResponse(bodyText);
+      logDiagnostic('AfroMessage', true, res.status, sanitizedResponse);
+
+      const providerRejected = parsedBody?.acknowledge === 'error' || (Array.isArray(parsedBody?.response?.errors) && parsedBody.response.errors.length > 0);
+      if (providerRejected) {
+        return { success: false, provider: 'AfroMessage', error: sanitizedResponse };
+      }
+
       if (res.ok) {
-        const data = await res.json();
-        console.log(`📱 SMS successfully dispatched via AfroMessage to ${formattedPhone}`);
+        const data = parsedBody;
+        console.log('📱 SMS successfully dispatched via AfroMessage');
         return { success: true, provider: 'AfroMessage', messageId: data.response?.id };
       }
+
+      return { success: false, provider: 'AfroMessage', error: sanitizedResponse };
     } catch (err: any) {
-      console.error('AfroMessage dispatch error:', err?.message || err);
+      const errorText = err?.message || 'Unknown AfroMessage request error';
+      logDiagnostic('AfroMessage', true, null, errorText);
+      return { success: false, provider: 'AfroMessage', error: errorText };
     }
   }
 
-  // 2. Check for Twilio SMS
   const twilioSid = process.env.TWILIO_ACCOUNT_SID;
   const twilioAuth = process.env.TWILIO_AUTH_TOKEN;
   const twilioFrom = process.env.TWILIO_PHONE_NUMBER;
@@ -64,17 +130,24 @@ export async function sendSmsOtp(
         }
       );
 
+      const bodyText = await res.text();
+      const sanitizedResponse = sanitizeProviderResponse(bodyText);
+      logDiagnostic('Twilio', true, res.status, sanitizedResponse);
+
       if (res.ok) {
-        const data = await res.json();
-        console.log(`📱 SMS successfully dispatched via Twilio to ${formattedPhone}`);
+        const data = JSON.parse(bodyText || '{}');
+        console.log('📱 SMS successfully dispatched via Twilio');
         return { success: true, provider: 'Twilio', messageId: data.sid };
       }
+
+      return { success: false, provider: 'Twilio', error: sanitizedResponse };
     } catch (err: any) {
-      console.error('Twilio dispatch error:', err?.message || err);
+      const errorText = err?.message || 'Unknown Twilio request error';
+      logDiagnostic('Twilio', true, null, errorText);
+      return { success: false, provider: 'Twilio', error: errorText };
     }
   }
 
-  // 3. Check for Generic SMS API Webhook
   const genericSmsUrl = process.env.SMS_API_URL;
   const genericSmsKey = process.env.SMS_API_KEY;
 
@@ -93,22 +166,24 @@ export async function sendSmsOtp(
         }),
       });
 
+      const bodyText = await res.text();
+      const sanitizedResponse = sanitizeProviderResponse(bodyText);
+      logDiagnostic('GenericSMS', true, res.status, sanitizedResponse);
+
       if (res.ok) {
-        console.log(`📱 SMS successfully dispatched via Generic SMS API to ${formattedPhone}`);
+        console.log('📱 SMS successfully dispatched via Generic SMS API');
         return { success: true, provider: 'GenericSMS' };
       }
+
+      return { success: false, provider: 'GenericSMS', error: sanitizedResponse };
     } catch (err: any) {
-      console.error('Generic SMS dispatch error:', err?.message || err);
+      const errorText = err?.message || 'Unknown Generic SMS request error';
+      logDiagnostic('GenericSMS', true, null, errorText);
+      return { success: false, provider: 'GenericSMS', error: errorText };
     }
   }
 
-  // 4. Fallback Logger (Logs exact SIM dispatch details)
-  console.log(`\n========================================`);
-  console.log(`📱 SIM CARD SMS DISPATCH`);
-  console.log(`To Phone Number: ${formattedPhone}`);
-  console.log(`Message: ${messageText}`);
-  console.log(`OTP Code: ${otpCode}`);
-  console.log(`========================================\n`);
+  logDiagnostic('LocalSIM_Logger', false, null, 'No configured SMS provider - local logger used');
 
   return {
     success: true,

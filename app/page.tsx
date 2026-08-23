@@ -34,6 +34,7 @@ import {
   Bar,
   Cell
 } from "recharts";
+import { DailyMotivation } from "@/components/dashboard/DailyMotivation";
 
 type PlanTask = {
   id: string;
@@ -290,6 +291,9 @@ export default function Home() {
           </Link>
         </div>
       </section>
+
+      {/* ── DAILY MOTIVATION & TEACHER MENTORSHIP WIDGET ─────────────────────── */}
+      <DailyMotivation />
 
       {/* ── AI NUTRITION & FOOD COACH WIDGET ─────────────────────────────────── */}
       <section className="rounded-2xl border border-orange-500/30 bg-gradient-to-br from-orange-950/20 via-slate-900/80 to-slate-950 p-6 shadow-xl">

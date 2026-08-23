@@ -398,3 +398,14 @@ model MonthlyProgressReport {
   @@unique([year, month])
 }
 
+model TelegramNotificationLog {
+  id        String   @id @default(cuid())
+  date      DateTime
+  type      String   // "DAILY_REMINDER" | "COMPLETION_REPORT"
+  sentAt    DateTime @default(now())
+  chatId    String
+  message   String?
+
+  @@unique([date, type])
+}
+

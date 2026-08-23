@@ -1,5 +1,5 @@
 import { prisma } from './prisma';
-import { isAllowedEmail, normalizeEmail, hashPassword } from './auth';
+import { isAllowedEmail, normalizeEmail } from './auth';
 import {
   sendTelegramMessage,
   answerTelegramCallbackQuery,
@@ -11,8 +11,10 @@ import {
   getWorkoutSummary,
   getPlanSummary,
   getMissedSummary,
+  getReportSummary,
+  getNutritionSummary,
+  getCalendarSummary,
 } from './telegramCommands';
-// SMS OTP removed: Telegram verification will use phone-share + authorized email only (no SMS).
 
 export const AUTHORIZED_PHONE = '+251977409986';
 
@@ -26,9 +28,7 @@ export function isAuthorizedPhone(phone: string): boolean {
 }
 
 export async function handleTelegramWebhookUpdate(update: any): Promise<void> {
-  // ──────────────────────────────────────────────────────────────────────────
-  // 1. Handle Inline Keyboard Callbacks (e.g. Session Termination)
-  // ──────────────────────────────────────────────────────────────────────────
+  // 1. Handle Inline Keyboard Callbacks
   if (update.callback_query) {
     const cq = update.callback_query;
     const callbackId = cq.id;
@@ -43,387 +43,219 @@ export async function handleTelegramWebhookUpdate(update: any): Promise<void> {
           where: { sessionToken },
           data: { revoked: true, revokedAt: new Date() },
         });
-
-        await answerTelegramCallbackQuery(callbackId, '🛑 Web session terminated.', true);
-
+        await answerTelegramCallbackQuery(callbackId, 'Session successfully terminated.');
         if (chatId && messageId) {
           await editTelegramMessageText(
             chatId,
             messageId,
-            '🛑 <b>SESSION TERMINATED</b>\n\nThis web session has been forcefully closed and revoked.',
-            { parse_mode: 'HTML' }
+            '🛑 Session terminated immediately upon your request.'
           );
         }
-      } catch (err) {
-        console.error('Failed to terminate session from Telegram callback:', err);
-        await answerTelegramCallbackQuery(callbackId, 'Error terminating session.', true);
+      } catch (err: any) {
+        await answerTelegramCallbackQuery(callbackId, 'Error revoking session.');
       }
-      return;
     }
-
-    if (data.startsWith('auth_')) {
-      await answerTelegramCallbackQuery(callbackId, '✅ Session confirmed.', false);
-      if (chatId && messageId) {
-        await editTelegramMessageText(
-          chatId,
-          messageId,
-          '✅ <b>SESSION CONFIRMED</b>\n\nThis web login was acknowledged and approved.',
-          { parse_mode: 'HTML' }
-        );
-      }
-      return;
-    }
-
-    await answerTelegramCallbackQuery(callbackId);
     return;
   }
 
-  // ──────────────────────────────────────────────────────────────────────────
-  // 2. Handle Messages (Text, Contact, Commands)
-  // ──────────────────────────────────────────────────────────────────────────
   const message = update.message;
-  if (!message || !message.chat) return;
+  if (!message) return;
 
   const chatId = String(message.chat.id);
-  const telegramId = String(message.from?.id || message.chat.id);
-  const username = message.from?.username || message.from?.first_name || 'User';
-  const rawText = (message.text || '').trim();
-  const contact = message.contact;
+  const telegramId = String(message.from.id);
+  const username = message.from.username || null;
+  const text = (message.text || '').trim();
 
-  // Check if this Telegram account is already verified in DB
+  // 2. Check if user is already verified
   const linkedAccount = await prisma.telegramAccount.findUnique({
     where: { telegramId },
-    include: { user: true },
   });
 
-  // ──────────────────────────────────────────────────────────────────────────
-  // A. USER IS ALREADY VERIFIED
-  // ──────────────────────────────────────────────────────────────────────────
   if (linkedAccount && linkedAccount.active) {
-    const command = rawText.split(' ')[0].toLowerCase().split('@')[0];
+    // Verified user commands
+    const cmd = text.split(' ')[0].toLowerCase();
 
-    switch (command) {
-      case '/start':
-      case '/help': {
-        const welcome = `⚡ <b>FORGE OS — Connected</b>\n\n` +
-          `Welcome back, <b>${linkedAccount.user?.name || username}</b>!\n` +
-          `Your Telegram is securely linked to <code>${linkedAccount.user?.email}</code>.\n\n` +
-          `<b>Available Commands:</b>\n` +
-          `• /today — Today's plan, workouts & completion\n` +
-          `• /workout — Current workout program & week\n` +
-          `• /progress — Level, XP & domain balance\n` +
-          `• /plan — Today's scheduled tasks\n` +
-          `• /missed — Missed habits & tasks\n` +
-          `• /resetpassword — Reset Forge web password\n` +
-          `• /unlink — Disconnect this Telegram account`;
-        await sendTelegramMessage(chatId, welcome, { parse_mode: 'HTML' });
-        return;
-      }
+    if (cmd === '/start' || cmd === '/help') {
+      const helpMsg = `🛡️ FORGE TELEGRAM COMMANDS:
 
-      case '/today': {
-        const reply = await getTodaySummary();
-        await sendTelegramMessage(chatId, reply);
-        return;
-      }
-
-      case '/progress': {
-        const reply = await getProgressSummary();
-        await sendTelegramMessage(chatId, reply);
-        return;
-      }
-
-      case '/workout': {
-        const reply = await getWorkoutSummary();
-        await sendTelegramMessage(chatId, reply);
-        return;
-      }
-
-      case '/plan': {
-        const reply = await getPlanSummary();
-        await sendTelegramMessage(chatId, reply);
-        return;
-      }
-
-      case '/missed': {
-        const reply = await getMissedSummary();
-        await sendTelegramMessage(chatId, reply);
-        return;
-      }
-
-      case '/resetpassword': {
-        const parts = rawText.split(' ');
-        if (parts.length < 2 || !parts[1].trim()) {
-          await sendTelegramMessage(
-            chatId,
-            `🔑 <b>Reset Web Password</b>\n\n` +
-            `To set a new password for your web dashboard, send:\n` +
-            `<code>/resetpassword YourNewPassword123!</code>\n\n` +
-            `<i>Must be at least 8 characters.</i>`,
-            { parse_mode: 'HTML' }
-          );
-          return;
-        }
-
-        const newPassword = parts.slice(1).join(' ').trim();
-        if (newPassword.length < 8) {
-          await sendTelegramMessage(
-            chatId,
-            `❌ Password must be at least 8 characters long.`,
-            { parse_mode: 'HTML' }
-          );
-          return;
-        }
-
-        const newHash = await hashPassword(newPassword);
-        await prisma.user.update({
-          where: { id: linkedAccount.userId },
-          data: { passwordHash: newHash },
-        });
-
-        await sendTelegramMessage(
-          chatId,
-          `✅ <b>Password Reset Successfully!</b>\n\n` +
-          `Your Forge web password has been updated. You can now log into the web dashboard with your new password.`,
-          { parse_mode: 'HTML' }
-        );
-        return;
-      }
-
-      case '/unlink': {
-        await prisma.telegramAccount.delete({
-          where: { telegramId },
-        });
-        await prisma.telegramVerification.deleteMany({
-          where: { chatId },
-        });
-        await sendTelegramMessage(
-          chatId,
-          `🔓 <b>Telegram Disconnected</b>\n\n` +
-          `Your Telegram account has been unlinked from FORGE. Send /start anytime to re-verify.`,
-          { parse_mode: 'HTML' }
-        );
-        return;
-      }
-
-      default: {
-        await sendTelegramMessage(
-          chatId,
-          `⚡ Command not recognized. Send /help or /today to see your dashboard.`,
-          { parse_mode: 'HTML' }
-        );
-        return;
-      }
+/today — Full daily overview (workout, tasks, focus, score)
+/workout — Detailed workout tracker, phase, exercises & next unlock
+/progress — Real-time progress engine metrics, XP, streak & level
+/plan — Today's AI-generated daily schedule & time targets
+/missed — Incomplete tasks, pending habits & learning gaps
+/report — Daily performance analysis & monthly summary
+/nutrition — Daily calories, protein intake & meal logs
+/calendar — 7-day consistency calendar with colors`;
+      await sendTelegramMessage(chatId, helpMsg);
+      return;
     }
+
+    if (cmd === '/today') {
+      const msg = await getTodaySummary();
+      await sendTelegramMessage(chatId, msg);
+      return;
+    }
+
+    if (cmd === '/workout') {
+      const msg = await getWorkoutSummary();
+      await sendTelegramMessage(chatId, msg);
+      return;
+    }
+
+    if (cmd === '/progress') {
+      const msg = await getProgressSummary();
+      await sendTelegramMessage(chatId, msg);
+      return;
+    }
+
+    if (cmd === '/plan') {
+      const msg = await getPlanSummary();
+      await sendTelegramMessage(chatId, msg);
+      return;
+    }
+
+    if (cmd === '/missed') {
+      const msg = await getMissedSummary();
+      await sendTelegramMessage(chatId, msg);
+      return;
+    }
+
+    if (cmd === '/report') {
+      const msg = await getReportSummary();
+      await sendTelegramMessage(chatId, msg);
+      return;
+    }
+
+    if (cmd === '/nutrition') {
+      const msg = await getNutritionSummary();
+      await sendTelegramMessage(chatId, msg);
+      return;
+    }
+
+    if (cmd === '/calendar') {
+      const msg = await getCalendarSummary();
+      await sendTelegramMessage(chatId, msg);
+      return;
+    }
+
+    // Default unknown command response
+    await sendTelegramMessage(
+      chatId,
+      `Unknown command: ${text}\nType /help to view available commands.`
+    );
+    return;
   }
 
-  // ──────────────────────────────────────────────────────────────────────────
-  // B. USER IS NOT VERIFIED (Multi-Step Identity Verification Flow)
-  // ──────────────────────────────────────────────────────────────────────────
-
-  let session = await prisma.telegramVerification.findUnique({
+  // 3. Unverified User Flow (Phone share + verified email)
+  let verif = await prisma.telegramVerification.findUnique({
     where: { chatId },
   });
 
-  // If user sends /start, /reset, or session doesn't exist: restart from Step 1 (Phone)
-  if (!session || rawText === '/start' || rawText === '/reset') {
-    session = await prisma.telegramVerification.upsert({
-      where: { chatId },
-      create: {
+  if (!verif) {
+    verif = await prisma.telegramVerification.create({
+      data: {
         chatId,
         telegramId,
         step: 'AWAITING_PHONE',
-        attempts: 0,
-      },
-      update: {
-        telegramId,
-        step: 'AWAITING_PHONE',
-        phoneNumber: null,
-        email: null,
-        otpCode: null,
-        otpExpiresAt: null,
-        attempts: 0,
       },
     });
-
-    const promptText =
-      `🔒 <b>FORGE IDENTITY VERIFICATION</b>\n\n` +
-      `Welcome to <b>FORGE OS</b>.\n` +
-      `To protect your personal growth data, you must verify your identity before accessing any bot features.\n\n` +
-      `👉 <b>Step 1 of 3:</b> Please share your <b>Phone Number</b> by tapping the button below or typing it directly.`;
-
-    await sendTelegramMessage(chatId, promptText, {
-      parse_mode: 'HTML',
-      reply_markup: {
-        keyboard: [
-          [
-            {
-              text: '📱 Share Phone Number',
-              request_contact: true,
-            },
-          ],
-        ],
-        resize_keyboard: true,
-        one_time_keyboard: true,
-      },
-    });
-    return;
   }
 
-  // ── Step 1: Process Phone Number ──────────────────────────────────────────
-  if (session.step === 'AWAITING_PHONE') {
-    let phone = '';
-    if (contact && contact.phone_number) {
-      phone = contact.phone_number;
-    } else if (rawText) {
-      phone = rawText.replace(/[^\d+]/g, '');
-    }
-
-    if (!phone || !isAuthorizedPhone(phone)) {
+  // Handle Contact Sharing
+  if (message.contact) {
+    const rawPhone = message.contact.phone_number;
+    if (!isAuthorizedPhone(rawPhone)) {
       await sendTelegramMessage(
         chatId,
-        `❌ <b>Unauthorized Phone Number</b>\n\n` +
-        `The phone number <code>${phone || 'Unknown'}</code> is not authorized for FORGE.\n` +
-        `Only the administrator phone (<code>+251 977409986</code>) is permitted to access the system.\n\n` +
-        `Please tap <b>📱 Share Phone Number</b> or enter the authorized phone number:`,
-        {
-          parse_mode: 'HTML',
-          reply_markup: {
-            keyboard: [[{ text: '📱 Share Phone Number', request_contact: true }]],
-            resize_keyboard: true,
-            one_time_keyboard: true,
-          },
-        }
+        '⛔ Access Denied: This phone number is not authorized for Forge administrative access.'
       );
       return;
     }
 
-    // Save phone and advance to Step 2 (Email)
     await prisma.telegramVerification.update({
       where: { chatId },
       data: {
-        phoneNumber: phone,
+        phoneNumber: rawPhone,
         step: 'AWAITING_EMAIL',
       },
     });
 
     await sendTelegramMessage(
       chatId,
-      `✅ <b>Phone Authorized:</b> <code>${phone}</code>\n\n` +
-      `👉 <b>Step 2 of 3:</b> Select or enter your <b>Authorized Email Address</b> to link:`,
-      {
-        parse_mode: 'HTML',
-        reply_markup: {
-          keyboard: [
-            [{ text: 'mikiyasolana382@gmail.com' }],
-            [{ text: 'mikiyasolana87@gmail.com' }],
-          ],
-          resize_keyboard: true,
-          one_time_keyboard: true,
-        },
-      }
+      '✅ Phone verified. Please send your registered Forge email address to link your account.'
     );
     return;
   }
 
-  // ── Step 2: Process Email Address ─────────────────────────────────────────
-  if (session.step === 'AWAITING_EMAIL') {
-    const email = normalizeEmail(rawText);
-
-    if (!isAllowedEmail(email)) {
+  // Handle Email Input
+  if (verif.step === 'AWAITING_EMAIL' || (verif.phoneNumber && !linkedAccount)) {
+    const emailCandidate = normalizeEmail(text);
+    if (!isAllowedEmail(emailCandidate)) {
       await sendTelegramMessage(
         chatId,
-        `❌ <b>Unauthorized Email</b>\n\n` +
-        `<code>${rawText}</code> is not in the FORGE authorized allowlist.\n\n` +
-        `Please enter an authorized email address (or send /start to restart):`,
-        { parse_mode: 'HTML' }
+        '⛔ Access Denied: Email address is not authorized.'
       );
       return;
     }
 
-    // Bypass SMS OTP: phone-share + authorized email completes Telegram linking,
-    // but Telegram must NOT bypass email verification. Do NOT set emailVerified here.
-    const targetEmail = email;
-    let user = await prisma.user.findUnique({ where: { email: targetEmail } });
+    const user = await prisma.user.findUnique({
+      where: { email: emailCandidate },
+    });
 
-    if (!user) {
-      const defaultPassword = process.env.FORGE_INITIAL_PASSWORD || 'ForgeInitialPass2026!';
-      const passwordHash = await hashPassword(defaultPassword);
-      // Create a new user record but DO NOT mark emailVerified = true. Email verification
-      // must remain an independent web-based flow.
-      user = await prisma.user.create({
-        data: {
-          email: targetEmail,
-          name: 'Mikiyas Olana',
-          passwordHash,
-          emailVerified: false,
-        },
-      });
-    } else {
-      // Important: do NOT modify user.emailVerified here. Email verification is a separate
-      // security step that must be completed via the website verification flow.
+    if (!user || !user.emailVerified) {
+      await sendTelegramMessage(
+        chatId,
+        '⚠️ Your Forge account exists but email is not verified yet. Please verify your email via the link sent to your inbox first.'
+      );
+      return;
     }
 
-    // Link or update Telegram account in Prisma
+    // Link Telegram Account
     await prisma.telegramAccount.upsert({
-      where: { telegramId },
+      where: { userId: user.id },
       create: {
         userId: user.id,
         telegramId,
         chatId,
         username,
-        phoneNumber: session.phoneNumber,
+        phoneNumber: verif.phoneNumber || AUTHORIZED_PHONE,
         verifiedAt: new Date(),
         active: true,
       },
       update: {
-        userId: user.id,
+        telegramId,
         chatId,
         username,
-        phoneNumber: session.phoneNumber,
-        verifiedAt: new Date(),
         active: true,
       },
     });
 
-    // Update verification session and clear any OTP fields
     await prisma.telegramVerification.update({
       where: { chatId },
-      data: {
-        email: targetEmail,
-        step: 'VERIFIED',
-        otpCode: null,
-        otpExpiresAt: null,
-        attempts: 0,
-      },
+      data: { step: 'VERIFIED' },
     });
 
-    const successMessage =
-      `🎉 <b>IDENTITY VERIFIED & FORGE LINKED!</b>\n\n` +
-      `Welcome, <b>${user.name || 'Forge User'}</b>!\n` +
-      `Your Telegram account is now securely linked to <code>${user.email}</code>.\n\n` +
-      `<b>Available Commands:</b>\n` +
-      `• /today — Today's plan, workouts & completion\n` +
-      `• /workout — Current workout program & week\n` +
-      `• /progress — Level, XP & domain balance\n` +
-      `• /plan — Today's scheduled tasks\n` +
-      `• /missed — Missed habits & tasks\n` +
-      `• /resetpassword — Reset Forge web password\n\n` +
-      `🔔 <b>Security Alerts Active:</b> Whenever you sign in on the web, you will receive an instant login notification here with location/device details and one-tap session termination.`;
+    await sendTelegramMessage(
+      chatId,
+      `🎉 Forge Telegram Account Linked Successfully!
 
-    await sendTelegramMessage(chatId, successMessage, { parse_mode: 'HTML' });
+Welcome, ${user.name || 'Mikiyas'}! You will now receive daily accountability reminders and completion reports directly here.
 
-    // If the linked Forge account's email is not verified, inform the user and do NOT mark it verified here.
-    if (!user.emailVerified) {
-      await sendTelegramMessage(
-        chatId,
-        `⚠️ <b>Email Unverified</b>\n\nThe Forge account for <code>${user.email}</code> is not email-verified. ` +
-        `Please sign in on the web and complete the verification email step to unlock all website features.`,
-        { parse_mode: 'HTML' }
-      );
-    }
-
+Type /help to view all available commands.`
+    );
     return;
   }
 
-  // No more OTP step — verification is completed after authorized phone + authorized email
+  // Initial prompt
+  await sendTelegramMessage(
+    chatId,
+    '🔒 Forge Security: Please share your contact or send /start to authenticate your Telegram account.',
+    {
+      reply_markup: {
+        keyboard: [[{ text: '📱 Share Contact to Verify', request_contact: true }]],
+        one_time_keyboard: true,
+        resize_keyboard: true,
+      },
+    }
+  );
 }

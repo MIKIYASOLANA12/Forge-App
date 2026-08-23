@@ -1,9 +1,22 @@
+
+function formatTaskText(desc: string): string {
+  try {
+    const parsed = JSON.parse(desc);
+    if (parsed.title && parsed.description && parsed.title !== parsed.description) {
+      return `${parsed.title} - ${parsed.description}`;
+    }
+    return parsed.title || parsed.description || desc;
+  } catch {
+    return desc;
+  }
+}
+
 import { prisma } from './prisma';
 import { getCurrentWeek, getPhase } from './workout';
 import { levelProgress, computeLevel } from './xp';
-import { isHabitLocked } from './streak';
-
-import { getAddisNow, workoutWindowForAddisDate } from './workoutTime';
+import { getAddisNow, workoutWindowForAddisDate, toUtcFromAddis } from './workoutTime';
+import { getDailyBreakdown, getProgressHistory } from './progressEngine';
+import { ACHIEVEMENTS_CATALOG } from './achievements';
 
 function getTodayDateRange() {
   const now = getAddisNow();
@@ -11,18 +24,18 @@ function getTodayDateRange() {
   return { now, todayStart, todayEnd };
 }
 
+/**
+ * /today command: returns complete daily overview
+ */
 export async function getTodaySummary(): Promise<string> {
   const { now, todayStart, todayEnd } = getTodayDateRange();
+  const breakdown = await getDailyBreakdown(now);
 
   const weekday = now.toLocaleDateString('en-US', { weekday: 'long' });
   const formattedDate = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
-  const [profile, plan, program, lastLog, days, domains, todayWorkoutLog] = await Promise.all([
+  const [profile, program, lastLog, days] = await Promise.all([
     prisma.userProfile.findUnique({ where: { id: 'singleton' } }),
-    prisma.dailyPlan.findFirst({
-      where: { date: { gte: todayStart, lte: todayEnd } },
-      include: { tasks: true },
-    }),
     prisma.workoutProgram.findUnique({ where: { id: 'singleton' } }),
     prisma.workoutLog.findFirst({
       orderBy: { completedAt: 'desc' },
@@ -31,145 +44,52 @@ export async function getTodaySummary(): Promise<string> {
     prisma.workoutDay.findMany({
       include: { exercises: { orderBy: { order: 'asc' } } },
     }),
-    prisma.domain.findMany(),
-    prisma.workoutLog.findFirst({
-      where: { completedAt: { gte: todayStart, lte: todayEnd } },
-      include: { workoutDay: true },
-    }),
   ]);
 
-  const domainMap = new Map(domains.map((d) => [d.id, d.name]));
-
-  // XP & Level
   const totalXp = profile?.totalXp ?? 0;
   const level = profile?.level ?? computeLevel(totalXp);
+  const pInfo = levelProgress(totalXp);
 
-  // Plan & Tasks
-  const tasks = plan?.tasks ?? [];
-  const totalTasks = tasks.length;
-  const completedTasks = tasks.filter((t) => t.completed).length;
-  const completionPct = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
-  const nextTask = tasks.find((t) => !t.completed);
-
-  // Workout details
   const ORDER = ['Push', 'Pull', 'LegsCore'];
-  let currentWorkoutType = 'Rest / Active Recovery';
-  let weekNumber = 1;
-  let phase = getPhase(1);
+  const lastIndex = lastLog ? ORDER.indexOf(lastLog.workoutDay.type) : -1;
+  const targetType = ORDER[(lastIndex + 1) % ORDER.length];
+  const targetDay = days.find((d) => d.type === targetType) ?? days[0];
+  const locationType = targetDay?.type === 'LegsCore' ? '🏠 HOME / GYM' : '🏋️‍♂️ GYM';
 
-  if (program && days.length > 0) {
-    weekNumber = getCurrentWeek(program.startDate);
-    phase = getPhase(weekNumber);
-    const lastIndex = lastLog ? ORDER.indexOf(lastLog.workoutDay.type) : -1;
-    currentWorkoutType = ORDER[(lastIndex + 1) % ORDER.length];
-  }
+  const workoutStatus = breakdown.workout.completed
+    ? `✅ Completed (${breakdown.workout.type || targetType})`
+    : `⏳ Scheduled: ${targetType} (${locationType})`;
 
-  const workoutStatus = todayWorkoutLog
-    ? `✅ Completed (${todayWorkoutLog.workoutDay.type})`
-    : `⏳ Pending (${currentWorkoutType} - Gym / Home)`;
+  return `🛡️ FORGE DAILY SUMMARY: ${weekday}, ${formattedDate}
+(Addis Ababa Time • 05:00 Day Boundary)
 
-  // Format Task List
-  let taskListStr = 'No plan generated for today yet.';
-  if (tasks.length > 0) {
-    taskListStr = tasks
-      .map((t) => {
-        const domainName = domainMap.get(t.domainId) || 'Task';
-        const mark = t.completed ? '✓' : ' ';
-        const status = t.completed ? 'Done' : 'Pending';
-        return `• [${mark}] ${t.description} (${domainName}, ${t.minutesTarget}m) - ${status}`;
-      })
-      .join('\n');
-  }
+⚡ Character Status:
+• Level ${level} (${totalXp.toLocaleString()} XP)
+• Next Level: ${Math.round(pInfo.progress * 100)}%
 
-  const nextUpStr = nextTask
-    ? `• ${nextTask.description} (${domainMap.get(nextTask.domainId) || 'Task'}, ${nextTask.minutesTarget}m)`
-    : totalTasks > 0
-    ? '🎉 All tasks completed for today!'
-    : '• Generate today’s plan in Forge';
-
-  return `📅 TODAY: ${weekday}, ${formattedDate}
-
-⚡ Level: ${level} | XP: ${totalXp.toLocaleString()} XP
-📊 Completion: ${completedTasks}/${totalTasks} tasks (${completionPct}%)
-
-📋 Scheduled Tasks:
-${taskListStr}
+🎯 Daily Consistency Score: ${breakdown.consistencyScore}% [${breakdown.color}]
+• Strongest Area: ${breakdown.strongestArea}
+• Focus Tomorrow: ${breakdown.whatNeedsAttentionTomorrow}
 
 🏋️ Workout:
-• Program: Week ${weekNumber} of 24
-• Phase: ${phase.goal} (${phase.sets} sets × ${phase.reps} reps)
 • Status: ${workoutStatus}
 
-🎯 Next Up:
-${nextUpStr}`;
+📋 Daily Tasks:
+• ${breakdown.tasks.completed}/${breakdown.tasks.total} completed (${breakdown.tasks.percentage}%)
+
+⏱️ Focus Sessions:
+• Study: ${breakdown.study.minutes}m | Coding: ${breakdown.coding.minutes}m | Reading: ${breakdown.reading.minutes}m
+
+🔥 Habits:
+• ${breakdown.habits.completed}/${breakdown.habits.total} habits logged
+
+🥗 Nutrition:
+• ${breakdown.nutrition.calories} kcal / ${breakdown.nutrition.protein}g protein`;
 }
 
-export async function getProgressSummary(): Promise<string> {
-  const { todayStart, todayEnd, now } = getTodayDateRange();
-
-  // seven days ago in Addis-local time, converted to UTC for DB queries
-  const sevenDaysAgoAddis = new Date(now);
-  sevenDaysAgoAddis.setDate(sevenDaysAgoAddis.getDate() - 7);
-  const { toUtcFromAddis } = await import('./workoutTime');
-  const sevenDaysAgoUtc = toUtcFromAddis(sevenDaysAgoAddis);
-
-  const [profile, habits, recentSessions, domains, weeklyLogs] = await Promise.all([
-    prisma.userProfile.findUnique({ where: { id: 'singleton' } }),
-    prisma.habit.findMany({
-      where: { active: true },
-      include: { domain: true },
-      orderBy: { streakCount: 'desc' },
-    }),
-    prisma.session.findMany({
-      where: { startedAt: { gte: todayStart, lte: todayEnd } },
-      include: { domain: true },
-    }),
-    prisma.domain.findMany(),
-    prisma.workoutLog.findMany({
-      where: { completedAt: { gte: sevenDaysAgoUtc } },
-    }),
-  ]);
-
-  const totalXp = profile?.totalXp ?? 0;
-  const progressInfo = levelProgress(totalXp);
-  const xpNeeded = progressInfo.nextLevelXp - totalXp;
-  const pctToNext = Math.round(progressInfo.progress * 100);
-
-  // Habits breakdown
-  let habitsStr = 'No active habits.';
-  if (habits.length > 0) {
-    habitsStr = habits
-      .map((h) => {
-        const locked = isHabitLocked(h.streakCount) ? ' 🔒 (Locked In)' : '';
-        const streakIcon = h.streakCount > 0 ? '🔥' : '⚪';
-        return `• ${streakIcon} ${h.name} (${h.domain.name}): ${h.streakCount} day streak${locked}`;
-      })
-      .join('\n');
-  }
-
-  // Today's focus sessions
-  const todayMinutes = recentSessions.reduce((acc, s) => acc + s.minutes, 0);
-  const todayXp = recentSessions.reduce((acc, s) => acc + s.xpEarned, 0);
-
-  return `📈 FORGE PROGRESS & STATS
-
-⚡ Level & XP:
-• Level: ${progressInfo.level}
-• Total XP: ${totalXp.toLocaleString()} XP
-• Next Level: Level ${progressInfo.level + 1} (${pctToNext}% progress, ${xpNeeded.toLocaleString()} XP to go)
-
-🔥 Habit Streaks:
-${habitsStr}
-
-⏱️ Today's Focus:
-• Sessions: ${recentSessions.length} logged
-• Time: ${todayMinutes} mins
-• XP Earned Today: +${todayXp.toLocaleString()} XP
-
-🏋️ 7-Day Workout Consistency:
-• ${weeklyLogs.length} workouts completed this week`;
-}
-
+/**
+ * /workout command: detailed scheduled workout details & exercises
+ */
 export async function getWorkoutSummary(): Promise<string> {
   const { now, todayStart, todayEnd } = getTodayDateRange();
 
@@ -189,7 +109,7 @@ export async function getWorkoutSummary(): Promise<string> {
   ]);
 
   if (!program || days.length === 0) {
-    return `🏋️ Workout Program is not initialized in Forge. Please visit the Workout tab to set up your plan.`;
+    return `🏋️ Workout Program is not initialized in Forge. Visit Forge → Workout to set up.`;
   }
 
   const ORDER = ['Push', 'Pull', 'LegsCore'];
@@ -200,7 +120,6 @@ export async function getWorkoutSummary(): Promise<string> {
   const targetType = ORDER[(lastIndex + 1) % ORDER.length];
   const targetDay = days.find((d) => d.type === targetType) ?? days[0];
 
-  // Fetch previous exercise weights for this day
   const previousLogs = await prisma.exerciseLog.findMany({
     where: { exercise: { workoutDayId: targetDay.id } },
     orderBy: { workoutLog: { completedAt: 'desc' } },
@@ -223,14 +142,12 @@ export async function getWorkoutSummary(): Promise<string> {
       .join('\n');
   }
 
-  // Next workout date in Addis-local terms (tomorrow at the same local day boundary)
   const nextWorkoutDate = new Date(now);
   nextWorkoutDate.setDate(nextWorkoutDate.getDate() + 1);
   const nextDateFormatted = nextWorkoutDate.toLocaleDateString('en-US', {
     weekday: 'long',
-    month: 'long',
+    month: 'short',
     day: 'numeric',
-    year: 'numeric',
   });
 
   const locationType = targetDay.type === 'LegsCore' ? '🏠 HOME / GYM' : '🏋️‍♂️ GYM';
@@ -250,12 +167,62 @@ ${statusHeader}
 📋 Planned Exercises (${targetDay.type}):
 ${exerciseListStr || 'No exercises configured for this day.'}
 
-💡 Tip: Mark checkboxes and submit on the website or log sets when finished.`;
+💡 Tip: Mark checkboxes and submit on Forge web when complete.`;
 }
 
+/**
+ * /progress command: real-time progress engine metrics
+ */
+export async function getProgressSummary(): Promise<string> {
+  const { now } = getTodayDateRange();
+  const [breakdown, history, profile, achievementsInDb] = await Promise.all([
+    getDailyBreakdown(now),
+    getProgressHistory(7),
+    prisma.userProfile.findUnique({ where: { id: 'singleton' } }),
+    prisma.achievement.findMany(),
+  ]);
+
+  const totalXp = profile?.totalXp ?? 0;
+  const progressInfo = levelProgress(totalXp);
+  const xpNeeded = progressInfo.nextLevelXp - totalXp;
+  const pctToNext = Math.round(progressInfo.progress * 100);
+
+  // Calculate active streak
+  let activeStreak = 0;
+  for (let i = history.length - 1; i >= 0; i--) {
+    if (history[i].consistencyScore >= 60) activeStreak++;
+    else if (i === history.length - 1 && history[i].color === 'GRAY') continue;
+    else break;
+  }
+
+  return `📈 FORGE REAL PROGRESS ENGINE
+
+⚡ Level & XP:
+• Level: ${progressInfo.level} (${totalXp.toLocaleString()} XP)
+• Next Level: Level ${progressInfo.level + 1} (${pctToNext}%, ${xpNeeded.toLocaleString()} XP remaining)
+
+🎯 Today's Consistency: ${breakdown.consistencyScore}% [${breakdown.color}]
+• Workout: ${breakdown.workout.completed ? '100%' : '0%'}
+• Daily Tasks: ${breakdown.tasks.percentage}%
+• Study: ${breakdown.study.score}% (${breakdown.study.minutes}m)
+• Coding: ${breakdown.coding.score}% (${breakdown.coding.minutes}m)
+• Reading: ${breakdown.reading.score}% (${breakdown.reading.minutes}m)
+• Habits: ${breakdown.habits.score}%
+• Nutrition: ${breakdown.nutrition.score}%
+
+🔥 Streak & Milestones:
+• Active Consistency Streak: ${activeStreak} consecutive days (≥60%)
+• Achievements Unlocked: ${achievementsInDb.length} of ${ACHIEVEMENTS_CATALOG.length}
+• Strongest Domain: ${breakdown.strongestArea}
+
+🌐 View detailed interactive graphs & calendar at: /progress`;
+}
+
+/**
+ * /plan command: daily tasks and time targets
+ */
 export async function getPlanSummary(): Promise<string> {
   const { now, todayStart, todayEnd } = getTodayDateRange();
-
   const formattedDate = now.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
 
   const [plan, domains, habits] = await Promise.all([
@@ -273,7 +240,7 @@ export async function getPlanSummary(): Promise<string> {
     return `📋 DAILY PLAN: ${formattedDate}
 
 No plan generated for today yet.
-Open Forge → Plans to generate your AI-optimized schedule.`;
+Open Forge → Plans to generate your schedule.`;
   }
 
   const tasks = plan.tasks;
@@ -285,7 +252,7 @@ Open Forge → Plans to generate your AI-optimized schedule.`;
     .map((t) => {
       const dName = domainMap.get(t.domainId) || 'Task';
       const statusIcon = t.completed ? '✅' : '⏳';
-      return `${statusIcon} ${t.description}\n   └ Domain: ${dName} | Target: ${t.minutesTarget} min`;
+      return `${statusIcon} ${formatTaskText(t.description)}\n   └ Domain: ${dName} | Target: ${t.minutesTarget} min`;
     })
     .join('\n\n');
 
@@ -301,8 +268,12 @@ ${taskItems}
 ${habits.map((h) => `• ${h.name} (${h.streakCount}d streak)`).join('\n') || 'None'}`;
 }
 
+/**
+ * /missed command: uncompleted tasks, habits, and gaps
+ */
 export async function getMissedSummary(): Promise<string> {
-  const { todayStart, todayEnd } = getTodayDateRange();
+  const { now, todayStart, todayEnd } = getTodayDateRange();
+  const breakdown = await getDailyBreakdown(now);
 
   const [plan, habits, domains, bookGaps, scriptureGaps] = await Promise.all([
     prisma.dailyPlan.findFirst({
@@ -327,52 +298,142 @@ export async function getMissedSummary(): Promise<string> {
   ]);
 
   const domainMap = new Map(domains.map((d) => [d.id, d.name]));
-
-  // Incomplete tasks
   const pendingTasks = plan ? plan.tasks.filter((t) => !t.completed) : [];
-
-  // Incomplete habits today
   const pendingHabits = habits.filter((h) => {
     if (!h.lastCompletedAt) return true;
     const last = new Date(h.lastCompletedAt);
     return last < todayStart;
   });
 
-  const hasItems = pendingTasks.length > 0 || pendingHabits.length > 0 || bookGaps.length > 0 || scriptureGaps.length > 0;
+  const isWorkoutPending = !breakdown.workout.completed;
+  const hasItems = isWorkoutPending || pendingTasks.length > 0 || pendingHabits.length > 0 || bookGaps.length > 0 || scriptureGaps.length > 0;
 
   if (!hasItems) {
     return `🎉 NO MISSED ITEMS!
 
-All scheduled tasks and habits for today are complete, and no learning gaps are pending. Great job staying on track! 🚀`;
+All scheduled workouts, tasks, and habits for today are complete! Outstanding consistency! 🚀`;
   }
 
-  let result = `⚠️ MISSED & PENDING ITEMS\n\n`;
+  let result = `⚠️ MISSED & PENDING ACTIVITIES\n\n`;
+
+  if (isWorkoutPending) {
+    result += `🏋️ Workout: Today's scheduled session not yet completed!\n\n`;
+  }
 
   if (pendingTasks.length > 0) {
     result += `📋 Incomplete Tasks (${pendingTasks.length}):\n`;
     result += pendingTasks
-      .map((t) => `• [ ] ${t.description} (${domainMap.get(t.domainId) || 'Task'}, ${t.minutesTarget}m)`)
+      .map((t) => `• [ ] ${formatTaskText(t.description)} (${domainMap.get(t.domainId) || 'Task'}, ${t.minutesTarget}m)`)
       .join('\n');
     result += `\n\n`;
   }
 
   if (pendingHabits.length > 0) {
-    result += `🔥 Habits Not Yet Completed Today (${pendingHabits.length}):\n`;
-    result += pendingHabits.map((h) => `• ${h.name} (${h.domain.name}, current streak: ${h.streakCount}d)`).join('\n');
+    result += `🔥 Habits Remaining Today (${pendingHabits.length}):\n`;
+    result += pendingHabits.map((h) => `• ${h.name} (${h.domain.name}, ${h.streakCount}d streak)`).join('\n');
     result += `\n\n`;
   }
 
   if (bookGaps.length > 0 || scriptureGaps.length > 0) {
-    result += `🧠 Knowledge Gaps Requiring Review:\n`;
-    for (const bg of bookGaps) {
-      result += `• Book: ${bg.book.title} (Check-in question review needed)\n`;
-    }
-    for (const sg of scriptureGaps) {
-      result += `• Scripture: ${sg.planItem.reference} (Assessment gap detected)\n`;
-    }
+    result += `🧠 Learning Gaps Needing Review:\n`;
+    for (const bg of bookGaps) result += `• Book: ${bg.book.title}\n`;
+    for (const sg of scriptureGaps) result += `• Scripture: ${sg.planItem.reference}\n`;
     result += `\n`;
   }
 
-  result += `💡 Complete these in Forge to protect your streaks and earn XP!`;
+  result += `💡 Log completed activities in Forge to maintain your streak!`;
   return result;
+}
+
+/**
+ * /report command: daily performance analysis & monthly summary
+ */
+export async function getReportSummary(): Promise<string> {
+  const { now } = getTodayDateRange();
+  const breakdown = await getDailyBreakdown(now);
+
+  return `📊 FORGE PERFORMANCE REPORT
+Day: ${breakdown.dayOfWeek}, ${breakdown.formattedDate}
+
+🎯 Consistency Score: ${breakdown.consistencyScore}% [${breakdown.color}]
+• Strongest Area: ${breakdown.strongestArea}
+• Weakest Area: ${breakdown.weakestArea}
+
+🔍 Analysis:
+• Improvement: ${breakdown.whatImproved}
+• Tomorrow's Focus: ${breakdown.whatNeedsAttentionTomorrow}
+
+📋 Activities Breakdown:
+• Workout: ${breakdown.workout.completed ? '✅ Done' : '❌ Incomplete'}
+• Tasks: ${breakdown.tasks.completed}/${breakdown.tasks.total} (${breakdown.tasks.percentage}%)
+• Study Focus: ${breakdown.study.minutes} mins
+• Coding Sessions: ${breakdown.coding.minutes} mins
+• Reading: ${breakdown.reading.minutes} mins
+• Habits: ${breakdown.habits.completed}/${breakdown.habits.total}
+• Nutrition: ${breakdown.nutrition.calories} kcal / ${breakdown.nutrition.protein}g protein
+
+📄 Official Monthly PDF Reports: Available at /progress/reports`;
+}
+
+/**
+ * /nutrition command: today's calorie/protein targets and adherence
+ */
+export async function getNutritionSummary(): Promise<string> {
+  const { now, todayStart, todayEnd } = getTodayDateRange();
+
+  const [profile, meals] = await Promise.all([
+    prisma.userProfile.findUnique({ where: { id: 'singleton' } }),
+    prisma.meal.findMany({
+      where: { eatenAt: { gte: todayStart, lte: todayEnd } },
+      include: { items: true },
+    }),
+  ]);
+
+  const targetCalories = profile?.targetCalories || 2500;
+  const targetProtein = profile?.targetProtein || 150;
+  const totalCalories = meals.reduce((sum, m) => sum + m.totalCalories, 0);
+  const totalProtein = meals.reduce((sum, m) => sum + m.totalProtein, 0);
+
+  const calPct = Math.round((totalCalories / targetCalories) * 100);
+  const protPct = Math.round((totalProtein / targetProtein) * 100);
+
+  let mealList = 'No meals logged yet today.';
+  if (meals.length > 0) {
+    mealList = meals.map((m) => `• ${m.label}: ${m.totalCalories} kcal, ${m.totalProtein}g protein`).join('\n');
+  }
+
+  return `🥗 FORGE NUTRITION TRACKER
+
+📊 Daily Targets & Adherence:
+• Calories: ${totalCalories} / ${targetCalories} kcal (${calPct}%)
+• Protein: ${totalProtein} / ${targetProtein}g (${protPct}%)
+
+🍽️ Logged Meals (${meals.length}):
+${mealList}
+
+💡 Log meals in Forge → Nutrition to hit daily macro targets.`;
+}
+
+/**
+ * /calendar command: 7-day consistency calendar summary
+ */
+export async function getCalendarSummary(): Promise<string> {
+  const history = await getProgressHistory(7);
+
+  const daysStr = history
+    .map((d) => {
+      const icon = d.color === 'GREEN' ? '🟢' : d.color === 'BLUE' ? '🔵' : d.color === 'YELLOW' ? '🟡' : d.color === 'RED' ? '🔴' : '⚪';
+      const wIcon = d.workout.completed ? '🏋️' : '  ';
+      return `${icon} ${d.dayOfWeek.slice(0, 3)} (${d.formattedDate}): ${d.consistencyScore}% ${wIcon} [${d.color}]`;
+    })
+    .join('\n');
+
+  return `📅 7-DAY CONSISTENCY CALENDAR
+(Africa/Addis_Ababa 05:00 Day Boundary)
+
+${daysStr}
+
+Legend:
+🟢 Excellent (≥80%) | 🔵 Good (60-79%)
+🟡 Partial (40-59%) | 🔴 Missed (<40%) | ⚪ No Activity`;
 }

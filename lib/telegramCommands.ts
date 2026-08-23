@@ -171,7 +171,7 @@ ${habitsStr}
 }
 
 export async function getWorkoutSummary(): Promise<string> {
-  const { todayStart, todayEnd } = getTodayDateRange();
+  const { now, todayStart, todayEnd } = getTodayDateRange();
 
   const [program, lastLog, days, todayLog] = await Promise.all([
     prisma.workoutProgram.findUnique({ where: { id: 'singleton' } }),

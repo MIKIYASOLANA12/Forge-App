@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { computeXp } from '@/lib/xp'
 import { computeLevel } from '@/lib/xp'
 import { getStudyWeight } from '@/lib/taperCurve'
+import { recordProgressActivity } from '@/lib/progressEngine'
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -39,6 +40,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       await prisma.userProfile.update({ where: { id: 'singleton' }, data: { level: newLevel } })
     }
 
+    await recordProgressActivity(0).catch(() => {});
     return NextResponse.json({ task: updatedTask, xpEarned })
   } catch (error) {
     console.error('Error completing task:', error)

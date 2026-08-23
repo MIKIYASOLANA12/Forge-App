@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { computeXp, computeLevel, computeStreakBonus, computeBalanceDayBonus } from '@/lib/xp'
 import { getStudyWeight } from '@/lib/taperCurve'
+import { recordProgressActivity } from '@/lib/progressEngine'
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
@@ -99,6 +100,7 @@ export async function POST(req: NextRequest) {
       })
     }
 
+    await recordProgressActivity(0).catch(() => {});
     return NextResponse.json({ session, xpEarned, bonusXp }, { status: 201 })
   } catch (error) {
     console.error('Error creating session:', error)

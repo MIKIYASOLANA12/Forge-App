@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { recordProgressActivity } from '@/lib/progressEngine'
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -76,6 +77,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         include: { domain: true },
       })
 
+      await recordProgressActivity(0).catch(() => {});
       return NextResponse.json({ habit: updated, newStreak, wasReset: newStreak === 1 && habit.streakCount > 1 })
     }
 

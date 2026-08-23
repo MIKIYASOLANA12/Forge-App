@@ -337,3 +337,64 @@ model UserSession {
   lastActiveAt DateTime @default(now())
 }
 
+model Achievement {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  title       String
+  description String
+  icon        String   @default("trophy")
+  category    String   @default("general")
+  unlockedAt  DateTime @default(now())
+}
+
+model ProgressDaily {
+  id               String   @id @default(cuid())
+  date             DateTime @unique
+  consistencyScore Float    @default(0)
+  color            String   @default("GRAY")
+  workoutDone      Boolean  @default(false)
+  tasksCompleted   Int      @default(0)
+  tasksTotal       Int      @default(0)
+  studyMinutes     Int      @default(0)
+  codingMinutes    Int      @default(0)
+  readingMinutes   Int      @default(0)
+  nutritionScore   Float    @default(0)
+  habitsCompleted  Int      @default(0)
+  habitsTotal      Int      @default(0)
+  xpEarned         Int      @default(0)
+  strongestArea    String?
+  weakestArea      String?
+  summaryJson      String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model MonthlyProgressReport {
+  id                 String   @id @default(cuid())
+  year               Int
+  month              Int
+  totalXp            Int      @default(0)
+  endingLevel        Int      @default(1)
+  xpEarned           Int      @default(0)
+  workoutRate        Float    @default(0)
+  studyRate          Float    @default(0)
+  codingRate         Float    @default(0)
+  readingRate        Float    @default(0)
+  nutritionScore     Float    @default(0)
+  habitRate          Float    @default(0)
+  perfectDays        Int      @default(0)
+  missedDays         Int      @default(0)
+  longestStreak      Int      @default(0)
+  bestDay            String?
+  weakestDay         String?
+  strongestArea      String?
+  weakestArea        String?
+  biggestImprovement String?
+  biggestDecline     String?
+  reportJson         String
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@unique([year, month])
+}
+

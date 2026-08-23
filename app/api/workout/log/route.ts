@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { computeLevel } from '@/lib/xp'
+import { recordProgressActivity } from '@/lib/progressEngine'
 
 export async function POST(request: NextRequest) {
   const body = await request.json()
@@ -15,5 +16,6 @@ export async function POST(request: NextRequest) {
     if (level !== profile.level) await transaction.userProfile.update({ where: { id: 'singleton' }, data: { level } })
     return log
   })
+  await recordProgressActivity(0).catch(() => {});
   return NextResponse.json({ log: result, xpEarned }, { status: 201 })
 }

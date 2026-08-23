@@ -83,8 +83,8 @@ export async function GET() {
     year: 'numeric',
   });
 
-  const currentDayName = now.toLocaleDateString('en-US', { weekday: 'long' });
-  const currentDateFormatted = now.toLocaleDateString('en-US', {
+  const currentDayName = addisNow.toLocaleDateString('en-US', { weekday: 'long' });
+  const currentDateFormatted = addisNow.toLocaleDateString('en-US', {
     weekday: 'long',
     month: 'long',
     day: 'numeric',

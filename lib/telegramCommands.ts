@@ -1,3 +1,4 @@
+import { isGoogleCalendarConnected } from './googleCalendar';
 
 function formatTaskText(desc: string): string {
   try {
@@ -428,7 +429,10 @@ export async function getCalendarSummary(): Promise<string> {
     })
     .join('\n');
 
-  return `📅 7-DAY CONSISTENCY CALENDAR
+  const googleConnected = await isGoogleCalendarConnected();
+  const gStatus = googleConnected ? "✅ Connected & Synced" : "⚪ Disconnected";
+
+  return `📅 FORGE SCHEDULE & CALENDAR\n• Google Calendar: ${gStatus}\n\n📈 7-DAY CONSISTENCY HEATMAP
 (Africa/Addis_Ababa 05:00 Day Boundary)
 
 ${daysStr}

@@ -30,38 +30,36 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
-  // 2. Check for public routes
-  const isPublic = PUBLIC_PATHS.some((path) => pathname === path || pathname.startsWith(path + '/'));
-
-  // 3. Extract and verify session cookie
+  // 2. Extract and verify session cookie early so we can special-case /login
   const sessionCookie = req.cookies.get(SESSION_COOKIE_NAME)?.value;
   const session = sessionCookie ? await verifySessionToken(sessionCookie) : null;
 
-  if (session) {
-    // The session token now contains an emailVerified claim so the middleware
-    // does not need to make database calls here (Prisma is not allowed in
-    // the Edge/middleware runtime).
-    if (!session.emailVerified) {
-      const loginUrl = new URL('/login', req.url);
-      loginUrl.searchParams.set('required', 'email-verification');
-      if (pathname !== '/') {
-        loginUrl.searchParams.set('callbackUrl', pathname);
-      }
-      return NextResponse.redirect(loginUrl);
-    }
-  }
+  // 3. Check for public routes
+  const isPublic = PUBLIC_PATHS.some((path) => pathname === path || pathname.startsWith(path + '/'));
 
-  // 4. If user is authenticated and tries to visit /login, redirect to /
-  if (session && pathname === '/login') {
-    return NextResponse.redirect(new URL('/', req.url));
-  }
-
-  // 5. If route is public, allow access
+  // 4. If route is public, allow access — except for /login where a verified
+  //    authenticated user should be redirected to the app root.
   if (isPublic) {
+    if (pathname === '/login' && session && session.emailVerified) {
+      return NextResponse.redirect(new URL('/', req.url));
+    }
     return NextResponse.next();
   }
 
-  // 6. Route is protected and user is NOT authenticated
+  // 5. If we have a session but it's not email-verified, redirect to /login
+  //    (unless they're already on /login which we allowed above). This avoids
+  //    the infinite redirect loop for old sessions that do not include the
+  //    emailVerified claim.
+  if (session && !session.emailVerified) {
+    const loginUrl = new URL('/login', req.url);
+    loginUrl.searchParams.set('required', 'email-verification');
+    if (pathname !== '/') {
+      loginUrl.searchParams.set('callbackUrl', pathname);
+    }
+    return NextResponse.redirect(loginUrl);
+  }
+
+  // 6. If route is protected and user is NOT authenticated, block or redirect
   if (!session) {
     // API routes return 401 Unauthorized
     if (pathname.startsWith('/api/')) {
@@ -76,7 +74,7 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  // 7. Authenticated user accessing protected route
+  // 7. Authenticated & verified user accessing protected route
   return NextResponse.next();
 }
 

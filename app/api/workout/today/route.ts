@@ -1,14 +1,17 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getCurrentWeek, getPhase } from '@/lib/workout';
+import { getAddisNow, workoutWindowForAddisDate, toUtcFromAddis } from '@/lib/workoutTime';
 
 const ORDER = ['Push', 'Pull', 'LegsCore'];
 
 export async function GET() {
-  const now = new Date();
-  const currentDayOfWeek = now.getDay(); // 0 is Sunday, 6 is Saturday
-  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
-  const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+  // Use shared workout-time helpers for Addis/Addis_Ababa 05:00 day boundary
+  const addisNow = getAddisNow();
+  const currentDayOfWeek = addisNow.getDay(); // 0 is Sunday, 6 is Saturday
+
+  // Today's window (UTC) derived from Addis-local workout day that starts at 05:00
+  const { startUtc: todayStart, endUtc: todayEnd, startAddis: todayStartAddis } = workoutWindowForAddisDate(addisNow);
 
   const [program, lastLog, days, todayLog] = await Promise.all([
     prisma.workoutProgram.findUnique({ where: { id: 'singleton' } }),
@@ -46,24 +49,25 @@ export async function GET() {
     if (!lastByExercise.has(log.exerciseId)) lastByExercise.set(log.exerciseId, log);
   }
 
-  // Calculate Next Monday Launch Date
-  // If today is Sunday (0), next Monday is +1 day. If Saturday (6), +2 days.
+  // Calculate Next Monday Launch Date in Addis timezone, set to 05:00
   const daysUntilMonday = currentDayOfWeek === 0 ? 1 : currentDayOfWeek === 6 ? 2 : (8 - currentDayOfWeek) % 7;
-  const nextMonday = new Date(now);
-  nextMonday.setDate(nextMonday.getDate() + (daysUntilMonday === 0 ? 7 : daysUntilMonday));
-  nextMonday.setHours(6, 0, 0, 0); // 6:00 AM unlock
+  const nextMondayAddis = new Date(addisNow);
+  nextMondayAddis.setDate(nextMondayAddis.getDate() + (daysUntilMonday === 0 ? 7 : daysUntilMonday));
+  nextMondayAddis.setHours(5, 0, 0, 0); // 05:00 Addis
+  const nextMonday = toUtcFromAddis(nextMondayAddis); // convert to UTC
 
-  const nextMondayFormatted = nextMonday.toLocaleDateString('en-US', {
+  const nextMondayFormatted = nextMondayAddis.toLocaleDateString('en-US', {
     weekday: 'long',
     month: 'long',
     day: 'numeric',
     year: 'numeric',
   });
 
-  // Next workout unlock for completed sessions
-  const tomorrow = new Date(now);
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  tomorrow.setHours(6, 0, 0, 0);
+  // Next workout unlock for completed sessions (tomorrow at 05:00 Addis)
+  const tomorrowAddis = new Date(addisNow);
+  tomorrowAddis.setDate(tomorrowAddis.getDate() + 1);
+  tomorrowAddis.setHours(5, 0, 0, 0);
+  const tomorrow = toUtcFromAddis(tomorrowAddis);
 
   const nextType = todayLog ? ORDER[(ORDER.indexOf(todayLog.workoutDay.type) + 1) % ORDER.length] : ORDER[(ORDER.indexOf(type) + 1) % ORDER.length];
   const nextDay = days.find((item) => item.type === nextType) ?? days[0];

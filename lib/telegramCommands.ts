@@ -3,10 +3,11 @@ import { getCurrentWeek, getPhase } from './workout';
 import { levelProgress, computeLevel } from './xp';
 import { isHabitLocked } from './streak';
 
+import { getAddisNow, workoutWindowForAddisDate } from './workoutTime';
+
 function getTodayDateRange() {
-  const now = new Date();
-  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
-  const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+  const now = getAddisNow();
+  const { startUtc: todayStart, endUtc: todayEnd } = workoutWindowForAddisDate(now);
   return { now, todayStart, todayEnd };
 }
 
@@ -104,10 +105,13 @@ ${nextUpStr}`;
 }
 
 export async function getProgressSummary(): Promise<string> {
-  const { todayStart, todayEnd } = getTodayDateRange();
+  const { todayStart, todayEnd, now } = getTodayDateRange();
 
-  const sevenDaysAgo = new Date();
-  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+  // seven days ago in Addis-local time, converted to UTC for DB queries
+  const sevenDaysAgoAddis = new Date(now);
+  sevenDaysAgoAddis.setDate(sevenDaysAgoAddis.getDate() - 7);
+  const { toUtcFromAddis } = await import('./workoutTime');
+  const sevenDaysAgoUtc = toUtcFromAddis(sevenDaysAgoAddis);
 
   const [profile, habits, recentSessions, domains, weeklyLogs] = await Promise.all([
     prisma.userProfile.findUnique({ where: { id: 'singleton' } }),
@@ -122,7 +126,7 @@ export async function getProgressSummary(): Promise<string> {
     }),
     prisma.domain.findMany(),
     prisma.workoutLog.findMany({
-      where: { completedAt: { gte: sevenDaysAgo } },
+      where: { completedAt: { gte: sevenDaysAgoUtc } },
     }),
   ]);
 
@@ -219,7 +223,8 @@ export async function getWorkoutSummary(): Promise<string> {
       .join('\n');
   }
 
-  const nextWorkoutDate = new Date();
+  // Next workout date in Addis-local terms (tomorrow at the same local day boundary)
+  const nextWorkoutDate = new Date(now);
   nextWorkoutDate.setDate(nextWorkoutDate.getDate() + 1);
   const nextDateFormatted = nextWorkoutDate.toLocaleDateString('en-US', {
     weekday: 'long',

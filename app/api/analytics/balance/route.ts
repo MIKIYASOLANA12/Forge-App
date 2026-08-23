@@ -3,17 +3,18 @@ import { prisma } from '@/lib/prisma'
 import { computeBalanceScore, getTargetAllocation } from '@/lib/taperCurve'
 
 export async function GET() {
-  const end = new Date()
-  end.setHours(23, 59, 59, 999)
-  const start = new Date(end)
-  start.setDate(start.getDate() - 6)
-  start.setHours(0, 0, 0, 0)
+  const { getAddisNow, workoutWindowForAddisDate } = await import('@/lib/workoutTime');
+  const addisNow = getAddisNow();
+  const startAddis = new Date(addisNow);
+  startAddis.setDate(startAddis.getDate() - 6);
+  const { startUtc: startUtc, endUtc: endUtc } = workoutWindowForAddisDate(addisNow);
+  const { startUtc: startRangeStart } = workoutWindowForAddisDate(startAddis);
 
   const [domains, profile, sessions] = await Promise.all([
     prisma.domain.findMany({ orderBy: { name: 'asc' } }),
     prisma.userProfile.findUnique({ where: { id: 'singleton' } }),
     prisma.session.findMany({
-      where: { startedAt: { gte: start, lte: end } },
+      where: { startedAt: { gte: startRangeStart, lte: endUtc } },
       select: { minutes: true, domain: { select: { name: true } } },
     }),
   ])

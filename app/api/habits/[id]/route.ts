@@ -22,14 +22,15 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
     // Mark complete for today
     if (action === 'complete') {
-      const now = new Date()
+      // Use Addis workout day boundary for "today"
+      const addisNow = (await import('@/lib/workoutTime')).getAddisNow();
+      const { startUtc: todayStart, endUtc: todayEnd } = (await import('@/lib/workoutTime')).workoutWindowForAddisDate(addisNow);
 
-      // Check if already logged today
-      const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+      // Check if already logged today within the Addis-defined workout window
       const existing = await prisma.habitLog.findFirst({
         where: {
           habitId: id,
-          date: { gte: todayStart },
+          date: { gte: todayStart, lte: todayEnd },
         },
       })
 
@@ -37,7 +38,9 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         return NextResponse.json({ error: 'Already completed today' }, { status: 409 })
       }
 
-      // Check streak continuity
+      // Check streak continuity using UTC now mapped to Addis-local timing for consistency
+      const now = addisNow;
+
       let newStreak = habit.streakCount
       let streakStartedAt = habit.streakStartedAt
 
@@ -57,17 +60,18 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         streakStartedAt = now
       }
 
-      // Log the completion
+      // Log the completion using the UTC timestamp equivalent of the Addis now
+      const utcNow = (await import('@/lib/workoutTime')).toUtcFromAddis(now);
       await prisma.habitLog.create({
-        data: { habitId: id, date: now, completed: true },
+        data: { habitId: id, date: utcNow, completed: true },
       })
 
       const updated = await prisma.habit.update({
         where: { id },
         data: {
           streakCount: newStreak,
-          streakStartedAt,
-          lastCompletedAt: now,
+          streakStartedAt: utcNow,
+          lastCompletedAt: utcNow,
         },
         include: { domain: true },
       })

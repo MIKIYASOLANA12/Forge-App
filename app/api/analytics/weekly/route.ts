@@ -4,24 +4,26 @@ import { prisma } from '@/lib/prisma'
 const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
 export async function GET() {
-  const end = new Date()
-  end.setHours(23, 59, 59, 999)
-  const start = new Date(end)
-  start.setDate(start.getDate() - 6)
-  start.setHours(0, 0, 0, 0)
+  const { getAddisNow, workoutWindowForAddisDate } = await import('@/lib/workoutTime');
+  const addisNow = getAddisNow();
+  // Use Addis-local day window. Compute the startAddis for 6 days ago (week window start) and then create UTC range.
+  const startAddis = new Date(addisNow);
+  startAddis.setDate(startAddis.getDate() - 6);
+  const { startUtc: startUtc } = workoutWindowForAddisDate(startAddis);
+  const { endUtc: endUtc } = workoutWindowForAddisDate(addisNow);
 
   const [domains, sessions] = await Promise.all([
     prisma.domain.findMany({ orderBy: { name: 'asc' } }),
     prisma.session.findMany({
-      where: { startedAt: { gte: start, lte: end } },
+      where: { startedAt: { gte: startUtc, lte: endUtc } },
       select: { domainId: true, startedAt: true, minutes: true },
     }),
   ])
 
   const days = Array.from({ length: 7 }, (_, index) => {
-    const date = new Date(start)
-    date.setDate(start.getDate() + index)
-    return date
+    const d = new Date(startAddis);
+    d.setDate(startAddis.getDate() + index);
+    return d;
   })
 
   return NextResponse.json({

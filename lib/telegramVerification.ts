@@ -12,7 +12,7 @@ import {
   getPlanSummary,
   getMissedSummary,
 } from './telegramCommands';
-import { sendSmsOtp } from './sms';
+// SMS OTP removed: Telegram verification will use phone-share + authorized email only (no SMS).
 
 export const AUTHORIZED_PHONE = '+251977409986';
 
@@ -23,10 +23,6 @@ export function normalizePhone(raw: string): string {
 export function isAuthorizedPhone(phone: string): boolean {
   const norm = normalizePhone(phone);
   return norm.endsWith('977409986');
-}
-
-function generate6DigitOtp(): string {
-  return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
 export async function handleTelegramWebhookUpdate(update: any): Promise<void> {
@@ -344,100 +340,30 @@ export async function handleTelegramWebhookUpdate(update: any): Promise<void> {
       return;
     }
 
-    // Generate 6-Digit OTP Code
-    const otp = generate6DigitOtp();
-    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
-
-    await prisma.telegramVerification.update({
-      where: { chatId },
-      data: {
-        email,
-        otpCode: otp,
-        otpExpiresAt: expiresAt,
-        step: 'AWAITING_OTP',
-        attempts: 0,
-      },
-    });
-
-    // Send real SMS OTP to user's physical SIM card phone number
-    const targetPhone = session.phoneNumber || AUTHORIZED_PHONE;
-    const rawFormatType = contact && contact.phone_number ? 'Telegram contact' : 'typed input';
-    await sendSmsOtp(targetPhone, otp, { rawFormatType });
-
-    await sendTelegramMessage(
-      chatId,
-      `📱 <b>SMS OTP SENT TO YOUR SIM CARD</b>\n\n` +
-      `We have sent a 6-digit security verification code via SMS to your phone SIM card:\n` +
-      `👉 <code>${targetPhone}</code>\n\n` +
-      `<i>(Check your phone's SMS messages. Code expires in 10 minutes)</i>\n\n` +
-      `👉 <b>Step 3 of 3:</b> Please type and send the <b>6-digit SMS code</b> here to verify:`,
-      { parse_mode: 'HTML' }
-    );
-    return;
-  }
-
-  // ── Step 3: Process OTP Verification ──────────────────────────────────────
-  if (session.step === 'AWAITING_OTP') {
-    const inputOtp = rawText.replace(/\s+/g, '');
-
-    // Check expiration
-    if (!session.otpExpiresAt || new Date() > session.otpExpiresAt) {
-      await sendTelegramMessage(
-        chatId,
-        `⌛ <b>OTP Code Expired</b>\n\nPlease send /start to restart the verification process.`,
-        { parse_mode: 'HTML' }
-      );
-      return;
-    }
-
-    if (inputOtp !== session.otpCode) {
-      const nextAttempts = session.attempts + 1;
-      if (nextAttempts >= 5) {
-        await prisma.telegramVerification.update({
-          where: { chatId },
-          data: { step: 'AWAITING_PHONE', attempts: 0 },
-        });
-        await sendTelegramMessage(
-          chatId,
-          `❌ <b>Too many incorrect attempts.</b>\nPlease send /start to begin verification again.`,
-          { parse_mode: 'HTML' }
-        );
-        return;
-      }
-
-      await prisma.telegramVerification.update({
-        where: { chatId },
-        data: { attempts: nextAttempts },
-      });
-
-      await sendTelegramMessage(
-        chatId,
-        `❌ <b>Incorrect OTP code.</b>\nPlease enter the correct 6-digit code (or send /start to restart):`,
-        { parse_mode: 'HTML' }
-      );
-      return;
-    }
-
-    // OTP IS VALID! Link account to Forge user
-    const targetEmail = session.email!;
-    let user = await prisma.user.findUnique({
-      where: { email: targetEmail },
-    });
+    // Bypass SMS OTP: phone-share + authorized email completes Telegram linking,
+    // but Telegram must NOT bypass email verification. Do NOT set emailVerified here.
+    const targetEmail = email;
+    let user = await prisma.user.findUnique({ where: { email: targetEmail } });
 
     if (!user) {
       const defaultPassword = process.env.FORGE_INITIAL_PASSWORD || 'ForgeInitialPass2026!';
       const passwordHash = await hashPassword(defaultPassword);
+      // Create a new user record but DO NOT mark emailVerified = true. Email verification
+      // must remain an independent web-based flow.
       user = await prisma.user.create({
         data: {
           email: targetEmail,
           name: 'Mikiyas Olana',
           passwordHash,
-          emailVerified: true,
+          emailVerified: false,
         },
       });
+    } else {
+      // Important: do NOT modify user.emailVerified here. Email verification is a separate
+      // security step that must be completed via the website verification flow.
     }
 
-    // Link Telegram Account in Prisma
+    // Link or update Telegram account in Prisma
     await prisma.telegramAccount.upsert({
       where: { telegramId },
       create: {
@@ -459,15 +385,21 @@ export async function handleTelegramWebhookUpdate(update: any): Promise<void> {
       },
     });
 
-    // Mark session as verified
+    // Update verification session and clear any OTP fields
     await prisma.telegramVerification.update({
       where: { chatId },
-      data: { step: 'VERIFIED' },
+      data: {
+        email: targetEmail,
+        step: 'VERIFIED',
+        otpCode: null,
+        otpExpiresAt: null,
+        attempts: 0,
+      },
     });
 
     const successMessage =
-      `🎉 <b>IDENTITY VERIFIED & FORGE UNLOCKED!</b>\n\n` +
-      `Welcome, <b>${user.name || 'Mikiyas'}</b>!\n` +
+      `🎉 <b>IDENTITY VERIFIED & FORGE LINKED!</b>\n\n` +
+      `Welcome, <b>${user.name || 'Forge User'}</b>!\n` +
       `Your Telegram account is now securely linked to <code>${user.email}</code>.\n\n` +
       `<b>Available Commands:</b>\n` +
       `• /today — Today's plan, workouts & completion\n` +
@@ -479,5 +411,19 @@ export async function handleTelegramWebhookUpdate(update: any): Promise<void> {
       `🔔 <b>Security Alerts Active:</b> Whenever you sign in on the web, you will receive an instant login notification here with location/device details and one-tap session termination.`;
 
     await sendTelegramMessage(chatId, successMessage, { parse_mode: 'HTML' });
+
+    // If the linked Forge account's email is not verified, inform the user and do NOT mark it verified here.
+    if (!user.emailVerified) {
+      await sendTelegramMessage(
+        chatId,
+        `⚠️ <b>Email Unverified</b>\n\nThe Forge account for <code>${user.email}</code> is not email-verified. ` +
+        `Please sign in on the web and complete the verification email step to unlock all website features.`,
+        { parse_mode: 'HTML' }
+      );
+    }
+
+    return;
   }
+
+  // No more OTP step — verification is completed after authorized phone + authorized email
 }

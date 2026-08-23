@@ -85,7 +85,8 @@ export async function handleTelegramWebhookUpdate(update: any): Promise<void> {
 /missed — Incomplete tasks, pending habits & learning gaps
 /report — Daily performance analysis & monthly summary
 /nutrition — Daily calories, protein intake & meal logs
-/calendar — 7-day consistency calendar with colors`;
+/calendar — 7-day consistency calendar with colors
+/resetpassword — Generate an instant secure password reset link`;
       await sendTelegramMessage(chatId, helpMsg);
       return;
     }
@@ -135,6 +136,32 @@ export async function handleTelegramWebhookUpdate(update: any): Promise<void> {
     if (cmd === '/calendar') {
       const msg = await getCalendarSummary();
       await sendTelegramMessage(chatId, msg);
+      return;
+    }
+
+    if (cmd === '/resetpassword' || cmd === '/reset') {
+      const user = await prisma.user.findUnique({
+        where: { id: linkedAccount.userId },
+      });
+
+      if (!user) {
+        await sendTelegramMessage(chatId, '⚠️ User account not found.');
+        return;
+      }
+
+      const { createAuthToken } = await import('./auth');
+      const rawToken = await createAuthToken(user.id, 'PASSWORD_RESET');
+      const baseUrl = (process.env.FORGE_PUBLIC_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://forge-app-eight-kappa.vercel.app').replace(/\/$/, '');
+      const resetUrl = `${baseUrl}/auth/reset-password?token=${rawToken}&email=${encodeURIComponent(user.email)}`;
+
+      const resetMsg = `🔑 FORGE PASSWORD RESET
+
+Click the secure link below to set your new password:
+${resetUrl}
+
+⏱️ This link is single-use and expires in 1 hour.`;
+
+      await sendTelegramMessage(chatId, resetMsg);
       return;
     }
 

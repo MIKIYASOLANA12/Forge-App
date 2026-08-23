@@ -106,7 +106,8 @@ export async function POST(req: NextRequest) {
       user.id,
       user.email,
       user.name || undefined,
-      sessionId
+      sessionId,
+      user.emailVerified
     );
 
     // 8. Dispatch Real-Time Telegram Security Alert if Telegram is connected

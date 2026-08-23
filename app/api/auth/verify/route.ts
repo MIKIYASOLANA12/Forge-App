@@ -28,8 +28,8 @@ export async function POST(req: NextRequest) {
       data: { emailVerified: true },
     });
 
-    // Create session and set cookie
-    const sessionToken = await createSessionToken(user.id, user.email, user.name || undefined);
+    // Create session and set cookie (user is now activated)
+    const sessionToken = await createSessionToken(user.id, user.email, user.name || undefined, undefined, true);
 
     const response = NextResponse.json({
       success: true,

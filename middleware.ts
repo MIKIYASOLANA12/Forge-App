@@ -1,6 +1,8 @@
 import { NextResponse, NextRequest } from 'next/server';
 import { SESSION_COOKIE_NAME, verifySessionToken } from './lib/session';
-import { prisma } from './lib/prisma';
+// Note: Do not import Prisma in middleware — the Edge/middleware runtime on Vercel
+// does not support Node-native modules. Email verification status is read from
+// the signed session token instead of querying the database here.
 
 const PUBLIC_PATHS = [
   '/login',
@@ -36,12 +38,10 @@ export async function middleware(req: NextRequest) {
   const session = sessionCookie ? await verifySessionToken(sessionCookie) : null;
 
   if (session) {
-    const user = await prisma.user.findUnique({
-      where: { id: session.userId },
-      select: { emailVerified: true },
-    });
-
-    if (!user || !user.emailVerified) {
+    // The session token now contains an emailVerified claim so the middleware
+    // does not need to make database calls here (Prisma is not allowed in
+    // the Edge/middleware runtime).
+    if (!session.emailVerified) {
       const loginUrl = new URL('/login', req.url);
       loginUrl.searchParams.set('required', 'email-verification');
       if (pathname !== '/') {

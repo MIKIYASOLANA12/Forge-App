@@ -40,8 +40,8 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    // Establish authenticated session
-    const sessionToken = await createSessionToken(user.id, user.email, user.name || undefined);
+    // Establish authenticated session (email is verified by reset)
+    const sessionToken = await createSessionToken(user.id, user.email, user.name || undefined, undefined, true);
 
     const response = NextResponse.json({
       success: true,

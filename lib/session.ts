@@ -6,6 +6,7 @@ export interface SessionPayload {
   name?: string;
   sessionId?: string;
   exp: number; // Unix epoch seconds
+  emailVerified?: boolean;
 }
 
 function getAuthSecret(): string {
@@ -63,7 +64,8 @@ export async function createSessionToken(
   userId: string,
   email: string,
   name?: string,
-  sessionId?: string
+  sessionId?: string,
+  emailVerified?: boolean
 ): Promise<string> {
   const secret = getAuthSecret();
   const exp = Math.floor(Date.now() / 1000) + 30 * 24 * 60 * 60; // 30 days
@@ -73,6 +75,7 @@ export async function createSessionToken(
     name: name || 'Mikiyas Olana',
     sessionId,
     exp,
+    emailVerified: !!emailVerified,
   };
 
   const payloadStr = JSON.stringify(payload);
@@ -111,6 +114,9 @@ export async function verifySessionToken(token: string): Promise<SessionPayload 
     if (payload.exp && payload.exp < Math.floor(Date.now() / 1000)) {
       return null;
     }
+
+    // Ensure emailVerified is a boolean (default false) to simplify middleware checks
+    payload.emailVerified = !!payload.emailVerified;
 
     return payload;
   } catch {

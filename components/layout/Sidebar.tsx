@@ -14,6 +14,7 @@ const NAV_ITEMS = [
   { href: "/", label: "Today", icon: Home },
   { href: "/workout", label: "Workout", icon: Dumbbell },
   { href: "/plans", label: "Plans", icon: CalendarDays },
+  { href: "/calendar", label: "Calendar", icon: CalendarDays },
   { href: "/progress", label: "Progress", icon: TrendingUp },
   { href: "/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/habits", label: "Habits", icon: Target },

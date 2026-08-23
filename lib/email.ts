@@ -1,4 +1,4 @@
-export interface SendEmailOptions {
+﻿export interface SendEmailOptions {
   to: string;
   subject: string;
   html: string;
@@ -42,7 +42,6 @@ export async function sendEmail({ to, subject, html, text }: SendEmailOptions): 
     }
   }
 
-  // Safe fallback for testing & environments without active SMTP
   console.log(`\n========================================`);
   console.log(`📧 EMAIL DISPATCH`);
   console.log(`To: ${to}`);
@@ -54,43 +53,54 @@ export async function sendEmail({ to, subject, html, text }: SendEmailOptions): 
   return true;
 }
 
-export async function sendActivationEmail(email: string, rawToken: string): Promise<boolean> {
+export async function sendVerificationEmail(email: string, rawToken: string, name?: string): Promise<boolean> {
   const baseUrl = getAppBaseUrl();
-  const activationUrl = `${baseUrl}/auth/verify?token=${rawToken}&email=${encodeURIComponent(email)}`;
+  const verificationUrl = `${baseUrl}/verify-email?token=${rawToken}`;
+  const firstName = name?.trim() || 'Mikiyas';
 
-  const subject = 'Activate your FORGE account';
-  const text = `Welcome to FORGE.
+  const subject = 'Verify your Forge account';
+  const text = `Hi ${firstName},
 
-Click the following secure link to activate your account:
-${activationUrl}
+You requested access to Forge.
 
-This link is single-use and will expire in 24 hours.
+Click the button below to verify your email and activate your account.
 
-If you did not request this, you can safely ignore this email.`;
+${verificationUrl}
+
+This link expires soon and can only be used once.
+
+If you did not request this, you can ignore this email.`;
 
   const html = `
     <div style="font-family: Arial, sans-serif; background-color: #09090e; color: #f1f5f9; padding: 40px 20px;">
-      <div style="max-width: 500px; margin: 0 auto; background-color: #111118; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 32px;">
+      <div style="max-width: 520px; margin: 0 auto; background-color: #111118; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 32px;">
         <h1 style="color: #f59e0b; margin-top: 0; font-size: 24px; font-weight: 800; letter-spacing: 1px;">FORGE</h1>
-        <h2 style="font-size: 18px; margin-bottom: 16px;">Activate Your Account</h2>
+        <h2 style="font-size: 18px; margin-bottom: 16px;">Verify your Forge account</h2>
         <p style="color: #94a3b8; font-size: 14px; line-height: 1.6;">
-          Your personal growth assistant is ready. Click the button below to verify your email and activate full access to FORGE.
+          Hi ${firstName},<br /><br />
+          You requested access to Forge.
+        </p>
+        <p style="color: #94a3b8; font-size: 14px; line-height: 1.6;">
+          Click the button below to verify your email and activate your account.
         </p>
         <div style="margin: 28px 0;">
-          <a href="${activationUrl}" style="background-color: #f59e0b; color: #000000; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 700; font-size: 14px; display: inline-block;">
-            Activate Account
+          <a href="${verificationUrl}" style="background-color: #f59e0b; color: #000000; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 700; font-size: 14px; display: inline-block;">
+            Verify my email
           </a>
         </div>
         <p style="color: #475569; font-size: 12px; line-height: 1.5;">
-          This link is single-use and will expire in 24 hours.<br />
-          If the button doesn't work, copy and paste this URL into your browser:<br />
-          <span style="color: #3b82f6;">${activationUrl}</span>
+          This link expires soon and can only be used once.<br />
+          If you did not request this, you can ignore this email.
         </p>
       </div>
     </div>
   `;
 
   return sendEmail({ to: email, subject, text, html });
+}
+
+export async function sendActivationEmail(email: string, rawToken: string): Promise<boolean> {
+  return sendVerificationEmail(email, rawToken, 'Mikiyas');
 }
 
 export async function sendPasswordResetEmail(email: string, rawToken: string): Promise<boolean> {

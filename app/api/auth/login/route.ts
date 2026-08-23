@@ -41,10 +41,7 @@ export async function POST(req: NextRequest) {
 
     // 1. Strict Server-Side Allowlist
     if (!isAllowedEmail(normalized)) {
-      return NextResponse.json(
-        { error: 'Access denied. This email is not authorized for FORGE.' },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: 'Invalid email or password.' }, { status: 401 });
     }
 
     // Ensure database users are initialized if this is first run
@@ -57,21 +54,25 @@ export async function POST(req: NextRequest) {
     });
 
     if (!user) {
-      return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 });
+      return NextResponse.json({ error: 'Invalid email or password.' }, { status: 401 });
     }
 
     // 3. Verify Password
     const passwordValid = await verifyPassword(password, user.passwordHash);
     if (!passwordValid) {
-      return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 });
+      return NextResponse.json({ error: 'Invalid email or password.' }, { status: 401 });
     }
 
-    // 4. Ensure email is marked verified on successful login
+    // 4. Require real email verification before allowing Forge access.
     if (!user.emailVerified) {
-      await prisma.user.update({
-        where: { id: user.id },
-        data: { emailVerified: true },
-      });
+      return NextResponse.json(
+        {
+          error: 'Check your email to activate your Forge account.',
+          requiresActivation: true,
+          email: user.email,
+        },
+        { status: 403 }
+      );
     }
 
     // 5. Generate Session and Location Metadata

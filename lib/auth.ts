@@ -131,7 +131,7 @@ export async function bootstrapAuthorizedUsers(): Promise<void> {
           email,
           name: 'Mikiyas Olana',
           passwordHash,
-          emailVerified: true,
+          emailVerified: false,
         },
       });
     }
@@ -157,6 +157,14 @@ export async function getSessionUserFromCookie(): Promise<SessionPayload | null>
       }
     }
 
+    const user = await prisma.user.findUnique({
+      where: { id: session.userId },
+      select: { emailVerified: true },
+    });
+    if (!user || !user.emailVerified) {
+      return null;
+    }
+
     return session;
   } catch {
     return null;
@@ -179,6 +187,14 @@ export async function getSessionUserFromRequest(req: NextRequest | Request): Pro
       if (dbSession?.revoked) {
         return null;
       }
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: session.userId },
+      select: { emailVerified: true },
+    });
+    if (!user || !user.emailVerified) {
+      return null;
     }
 
     return session;

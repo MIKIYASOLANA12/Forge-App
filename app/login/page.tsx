@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   Dumbbell,
@@ -28,6 +28,41 @@ function LoginForm() {
   const [error, setError] = useState("");
   const [activationNotice, setActivationNotice] = useState(false);
   const [forgotSent, setForgotSent] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
+  const [resendState, setResendState] = useState<"idle" | "sent" | "rate-limited">("idle");
+
+  const handleResendVerification = async () => {
+    if (!email.trim()) return;
+    setLoading(true);
+    setError("");
+    setResendState("idle");
+
+    try {
+      const res = await fetch("/api/auth/resend-verification", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        setResendCooldown(60);
+        setResendState("sent");
+      } else {
+        setError(data.error || "Unable to resend your verification email right now.");
+      }
+    } catch (err: any) {
+      setError(err?.message || "Unable to resend your verification email right now.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const timer = setTimeout(() => setResendCooldown((value) => Math.max(0, value - 1)), 1000);
+    return () => clearTimeout(timer);
+  }, [resendCooldown]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -116,21 +151,32 @@ function LoginForm() {
               <Mail size={24} />
             </div>
             <h2 className="text-lg font-bold text-[var(--text-primary)]">
-              Check your email
+              Check your email to activate your Forge account.
             </h2>
             <p className="text-sm text-[var(--text-secondary)] mt-2 leading-relaxed">
-              We sent a secure activation link to:
+              A secure verification link has been sent to:
               <br />
               <span className="font-semibold text-[var(--text-primary)]">{email}</span>
             </p>
             <div className="mt-6 p-3 rounded-lg bg-[var(--bg-elevated)] border border-[var(--border)] text-xs text-[var(--text-muted)] text-left flex items-start gap-2">
               <Sparkles size={16} className="text-[var(--xp-gold)] shrink-0 mt-0.5" />
-              <span>Click the activation link in your email to enable your Forge session.</span>
+              <span>Click the verification link in your email to enable your Forge session.</span>
             </div>
+            {resendState === "sent" && (
+              <p className="mt-3 text-xs text-[var(--success)]">A new verification email has been sent.</p>
+            )}
+            <button
+              type="button"
+              onClick={handleResendVerification}
+              disabled={loading || resendCooldown > 0}
+              className="btn btn-ghost w-full mt-6 text-sm"
+            >
+              {resendCooldown > 0 ? `Resend verification email (${resendCooldown}s)` : "Resend verification email"}
+            </button>
             <button
               type="button"
               onClick={() => setActivationNotice(false)}
-              className="btn btn-ghost w-full mt-6 text-sm"
+              className="btn btn-ghost w-full mt-3 text-sm"
             >
               Back to Sign In
             </button>

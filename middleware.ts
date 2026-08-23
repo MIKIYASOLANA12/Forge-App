@@ -1,12 +1,15 @@
 import { NextResponse, NextRequest } from 'next/server';
 import { SESSION_COOKIE_NAME, verifySessionToken } from './lib/session';
+import { prisma } from './lib/prisma';
 
 const PUBLIC_PATHS = [
   '/login',
   '/auth/verify',
+  '/verify-email',
   '/auth/reset-password',
   '/api/auth/login',
   '/api/auth/verify',
+  '/api/auth/resend-verification',
   '/api/auth/forgot-password',
   '/api/auth/reset-password',
   '/api/telegram/webhook',
@@ -31,6 +34,22 @@ export async function middleware(req: NextRequest) {
   // 3. Extract and verify session cookie
   const sessionCookie = req.cookies.get(SESSION_COOKIE_NAME)?.value;
   const session = sessionCookie ? await verifySessionToken(sessionCookie) : null;
+
+  if (session) {
+    const user = await prisma.user.findUnique({
+      where: { id: session.userId },
+      select: { emailVerified: true },
+    });
+
+    if (!user || !user.emailVerified) {
+      const loginUrl = new URL('/login', req.url);
+      loginUrl.searchParams.set('required', 'email-verification');
+      if (pathname !== '/') {
+        loginUrl.searchParams.set('callbackUrl', pathname);
+      }
+      return NextResponse.redirect(loginUrl);
+    }
+  }
 
   // 4. If user is authenticated and tries to visit /login, redirect to /
   if (session && pathname === '/login') {

@@ -596,7 +596,7 @@ function TodayWorkoutTab({
                     {/* Add / Remove Set buttons */}
                     <div className="flex items-center gap-1.5 self-end sm:self-center">
                       <button
-                        onClick={() => handleAddSet(exercise.id)}
+                        onClick={() => onAddSet(exercise.id)}
                         className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 text-[11px] font-bold text-slate-300 hover:text-white hover:border-slate-700 transition-colors"
                         title="Add Another Set"
                       >
@@ -605,7 +605,7 @@ function TodayWorkoutTab({
                       </button>
                       {sets.length > 1 && (
                         <button
-                          onClick={() => handleRemoveSet(exercise.id)}
+                          onClick={() => onRemoveSet(exercise.id)}
                           className="p-1 rounded-lg bg-slate-900 border border-slate-800 text-slate-400 hover:text-rose-400 transition-colors"
                           title="Remove Last Set"
                         >

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getCurrentWeek, getPhase } from '@/lib/workout';
 import { getAddisNow, workoutWindowForAddisDate, toUtcFromAddis } from '@/lib/workoutTime';
+import { WORKOUT_DAY_TARGETS, getExerciseMuscleInfo } from '@/lib/workoutMuscleTargets';
 
 const ORDER = ['Push', 'Pull', 'LegsCore'];
 
@@ -36,8 +37,13 @@ export async function GET() {
   const day = days.find((item) => item.type === type) ?? days[0];
 
   const location = day.type === 'LegsCore' ? 'HOME / GYM' : 'GYM';
+  const targetInfo = WORKOUT_DAY_TARGETS[day.type] || {
+    primaryBodyParts: 'Full Body Hypertrophy',
+    focusBadges: ['Compound Movements', 'Core Stability'],
+    description: 'Targeted muscular overload session.',
+  };
 
-  // Fetch previous weights
+  // Fetch previous weights with setDetails
   const previousLogs = await prisma.exerciseLog.findMany({
     where: { exercise: { workoutDayId: day.id } },
     orderBy: { workoutLog: { completedAt: 'desc' } },
@@ -72,6 +78,7 @@ export async function GET() {
   const nextType = todayLog ? ORDER[(ORDER.indexOf(todayLog.workoutDay.type) + 1) % ORDER.length] : ORDER[(ORDER.indexOf(type) + 1) % ORDER.length];
   const nextDay = days.find((item) => item.type === nextType) ?? days[0];
   const nextLocation = nextDay.type === 'LegsCore' ? 'HOME / GYM' : 'GYM';
+  const nextTargetInfo = WORKOUT_DAY_TARGETS[nextDay.type] || targetInfo;
 
   const isWeekendPreLaunch = (currentDayOfWeek === 0 || currentDayOfWeek === 6) && !lastLog;
 
@@ -98,6 +105,9 @@ export async function GET() {
     launchMondayFormatted: nextMondayFormatted,
     launchUnlockTimestamp: nextMonday.getTime(),
     completedToday: Boolean(todayLog),
+    targetBodyParts: targetInfo.primaryBodyParts,
+    focusBadges: targetInfo.focusBadges,
+    targetDescription: targetInfo.description,
     todayLog: todayLog ? {
       id: todayLog.id,
       completedAt: todayLog.completedAt,
@@ -108,16 +118,25 @@ export async function GET() {
       id: day.id,
       type: day.type,
       location,
-      exercises: day.exercises.map((exercise) => ({
-        ...exercise,
-        lastLog: lastByExercise.get(exercise.id) ?? null,
-      })),
+      targetBodyParts: targetInfo.primaryBodyParts,
+      focusBadges: targetInfo.focusBadges,
+      exercises: day.exercises.map((exercise) => {
+        const muscleInfo = getExerciseMuscleInfo(exercise.name);
+        return {
+          ...exercise,
+          targetMuscle: muscleInfo.muscle,
+          masterCue: muscleInfo.cue,
+          lastLog: lastByExercise.get(exercise.id) ?? null,
+        };
+      }),
     },
     nextWorkout: {
       dateFormatted: targetDateFormatted,
       unlockTimestamp: targetUnlockTime,
       type: isWeekendPreLaunch ? 'Push' : nextDay.type,
       location: isWeekendPreLaunch ? 'GYM' : nextLocation,
+      targetBodyParts: isWeekendPreLaunch ? WORKOUT_DAY_TARGETS.Push.primaryBodyParts : nextTargetInfo.primaryBodyParts,
+      focusBadges: isWeekendPreLaunch ? WORKOUT_DAY_TARGETS.Push.focusBadges : nextTargetInfo.focusBadges,
       phase,
       exercises: isWeekendPreLaunch ? (days.find(d => d.type === 'Push')?.exercises ?? day.exercises) : nextDay.exercises,
     },

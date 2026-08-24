@@ -71,6 +71,7 @@ model ExerciseLog {
   repsCompleted Int
   weightKg      Float?
   checked       Boolean         @default(false)
+  setDetails    String?         // JSON array of individual set entries: [{ set: 1, weightKg: 60, reps: 8, completed: true }]
 }
 
 model Habit {

@@ -48,12 +48,14 @@ type WorkoutToday = {
   day?: {
     type?: string;
     location?: string;
+    targetBodyParts?: string;
     exercises?: Array<{ id: string; name: string }>;
   };
   nextWorkout?: {
     dateFormatted?: string;
     type?: string;
     location?: string;
+    targetBodyParts?: string;
   };
   weekNumber?: number;
   phase?: { goal?: string };
@@ -222,7 +224,7 @@ export default function Home() {
   });
 
   const nextWorkoutText = nextWorkout?.day?.type
-    ? `${nextWorkout.day.type} (${nextWorkout.day.location || "GYM"}) · ${nextWorkout.day.exercises?.length ?? 0} exercises`
+    ? `${nextWorkout.day.type} (${nextWorkout.day.targetBodyParts || "Chest, Shoulders & Triceps"}) · ${nextWorkout.day.location || "GYM"}`
     : "Active Recovery";
 
   // Real-time weekly analytics from database

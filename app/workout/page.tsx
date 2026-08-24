@@ -68,15 +68,12 @@ type NextWorkout = {
     reps: string;
     goal: string;
   };
-  exercises: { id: string; name: string; order: number }[];
+  exercises: { id: string; name: string; order: number; targetMuscle?: string; masterCue?: string }[];
 };
 
 type TodayData = {
   currentDayName?: string;
   currentDateFormatted?: string;
-  isWeekendPreLaunch?: boolean;
-  launchMondayFormatted?: string;
-  launchUnlockTimestamp?: number;
   completedToday: boolean;
   targetBodyParts?: string;
   focusBadges?: string[];
@@ -122,6 +119,47 @@ type HistoryLog = {
     exercise: { name: string };
   }[];
 };
+
+function CountdownTimer({ targetTimestamp }: { targetTimestamp: number }) {
+  const [timeLeft, setTimeLeft] = useState<{ hours: number; minutes: number; seconds: number }>({
+    hours: 0,
+    minutes: 0,
+    seconds: 0,
+  });
+
+  useEffect(() => {
+    const update = () => {
+      const diff = Math.max(0, targetTimestamp - Date.now());
+      const hours = Math.floor(diff / (1000 * 60 * 60));
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+      setTimeLeft({ hours, minutes, seconds });
+    };
+
+    update();
+    const timer = setInterval(update, 1000);
+    return () => clearInterval(timer);
+  }, [targetTimestamp]);
+
+  return (
+    <div className="flex items-center gap-2 font-mono text-2xl md:text-3xl font-extrabold text-white">
+      <div className="flex flex-col items-center bg-slate-950 px-3 py-1.5 rounded-xl border border-slate-800 shadow-inner">
+        <span>{String(timeLeft.hours).padStart(2, "0")}</span>
+        <span className="text-[9px] font-sans text-slate-500 uppercase tracking-widest">Hrs</span>
+      </div>
+      <span className="text-orange-400 font-bold mb-3">:</span>
+      <div className="flex flex-col items-center bg-slate-950 px-3 py-1.5 rounded-xl border border-slate-800 shadow-inner">
+        <span>{String(timeLeft.minutes).padStart(2, "0")}</span>
+        <span className="text-[9px] font-sans text-slate-500 uppercase tracking-widest">Min</span>
+      </div>
+      <span className="text-orange-400 font-bold mb-3">:</span>
+      <div className="flex flex-col items-center bg-slate-950 px-3 py-1.5 rounded-xl border border-slate-800 shadow-inner">
+        <span className="text-orange-400">{String(timeLeft.seconds).padStart(2, "0")}</span>
+        <span className="text-[9px] font-sans text-slate-500 uppercase tracking-widest">Sec</span>
+      </div>
+    </div>
+  );
+}
 
 export default function WorkoutPage() {
   const [tab, setTab] = useState<"today" | "progress" | "history">("today");
@@ -265,7 +303,6 @@ export default function WorkoutPage() {
       const completedSets = sets.filter((s) => s.completed);
       const isChecked = completedSets.length > 0;
       
-      // Calculate max/top weight used in sets
       const numericWeights = sets
         .map((s) => Number(s.weightKg))
         .filter((w) => !isNaN(w) && w > 0);
@@ -369,7 +406,7 @@ export default function WorkoutPage() {
         </div>
       </section>
 
-      {/* ── TAB 1: TODAY'S ACTIVE WORKOUT ───────────────────────────────────── */}
+      {/* ── TAB 1: TODAY'S ACTIVE WORKOUT / COMPLETED LOCK VIEW ──────────────── */}
       {tab === "today" && (
         <TodayWorkoutTab
           today={today}
@@ -450,46 +487,98 @@ function TodayWorkoutTab({
     );
   }
 
-  // Pre-launch case
-  if (today.isWeekendPreLaunch && !manualOverride) {
+  // ── CASE 1: WORKOUT COMPLETED TODAY (CLOSED & COUNTING DOWN UNTIL 05:00 AM TOMORROW) ──
+  if (today.completedToday && !manualOverride) {
     const nextWk = today.nextWorkout;
     return (
       <div className="space-y-6 animate-fade-in">
-        <section className="relative overflow-hidden rounded-2xl border border-orange-500/40 bg-gradient-to-br from-orange-950/30 via-slate-900/90 to-slate-950 p-6 md:p-8 shadow-2xl">
+        {/* Completed Announcement & Countdown Banner */}
+        <section className="relative overflow-hidden rounded-2xl border border-emerald-500/40 bg-gradient-to-br from-emerald-950/30 via-slate-900/90 to-slate-950 p-6 md:p-8 shadow-2xl">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-            <div>
-              <div className="flex items-center gap-2 mb-2">
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-orange-500/20 text-orange-300 border border-orange-500/40">
-                  <Flame size={14} /> Official Program Kickoff
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+                  <CheckCircle2 size={14} /> TODAY'S WORKOUT COMPLETED
                 </span>
                 <span className="text-xs text-slate-400">
-                  Today is <strong className="text-white">{today.currentDayName}</strong>
+                  Recovery Active for <strong className="text-white">{today.currentDayName}</strong>
                 </span>
               </div>
               <h2 className="text-3xl md:text-4xl font-extrabold text-white">
-                Starting on Monday, {today.launchMondayFormatted?.split(",")[1]}
+                Great Work! Session Locked for Recovery.
               </h2>
-              <p className="mt-2 text-sm text-slate-300 max-w-xl">
-                The FORGE 24-week progressive overload protocol officially launches on{" "}
-                <strong className="text-orange-400">{today.launchMondayFormatted}</strong>.
+              <p className="text-sm text-slate-300 max-w-xl leading-relaxed">
+                You have completed and logged today's workout. Your muscles are in active synthesis.
+                The system has locked the checklist and will automatically unlock your next session at{" "}
+                <strong className="text-orange-400">05:00 AM Ethiopia Time</strong>.
+              </p>
+            </div>
+
+            {/* Countdown Badge to 05:00 AM Tomorrow */}
+            <div className="flex flex-col items-start md:items-end gap-2 bg-slate-950/90 p-5 rounded-2xl border border-emerald-500/30 shadow-xl">
+              <span className="text-xs font-bold uppercase tracking-wider text-orange-400 flex items-center gap-1.5">
+                <Flame size={14} /> Next Session Unlocks In
+              </span>
+              <CountdownTimer targetTimestamp={nextWk.unlockTimestamp} />
+              <span className="text-xs text-slate-400 flex items-center gap-1 mt-1 font-semibold">
+                <Clock3 size={13} /> Tomorrow ({nextWk.dateFormatted.split(",")[0]}) at 05:00 AM
+              </span>
+            </div>
+          </div>
+        </section>
+
+        {/* Tomorrow's Workout Preview Card */}
+        <section className="relative rounded-2xl border border-slate-800 bg-slate-900/50 p-6 md:p-8 overflow-hidden">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4 border-b border-slate-800 pb-4">
+            <div>
+              <span className="text-xs font-bold uppercase tracking-wider text-orange-400">
+                Tomorrow's Scheduled Protocol · {nextWk.location}
+              </span>
+              <h3 className="text-2xl font-bold text-white mt-1">
+                {nextWk.type} Day ({nextWk.targetBodyParts || "Target Hypertrophy"})
+              </h3>
+              <p className="text-xs text-slate-400 mt-1">
+                Phase Prescription: <strong className="text-white">{nextWk.phase.sets} sets × {nextWk.phase.reps} reps</strong>
               </p>
             </div>
 
             <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-orange-500/10 border border-orange-500/20 text-orange-400 text-xs font-bold">
+                <Lock size={14} /> Unlocks at 05:00 AM
+              </div>
               <button
                 onClick={onToggleOverride}
-                className="btn btn-primary btn-sm flex items-center gap-1 font-bold shadow-lg"
+                className="btn btn-ghost btn-xs text-slate-400 hover:text-white flex items-center gap-1"
+                title="Preview or Edit Today's Completed Session"
               >
-                <Unlock size={14} /> Open Live Workout (Test Mode)
+                <Unlock size={12} /> Edit / Review Today
               </button>
             </div>
+          </div>
+
+          {/* Tomorrow's Exercises List */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+            {nextWk.exercises.map((ex, i) => (
+              <div
+                key={ex.id || i}
+                className="p-3 rounded-xl border border-slate-800/80 bg-slate-950/60 flex flex-col justify-between space-y-1.5"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-mono font-bold text-slate-500">0{i + 1}</span>
+                  <span className="text-xs font-bold text-slate-200 truncate">{ex.name}</span>
+                </div>
+                {ex.targetMuscle && (
+                  <span className="text-[10px] text-orange-400 font-medium">🎯 {ex.targetMuscle}</span>
+                )}
+              </div>
+            ))}
           </div>
         </section>
       </div>
     );
   }
 
-  // Calculate exercises completed (an exercise is completed if all its sets are completed)
+  // ── CASE 2: ACTIVE WORKOUT SESSION (READY TO LOG) ───────────────────────────
   const totalExercises = today.day.exercises.length;
   const completedExercises = today.day.exercises.filter((ex) => {
     const sets = exerciseSets[ex.id] || [];

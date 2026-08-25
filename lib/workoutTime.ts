@@ -1,9 +1,17 @@
 export const TIMEZONE = 'Africa/Addis_Ababa';
-export const WORKOUT_DAY_START_HOUR = 5; // 05:00 AM Ethiopia Time
+
+// Daily Active Window (Addis Ababa Time)
+export const DAY_OPEN_HOUR = 5; // 05:00 AM
+export const DAY_OPEN_MINUTE = 0;
+export const WORKOUT_DAY_START_HOUR = DAY_OPEN_HOUR;
+
+export const DAY_CLOSE_HOUR = 21; // 09:28 PM (21:28)
+export const DAY_CLOSE_MINUTE = 28;
+
 export const TOTAL_JOURNEY_DAYS = 300;
 
 // Program benchmark start date (fixed anchor for the 300-day journey in Addis Ababa timezone)
-// Program anchor: August 10, 2026 05:00:00 (Addis time)
+// Anchor: August 10, 2026 05:00:00 (Addis time)
 export const JOURNEY_START_YEAR = 2026;
 export const JOURNEY_START_MONTH = 7; // August (0-indexed: 7)
 export const JOURNEY_START_DAY = 10;
@@ -39,12 +47,16 @@ export function getWorkoutLocationForAddisDate(addisDate: Date): 'GYM' | 'HOME' 
   return isGymDay(addisDate) ? 'GYM' : 'HOME';
 }
 
-// For a given Addis-local date, return the UTC window (start/end) that corresponds to the
-// workout day which begins at WORKOUT_DAY_START_HOUR (05:00 AM) in Addis timezone.
+/**
+ * Workout & Todo Execution Window:
+ * - Opens at exactly 05:00 AM Addis Time
+ * - Closes at exactly 09:28 PM (21:28) Addis Time
+ * - If current time is past 21:28, the execution window is CLOSED/LOCKED until 05:00 AM next morning.
+ */
 export function workoutWindowForAddisDate(addisDate: Date) {
-  // If current Addis time is before 05:00 AM, it still belongs to yesterday's 05:00 window
   let baseDate = new Date(addisDate);
-  if (baseDate.getHours() < WORKOUT_DAY_START_HOUR) {
+  // If current Addis time is before 05:00 AM, it still belongs to yesterday's day cycle
+  if (baseDate.getHours() < DAY_OPEN_HOUR) {
     baseDate.setDate(baseDate.getDate() - 1);
   }
 
@@ -52,14 +64,48 @@ export function workoutWindowForAddisDate(addisDate: Date) {
     baseDate.getFullYear(),
     baseDate.getMonth(),
     baseDate.getDate(),
-    WORKOUT_DAY_START_HOUR,
-    0,
+    DAY_OPEN_HOUR,
+    DAY_OPEN_MINUTE,
     0,
     0
   );
+
+  const closeAddis = new Date(
+    baseDate.getFullYear(),
+    baseDate.getMonth(),
+    baseDate.getDate(),
+    DAY_CLOSE_HOUR,
+    DAY_CLOSE_MINUTE,
+    0,
+    0
+  );
+
+  const nextUnlockAddis = new Date(startAddis);
+  nextUnlockAddis.setDate(nextUnlockAddis.getDate() + 1);
+  nextUnlockAddis.setHours(DAY_OPEN_HOUR, DAY_OPEN_MINUTE, 0, 0);
+
   const startUtc = toUtcFromAddis(startAddis);
-  const endUtc = new Date(startUtc.getTime() + 24 * 60 * 60 * 1000 - 1);
-  return { startUtc, endUtc, startAddis };
+  const closeUtc = toUtcFromAddis(closeAddis);
+  const nextUnlockUtc = toUtcFromAddis(nextUnlockAddis);
+  const endUtc = new Date(nextUnlockUtc.getTime() - 1);
+
+  // Authoritative Cutoff Status
+  const isPastCutoff = addisDate.getTime() >= closeAddis.getTime();
+  const isOpen = addisDate.getTime() >= startAddis.getTime() && !isPastCutoff;
+  const isClosed = isPastCutoff;
+
+  return {
+    startUtc,
+    closeUtc,
+    endUtc,
+    nextUnlockUtc,
+    startAddis,
+    closeAddis,
+    nextUnlockAddis,
+    isOpen,
+    isClosed,
+    isPastCutoff,
+  };
 }
 
 /**
@@ -80,7 +126,7 @@ export function getDayOfJourney300(targetDate?: Date): {
     JOURNEY_START_YEAR,
     JOURNEY_START_MONTH,
     JOURNEY_START_DAY,
-    WORKOUT_DAY_START_HOUR,
+    DAY_OPEN_HOUR,
     0,
     0,
     0
@@ -102,11 +148,11 @@ export function getDayOfJourney300(targetDate?: Date): {
 }
 
 /**
- * Hard 05:00 AM Workout Cutoff Checker
- * Returns whether a workout for a specific window can still be submitted.
+ * Authoritative 09:28 PM Cutoff Checker:
+ * Returns true only if current Addis time is before 09:28 PM on the active day.
  */
-export function isWorkoutWindowOpen(windowStartUtc: Date): boolean {
-  const now = new Date();
-  const windowEndUtc = new Date(windowStartUtc.getTime() + 24 * 60 * 60 * 1000);
-  return now.getTime() <= windowEndUtc.getTime();
+export function isExecutionWindowOpenNow(): boolean {
+  const addisNow = getAddisNow();
+  const { isOpen } = workoutWindowForAddisDate(addisNow);
+  return isOpen;
 }

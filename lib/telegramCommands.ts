@@ -24,6 +24,7 @@ import {
 } from './workoutTime';
 import { getDailyBreakdown, getProgressHistory } from './progressEngine';
 import { ACHIEVEMENTS_CATALOG } from './achievements';
+import { ensureTodayDailyPlan } from './dailyPlanGenerator';
 
 function getTodayDateRange() {
   const now = getAddisNow();
@@ -62,15 +63,23 @@ export async function getTodaySummary(): Promise<string> {
   const lastIndex = lastLog ? ORDER.indexOf(lastLog.workoutDay.type) : -1;
   const targetType = ORDER[(lastIndex + 1) % ORDER.length];
   const targetDay = days.find((d) => d.type === targetType) ?? days[0];
+  const windowInfo = workoutWindowForAddisDate(now);
+  const isClosed = windowInfo.isClosed;
   const isGym = getWorkoutLocationForAddisDate(now) === 'GYM';
   const locationType = isGym ? '🏋️‍♂️ GYM' : '🏠 HOME';
 
   const workoutStatus = breakdown.workout.completed
     ? `✅ Completed (${breakdown.workout.type || targetType})`
+    : isClosed
+    ? `🔴 MISSED (Closed at 09:28 PM)`
     : `⏳ Scheduled: ${targetType} (${locationType})`;
 
+  const windowStatus = isClosed
+    ? '🔴 CLOSED at 09:28 PM (Unlocks 05:00 AM)'
+    : '🟢 OPEN (05:00 AM – 09:28 PM)';
+
   return `🛡️ FORGE DAILY SUMMARY: ${weekday}, ${formattedDate}
-🔥 ${day300.formatted} (${day300.percentage}%) • 05:00 AM Ethiopia Day Rollover
+🔥 ${day300.formatted} (${day300.percentage}%) • ${windowStatus}
 
 ⚡ Character Status:
 • Level ${level} (${totalXp.toLocaleString()} XP)
@@ -232,44 +241,35 @@ export async function getProgressSummary(): Promise<string> {
 }
 
 /**
- * /plan command: daily tasks and time targets
+ * /plan & /todo command: daily tasks and time targets
  */
 export async function getPlanSummary(): Promise<string> {
-  const { now, todayStart, todayEnd } = getTodayDateRange();
+  const { now } = getTodayDateRange();
   const formattedDate = now.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
+  const windowInfo = workoutWindowForAddisDate(now);
 
-  const [plan, domains, habits] = await Promise.all([
-    prisma.dailyPlan.findFirst({
-      where: { date: { gte: todayStart, lte: todayEnd } },
-      include: { tasks: true },
-    }),
-    prisma.domain.findMany(),
-    prisma.habit.findMany({ where: { active: true } }),
-  ]);
+  const todayPlan = await ensureTodayDailyPlan();
+  const habits = await prisma.habit.findMany({ where: { active: true } });
 
-  const domainMap = new Map(domains.map((d) => [d.id, d.name]));
-
-  if (!plan || plan.tasks.length === 0) {
-    return `📋 DAILY PLAN: ${formattedDate}
-
-No plan generated for today yet.
-Open Forge → Plans to generate your schedule.`;
-  }
-
-  const tasks = plan.tasks;
+  const tasks = todayPlan.tasks;
   const completed = tasks.filter((t) => t.completed);
   const totalMinutes = tasks.reduce((sum, t) => sum + t.minutesTarget, 0);
   const completedMinutes = completed.reduce((sum, t) => sum + t.minutesTarget, 0);
 
   const taskItems = tasks
     .map((t) => {
-      const dName = domainMap.get(t.domainId) || 'Task';
-      const statusIcon = t.completed ? '✅' : '⏳';
-      return `${statusIcon} ${formatTaskText(t.description)}\n   └ Domain: ${dName} | Target: ${t.minutesTarget} min`;
+      const dName = t.domain?.name || 'Task';
+      const statusIcon = t.completed ? '✅' : windowInfo.isClosed ? '🔴 MISSED' : '⏳';
+      return `${statusIcon} ${formatTaskText(t.description)}\n   └ Domain: ${dName} | Target: ${t.minutesTarget} min | +${t.xpTarget || 50} XP`;
     })
     .join('\n\n');
 
-  return `📋 DAILY PLAN: ${formattedDate}
+  const windowHeader = windowInfo.isClosed
+    ? '🔴 CLOSED at 09:28 PM (Unlocks 05:00 AM)'
+    : '🟢 OPEN (05:00 AM – 09:28 PM)';
+
+  return `📋 DAILY TODO & PLAN: ${formattedDate}
+🕒 ${windowHeader}
 
 📊 Progress: ${completed.length}/${tasks.length} tasks completed
 ⏱️ Time: ${completedMinutes}/${totalMinutes} minutes completed

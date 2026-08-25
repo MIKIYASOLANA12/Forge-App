@@ -20,32 +20,32 @@ export const ROAST_CATALOG: RoastTemplate[] = [
   {
     category: 'WORKOUT_MISSED',
     intensity: 1,
-    text: "Your workout was scheduled, but the weights took a rest day instead. Tomorrow we get back on track.",
+    text: "Your workout was scheduled, but the weights took a rest day instead. Window closed at 9:28 PM. Tomorrow we get back on track.",
   },
   {
     category: 'WORKOUT_MISSED',
     intensity: 2,
-    text: "Bro had ONE workout to log before 05:00 AM. The dumbbells are filing a missing-persons report.",
+    text: "Bro had 16 hours and 28 minutes to log one workout. The dumbbells filed a missing-persons report at 9:28 PM.",
   },
   {
     category: 'WORKOUT_MISSED',
     intensity: 3,
-    text: "Workout closed permanently. You had until 05:00 AM. The clock won; your progressive overload remains undefeated in theory only.",
+    text: "Workout closed at 9:28 PM. You had 16 hours and 28 minutes. The checkbox remained untouched. Outstanding commitment to procrastination.",
   },
   {
     category: 'WORKOUT_MISSED',
     intensity: 4,
-    text: "Workout missed. Your future six-pack has officially submitted a resignation letter with 2 weeks notice.",
+    text: "Workout missed at 9:28 PM cutoff. Your future six-pack has officially submitted a resignation letter with 2 weeks notice.",
   },
   {
     category: 'WORKOUT_MISSED',
     intensity: 3,
-    text: "Forge waited. The workout waited. The checkbox waited. You apparently had other plans for your muscle synthesis.",
+    text: "Forge waited from 05:00 AM to 09:28 PM. The workout waited. The checkbox waited. You apparently had other plans.",
   },
   {
     category: 'WORKOUT_MISSED',
     intensity: 4,
-    text: "Your workout wasn't defeated by physical exhaustion. It was defeated by the refusal to tap the checkbox before 05:00 AM.",
+    text: "Your workout wasn't defeated by physical exhaustion. It was defeated by the refusal to tap the checkbox before 09:28 PM.",
   },
 
   // ── CHEMISTRY MISSED ROASTS ──

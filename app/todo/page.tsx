@@ -21,7 +21,9 @@ import {
   TrendingUp,
   Target,
   Layers,
-  ChevronRight
+  Lock,
+  History,
+  XCircle
 } from "lucide-react";
 import { clsx } from "clsx";
 
@@ -32,6 +34,8 @@ type TaskItem = {
   description: string;
   minutesTarget: number;
   completed: boolean;
+  status: "COMPLETED" | "MISSED" | "PENDING";
+  isLocked?: boolean;
   subject?: string | null;
   topic?: string | null;
   priority?: string | null;
@@ -46,8 +50,16 @@ type TaskItem = {
   };
 };
 
+type YesterdayData = {
+  dateFormatted: string;
+  workout: { status: "COMPLETED" | "MISSED"; type: string };
+  tasks: Array<{ id: string; description: string; completed: boolean; status: "COMPLETED" | "MISSED"; minutesTarget: number }>;
+  completedCount: number;
+  totalCount: number;
+};
+
 type TodayPlanData = {
-  id: string | null;
+  planId: string | null;
   dateFormatted: string;
   day300: {
     dayNumber: number;
@@ -56,7 +68,14 @@ type TodayPlanData = {
     percentage: number;
     daysRemaining: number;
   };
+  openTimeFormatted: string;
+  closeTimeFormatted: string;
+  closeTimestamp: number;
+  nextUnlockTimestamp: number;
+  isOpen: boolean;
+  isClosed: boolean;
   tasks: TaskItem[];
+  yesterday?: YesterdayData;
 };
 
 type RoastData = {
@@ -67,14 +86,49 @@ type RoastData = {
   isPerfectDay: boolean;
 };
 
+function CountdownClock({ targetTimestamp, isClosed }: { targetTimestamp: number; isClosed: boolean }) {
+  const [timeLeft, setTimeLeft] = useState<{ hours: number; minutes: number; seconds: number } | null>(null);
+
+  useEffect(() => {
+    const update = () => {
+      const diff = targetTimestamp - Date.now();
+      if (diff <= 0) {
+        setTimeLeft({ hours: 0, minutes: 0, seconds: 0 });
+        return;
+      }
+      const hours = Math.floor(diff / (1000 * 60 * 60));
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+      setTimeLeft({ hours, minutes, seconds });
+    };
+
+    update();
+    const interval = setInterval(update, 1000);
+    return () => clearInterval(interval);
+  }, [targetTimestamp]);
+
+  if (!timeLeft) return <span className="font-mono">--:--:--</span>;
+
+  const pad = (n: number) => String(n).padStart(2, "0");
+
+  return (
+    <div className="flex items-center gap-1.5 font-mono text-sm font-black">
+      <span className={clsx("px-2 py-1 rounded-md border", isClosed ? "bg-rose-950/40 text-rose-400 border-rose-500/30" : "bg-orange-950/40 text-orange-400 border-orange-500/30")}>
+        {pad(timeLeft.hours)}h : {pad(timeLeft.minutes)}m : {pad(timeLeft.seconds)}s
+      </span>
+    </div>
+  );
+}
+
 export default function TodoPage() {
-  const [tab, setTab] = useState<"today" | "tomorrow" | "recommendations">("today");
+  const [tab, setTab] = useState<"today" | "tomorrow" | "history">("today");
   const [todayData, setTodayData] = useState<TodayPlanData | null>(null);
   const [roastData, setRoastData] = useState<RoastData | null>(null);
   const [loading, setLoading] = useState(true);
   const [completingId, setCompletingId] = useState<string | null>(null);
+  const [actionError, setActionError] = useState("");
+
   const [newTaskText, setNewTaskText] = useState("");
-  const [newTaskDomain, setNewTaskDomain] = useState("Study");
   const [newTaskMinutes, setNewTaskMinutes] = useState(45);
   const [newTaskPriority, setNewTaskPriority] = useState("MEDIUM");
   const [addingTask, setAddingTask] = useState(false);
@@ -83,9 +137,10 @@ export default function TodoPage() {
   const [tomorrowTasks, setTomorrowTasks] = useState<
     Array<{ description: string; domainName: string; minutesTarget: number; priority: string; isStudy?: boolean }>
   >([
-    { description: "Chemistry — Topic Deep Dive (Learn & Active Recall)", domainName: "Study", minutesTarget: 60, priority: "HIGH", isStudy: true },
-    { description: "JavaScript — Conditionals & Problem Practice", domainName: "Coding", minutesTarget: 60, priority: "HIGH", isStudy: true },
-    { description: "Scheduled Daily Workout Session", domainName: "Workout", minutesTarget: 45, priority: "HIGH" },
+    { description: "Chemistry — Next Roadmap Topic (Learn, Recall & Practice)", domainName: "Study", minutesTarget: 60, priority: "HIGH", isStudy: true },
+    { description: "5 Million Coders / JavaScript — Practice & Quiz", domainName: "Coding", minutesTarget: 60, priority: "HIGH", isStudy: true },
+    { description: "Daily Scheduled Workout Session", domainName: "Workout", minutesTarget: 45, priority: "HIGH" },
+    { description: "Focused Reading & Knowledge Synthesis", domainName: "Reading", minutesTarget: 30, priority: "MEDIUM" },
   ]);
   const [savingTomorrow, setSavingTomorrow] = useState(false);
   const [tomorrowSavedMessage, setTomorrowSavedMessage] = useState("");
@@ -117,8 +172,9 @@ export default function TodoPage() {
   }, []);
 
   const handleToggleTask = async (task: TaskItem) => {
-    if (task.completed) return; // already completed
+    if (task.completed || todayData?.isClosed) return;
     setCompletingId(task.id);
+    setActionError("");
 
     try {
       const res = await fetch(`/api/plan/tasks/${task.id}/complete`, {
@@ -126,14 +182,16 @@ export default function TodoPage() {
       });
 
       if (res.ok) {
-        const data = await res.json();
         setTodayData((prev) => {
           if (!prev) return prev;
           return {
             ...prev,
-            tasks: prev.tasks.map((t) => (t.id === task.id ? { ...t, completed: true } : t)),
+            tasks: prev.tasks.map((t) => (t.id === task.id ? { ...t, completed: true, status: "COMPLETED" } : t)),
           };
         });
+      } else {
+        const errJson = await res.json();
+        setActionError(errJson.error || "Failed to complete task");
       }
     } catch (err) {
       console.error(err);
@@ -143,7 +201,7 @@ export default function TodoPage() {
   };
 
   const handleAddTaskToday = async () => {
-    if (!newTaskText.trim()) return;
+    if (!newTaskText.trim() || todayData?.isClosed) return;
     setAddingTask(true);
 
     try {
@@ -199,61 +257,101 @@ export default function TodoPage() {
     return (
       <div className="flex h-72 items-center justify-center gap-3 text-sm text-[var(--text-muted)]">
         <LoaderCircle size={20} className="animate-spin text-orange-500" />
-        <span>Loading Daily Todo OS & 300-Day Journey...</span>
+        <span>Loading Daily Execution OS & Real Tasks...</span>
       </div>
     );
   }
 
   return (
     <div className="mx-auto w-full max-w-[1280px] animate-fade-in pb-16 space-y-6">
-      {/* ── HEADER / 300-DAY JOURNEY BANNER ─────────────────────────────────── */}
-      <section className="flex flex-col justify-between gap-5 border-b border-[var(--border)] pb-6 md:flex-row md:items-end">
+      {/* ── HEADER / DAILY ACTIVE WINDOW BANNER ──────────────────────────────── */}
+      <section className="flex flex-col justify-between gap-5 border-b border-[var(--border)] pb-6 lg:flex-row lg:items-end">
         <div>
           <div className="flex flex-wrap items-center gap-2 mb-2">
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-orange-500/15 text-orange-400 border border-orange-500/30">
               <Flame size={14} /> {todayData?.day300.formatted || "DAY 1 / 300"}
             </span>
-            <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold text-slate-400 bg-slate-900 border border-slate-800">
-              <Calendar size={13} /> {todayData?.dateFormatted || "Live Schedule"}
+            <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold text-slate-300 bg-slate-900 border border-slate-800">
+              <Calendar size={13} /> {todayData?.dateFormatted}
             </span>
-            <span className="text-xs text-slate-500 font-mono">05:00 AM Ethiopia Day Rollover</span>
+            <span
+              className={clsx(
+                "px-2.5 py-1 rounded-full text-[11px] font-black uppercase tracking-wider border",
+                todayData?.isOpen
+                  ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/30"
+                  : "bg-rose-500/15 text-rose-400 border-rose-500/30"
+              )}
+            >
+              {todayData?.isOpen ? "🟢 Window OPEN (05:00 AM - 09:28 PM)" : "🔴 Window CLOSED (Locked at 09:28 PM)"}
+            </span>
           </div>
 
           <h1 className="text-3xl font-extrabold tracking-tight text-white flex items-center gap-3">
             <CheckSquare className="text-orange-500" size={32} />
-            Daily Todo & Planning OS
+            Daily Execution OS & Real Tasks
           </h1>
           <p className="mt-1 max-w-xl text-sm text-[var(--text-secondary)]">
-            Execute today's scheduled tasks, earn XP, maintain consistency, and plan tomorrow's battle rhythm.
+            Execution Window: <strong>05:00 AM – 09:28 PM</strong> Ethiopia Time. At 09:28 PM, uncompleted items close permanently.
           </p>
         </div>
 
-        {/* Tab Navigation */}
-        <div className="flex rounded-xl border border-[var(--border)] bg-[var(--bg-surface)] p-1">
-          <button
-            className={`btn btn-sm ${
-              tab === "today"
-                ? "bg-[var(--bg-elevated)] text-[var(--text-primary)] shadow-sm font-bold"
-                : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
-            }`}
-            onClick={() => setTab("today")}
-          >
-            <CheckSquare size={14} /> Today's Tasks ({completedCount}/{totalCount})
-          </button>
-          <button
-            className={`btn btn-sm ${
-              tab === "tomorrow"
-                ? "bg-[var(--bg-elevated)] text-[var(--text-primary)] shadow-sm font-bold"
-                : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
-            }`}
-            onClick={() => setTab("tomorrow")}
-          >
-            <Clock3 size={14} /> Plan Tomorrow
-          </button>
+        {/* Live Window Countdown Clock & Tabs */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800">
+            <Clock3 size={15} className={todayData?.isClosed ? "text-rose-400" : "text-orange-400"} />
+            <span className="text-xs font-bold text-slate-400">
+              {todayData?.isClosed ? "Unlocks in:" : "Closes in:"}
+            </span>
+            <CountdownClock
+              targetTimestamp={todayData?.isClosed ? todayData.nextUnlockTimestamp : todayData?.closeTimestamp || Date.now()}
+              isClosed={Boolean(todayData?.isClosed)}
+            />
+          </div>
+
+          <div className="flex rounded-xl border border-[var(--border)] bg-[var(--bg-surface)] p-1">
+            <button
+              className={`btn btn-sm ${
+                tab === "today"
+                  ? "bg-[var(--bg-elevated)] text-[var(--text-primary)] shadow-sm font-bold"
+                  : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+              }`}
+              onClick={() => setTab("today")}
+            >
+              Today ({completedCount}/{totalCount})
+            </button>
+            <button
+              className={`btn btn-sm ${
+                tab === "tomorrow"
+                  ? "bg-[var(--bg-elevated)] text-[var(--text-primary)] shadow-sm font-bold"
+                  : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+              }`}
+              onClick={() => setTab("tomorrow")}
+            >
+              Plan Tomorrow
+            </button>
+            <button
+              className={`btn btn-sm ${
+                tab === "history"
+                  ? "bg-[var(--bg-elevated)] text-[var(--text-primary)] shadow-sm font-bold"
+                  : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+              }`}
+              onClick={() => setTab("history")}
+            >
+              <History size={14} /> Yesterday
+            </button>
+          </div>
         </div>
       </section>
 
-      {/* ── ACCOUNTABILITY ROAST / CELEBRATION CARD ──────────────────────────── */}
+      {/* Action Error Alert */}
+      {actionError && (
+        <div className="p-4 rounded-xl border border-rose-500/40 bg-rose-950/30 text-rose-300 text-xs font-bold flex items-center gap-2">
+          <AlertTriangle size={16} className="text-rose-400 shrink-0" />
+          <span>{actionError}</span>
+        </div>
+      )}
+
+      {/* ── ACCOUNTABILITY ROAST CARD ────────────────────────────────────────── */}
       {roastData && (
         <section
           className={clsx(
@@ -290,7 +388,7 @@ export default function TodoPage() {
         </section>
       )}
 
-      {/* ── TAB 1: TODAY'S TASKS ────────────────────────────────────────────── */}
+      {/* ── TAB 1: TODAY'S ACTIVE TASKS ─────────────────────────────────────── */}
       {tab === "today" && (
         <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
           {/* Main Task List */}
@@ -300,7 +398,9 @@ export default function TodoPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="text-base font-extrabold text-white">Daily Execution Progress</h3>
-                  <p className="text-xs text-slate-400">Check boxes as you finish each task</p>
+                  <p className="text-xs text-slate-400">
+                    {todayData?.isClosed ? "🔒 Window closed at 09:28 PM" : "Check boxes as you finish each block"}
+                  </p>
                 </div>
                 <div className="text-right">
                   <div className="text-2xl font-black text-orange-400">{completionPercentage}%</div>
@@ -319,128 +419,137 @@ export default function TodoPage() {
               </div>
             </div>
 
-            {/* Tasks Cards */}
+            {/* Task Cards List */}
             <div className="space-y-3">
-              {todayData?.tasks.length === 0 ? (
-                <div className="p-8 text-center text-xs text-slate-400 border border-dashed border-slate-800 rounded-2xl">
-                  No tasks scheduled for today yet. Use the form below or the Plan Tomorrow tab.
-                </div>
-              ) : (
-                todayData?.tasks.map((task, index) => (
-                  <article
-                    key={task.id}
-                    className={clsx(
-                      "rounded-2xl border p-4 transition-all flex items-start gap-3.5",
-                      task.completed
-                        ? "border-emerald-500/30 bg-emerald-950/10 opacity-75"
-                        : "border-[var(--border)] bg-[var(--bg-surface)] hover:border-slate-700"
-                    )}
-                  >
-                    {/* Checkbox Button */}
-                    <button
-                      disabled={task.completed || completingId === task.id}
-                      onClick={() => handleToggleTask(task)}
-                      className={clsx(
-                        "mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border-2 transition-all",
-                        task.completed
-                          ? "border-emerald-500 bg-emerald-500 text-black shadow-sm font-bold"
-                          : "border-slate-700 hover:border-orange-500 bg-slate-950 text-slate-500"
-                      )}
-                      aria-label="Toggle task completion"
-                    >
-                      {completingId === task.id ? (
-                        <LoaderCircle size={14} className="animate-spin text-orange-400" />
-                      ) : task.completed ? (
-                        <CheckCircle2 size={16} strokeWidth={3} />
-                      ) : (
-                        <Square size={14} />
-                      )}
-                    </button>
-
-                    {/* Task Info */}
-                    <div className="flex-1 space-y-1.5">
-                      <div className="flex flex-wrap items-center gap-2">
-                        {task.domain && (
-                          <span
-                            className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider border"
-                            style={{
-                              backgroundColor: `${task.domain.color}15`,
-                              borderColor: `${task.domain.color}35`,
-                              color: task.domain.color,
-                            }}
-                          >
-                            {task.domain.name}
-                          </span>
-                        )}
-                        {task.priority && (
-                          <span
-                            className={clsx(
-                              "px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider",
-                              task.priority === "HIGH"
-                                ? "bg-rose-500/10 text-rose-400 border border-rose-500/20"
-                                : "bg-slate-800 text-slate-400"
-                            )}
-                          >
-                            {task.priority}
-                          </span>
-                        )}
-                        {task.plannedStartTime && (
-                          <span className="text-[11px] font-mono text-slate-400">
-                            🕒 {task.plannedStartTime} {task.plannedEndTime ? `- ${task.plannedEndTime}` : ""}
-                          </span>
-                        )}
-                      </div>
-
-                      <h4
-                        className={clsx(
-                          "text-sm font-bold leading-snug",
-                          task.completed ? "line-through text-slate-400" : "text-white"
-                        )}
-                      >
-                        {task.description}
-                      </h4>
-
-                      <div className="flex items-center gap-3 text-xs text-slate-400 pt-0.5">
-                        <span>⏱️ {task.minutesTarget} mins</span>
-                        <span>·</span>
-                        <span className="text-amber-400 font-bold">+{task.xpTarget || Math.round(task.minutesTarget * 1.2)} XP</span>
-                        {task.completed && (
-                          <span className="text-emerald-400 font-bold text-[11px]">✓ Saved to Progress Engine</span>
-                        )}
-                      </div>
-                    </div>
-                  </article>
-                ))
-              )}
-            </div>
-
-            {/* Fast Add Task Input */}
-            <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-surface)] p-4 space-y-3">
-              <h4 className="text-xs font-extrabold uppercase tracking-wider text-slate-400">Add Quick Task</h4>
-              <div className="flex flex-col sm:flex-row gap-2">
-                <input
-                  type="text"
-                  placeholder="Task description (e.g. Solve 10 Chemistry Stoichiometry problems)..."
-                  value={newTaskText}
-                  onChange={(e) => setNewTaskText(e.target.value)}
-                  className="flex-1 rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-xs text-white placeholder-slate-500 focus:border-orange-500 focus:outline-none"
-                />
-                <input
-                  type="number"
-                  placeholder="Mins"
-                  value={newTaskMinutes}
-                  onChange={(e) => setNewTaskMinutes(Number(e.target.value))}
-                  className="w-20 rounded-xl border border-slate-700 bg-slate-950 px-2 py-2 text-xs font-mono text-center text-white focus:border-orange-500 focus:outline-none"
-                />
-                <button
-                  onClick={handleAddTaskToday}
-                  disabled={addingTask || !newTaskText.trim()}
-                  className="btn btn-primary btn-sm rounded-xl font-bold flex items-center gap-1 shadow-md"
+              {todayData?.tasks.map((task) => (
+                <article
+                  key={task.id}
+                  className={clsx(
+                    "rounded-2xl border p-4 transition-all flex items-start gap-3.5",
+                    task.completed
+                      ? "border-emerald-500/30 bg-emerald-950/10 opacity-75"
+                      : todayData?.isClosed
+                      ? "border-rose-500/30 bg-rose-950/10 opacity-70"
+                      : "border-[var(--border)] bg-[var(--bg-surface)] hover:border-slate-700"
+                  )}
                 >
-                  <Plus size={14} /> Add Task
-                </button>
-              </div>
+                  {/* Checkbox Button */}
+                  <button
+                    disabled={task.completed || todayData?.isClosed || completingId === task.id}
+                    onClick={() => handleToggleTask(task)}
+                    className={clsx(
+                      "mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border-2 transition-all",
+                      task.completed
+                        ? "border-emerald-500 bg-emerald-500 text-black shadow-sm font-bold cursor-default"
+                        : todayData?.isClosed
+                        ? "border-rose-500/40 bg-rose-950 text-rose-500 cursor-not-allowed"
+                        : "border-slate-700 hover:border-orange-500 bg-slate-950 text-slate-500"
+                    )}
+                    aria-label="Toggle task completion"
+                  >
+                    {completingId === task.id ? (
+                      <LoaderCircle size={14} className="animate-spin text-orange-400" />
+                    ) : task.completed ? (
+                      <CheckCircle2 size={16} strokeWidth={3} />
+                    ) : todayData?.isClosed ? (
+                      <Lock size={12} />
+                    ) : (
+                      <Square size={14} />
+                    )}
+                  </button>
+
+                  {/* Task Info */}
+                  <div className="flex-1 space-y-1.5">
+                    <div className="flex flex-wrap items-center gap-2">
+                      {task.domain && (
+                        <span
+                          className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider border"
+                          style={{
+                            backgroundColor: `${task.domain.color}15`,
+                            borderColor: `${task.domain.color}35`,
+                            color: task.domain.color,
+                          }}
+                        >
+                          {task.domain.name}
+                        </span>
+                      )}
+                      {task.priority && (
+                        <span
+                          className={clsx(
+                            "px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider",
+                            task.priority === "HIGH"
+                              ? "bg-rose-500/10 text-rose-400 border border-rose-500/20"
+                              : "bg-slate-800 text-slate-400"
+                          )}
+                        >
+                          {task.priority}
+                        </span>
+                      )}
+                      {task.plannedStartTime && (
+                        <span className="text-[11px] font-mono text-slate-400">
+                          🕒 {task.plannedStartTime} {task.plannedEndTime ? `- ${task.plannedEndTime}` : ""}
+                        </span>
+                      )}
+                    </div>
+
+                    <h4
+                      className={clsx(
+                        "text-sm font-bold leading-snug",
+                        task.completed
+                          ? "line-through text-slate-400"
+                          : todayData?.isClosed
+                          ? "text-slate-300"
+                          : "text-white"
+                      )}
+                    >
+                      {task.description}
+                    </h4>
+
+                    <div className="flex items-center gap-3 text-xs text-slate-400 pt-0.5">
+                      <span>⏱️ {task.minutesTarget} mins</span>
+                      <span>·</span>
+                      <span className="text-amber-400 font-bold">+{task.xpTarget || Math.round(task.minutesTarget * 1.2)} XP</span>
+                      {task.completed && (
+                        <span className="text-emerald-400 font-bold text-[11px]">✓ Completed & Saved</span>
+                      )}
+                      {!task.completed && todayData?.isClosed && (
+                        <span className="text-rose-400 font-bold text-[11px]">🔴 MISSED (Closed at 09:28 PM)</span>
+                      )}
+                    </div>
+                  </div>
+                </article>
+              ))}
             </div>
+
+            {/* Fast Add Task Input (Only while open) */}
+            {!todayData?.isClosed && (
+              <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-surface)] p-4 space-y-3">
+                <h4 className="text-xs font-extrabold uppercase tracking-wider text-slate-400">Add Quick Task</h4>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <input
+                    type="text"
+                    placeholder="Task description (e.g. Solve 10 Chemistry Stoichiometry problems)..."
+                    value={newTaskText}
+                    onChange={(e) => setNewTaskText(e.target.value)}
+                    className="flex-1 rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-xs text-white placeholder-slate-500 focus:border-orange-500 focus:outline-none"
+                  />
+                  <input
+                    type="number"
+                    placeholder="Mins"
+                    value={newTaskMinutes}
+                    onChange={(e) => setNewTaskMinutes(Number(e.target.value))}
+                    className="w-20 rounded-xl border border-slate-700 bg-slate-950 px-2 py-2 text-xs font-mono text-center text-white focus:border-orange-500 focus:outline-none"
+                  />
+                  <button
+                    onClick={handleAddTaskToday}
+                    disabled={addingTask || !newTaskText.trim()}
+                    className="btn btn-primary btn-sm rounded-xl font-bold flex items-center gap-1 shadow-md"
+                  >
+                    <Plus size={14} /> Add Task
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Sidebar Overview */}
@@ -462,19 +571,21 @@ export default function TodoPage() {
                   Days Completed of 300
                 </div>
                 <div className="text-xs text-slate-500 mt-2 font-semibold">
-                  {todayData?.day300.daysRemaining} days remaining until master transformation
+                  {todayData?.day300.daysRemaining} days remaining
                 </div>
               </div>
             </div>
 
-            {/* Protocol Rules Notice */}
+            {/* Protocol Execution Window Info */}
             <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-4 space-y-2 text-xs">
               <span className="text-[10px] font-extrabold uppercase tracking-widest text-orange-400 block">
-                Daily Cutoff Policy
+                Execution Window Protocol
               </span>
-              <p className="text-slate-300 leading-relaxed">
-                Workouts and tasks must be logged before <strong>05:00 AM Ethiopia Time</strong>. At 05:00 AM, uncompleted items close permanently to preserve streak integrity.
-              </p>
+              <ul className="space-y-1.5 text-slate-300 leading-relaxed list-disc list-inside">
+                <li>Opens: <strong>05:00 AM</strong> Addis Time</li>
+                <li>Closes: <strong>09:28 PM</strong> Addis Time</li>
+                <li>Unsubmitted items lock as <strong>MISSED</strong> at 09:28 PM.</li>
+              </ul>
             </div>
           </aside>
         </div>
@@ -489,7 +600,7 @@ export default function TodoPage() {
               Night Planning: Design Tomorrow's Targets
             </h3>
             <p className="text-xs text-slate-400">
-              Set tomorrow's workout, chemistry, javascript, and study blocks before going to sleep.
+              Set tomorrow's workout, chemistry, javascript, and study blocks before 05:00 AM.
             </p>
           </div>
 
@@ -563,6 +674,92 @@ export default function TodoPage() {
                 Save Tomorrow's Plan
               </button>
             </div>
+          </div>
+        </section>
+      )}
+
+      {/* ── TAB 3: YESTERDAY'S RESULTS & MISSED HISTORY ───────────────────────── */}
+      {tab === "history" && todayData?.yesterday && (
+        <section className="rounded-2xl border border-[var(--border)] bg-[var(--bg-surface)] p-6 space-y-6 shadow-xl">
+          <div className="border-b border-[var(--border)] pb-4 space-y-1">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xl font-extrabold text-white flex items-center gap-2">
+                <History className="text-orange-400" size={20} />
+                Yesterday's Execution Results & Missed History
+              </h3>
+              <span className="text-xs font-mono text-slate-400 font-bold">
+                {todayData.yesterday.dateFormatted}
+              </span>
+            </div>
+            <p className="text-xs text-slate-400">
+              Audit log of completed vs missed targets from the previous 05:00 AM – 09:28 PM window.
+            </p>
+          </div>
+
+          <div className="space-y-3">
+            {/* Workout Status */}
+            <div
+              className={clsx(
+                "p-4 rounded-xl border flex items-center justify-between",
+                todayData.yesterday.workout.status === "COMPLETED"
+                  ? "border-emerald-500/30 bg-emerald-950/10 text-emerald-300"
+                  : "border-rose-500/30 bg-rose-950/10 text-rose-300"
+              )}
+            >
+              <div className="flex items-center gap-3">
+                <Dumbbell size={18} />
+                <div>
+                  <span className="text-sm font-bold text-white">Daily Workout: {todayData.yesterday.workout.type}</span>
+                  <p className="text-xs text-slate-400">Window closed at 09:28 PM</p>
+                </div>
+              </div>
+              <span
+                className={clsx(
+                  "px-2.5 py-1 rounded text-xs font-black uppercase tracking-wider",
+                  todayData.yesterday.workout.status === "COMPLETED"
+                    ? "bg-emerald-500/20 text-emerald-400"
+                    : "bg-rose-500/20 text-rose-400"
+                )}
+              >
+                {todayData.yesterday.workout.status === "COMPLETED" ? "🟢 Completed" : "🔴 Missed"}
+              </span>
+            </div>
+
+            {/* Yesterday Tasks */}
+            {todayData.yesterday.tasks.map((yt) => (
+              <div
+                key={yt.id}
+                className={clsx(
+                  "p-4 rounded-xl border flex items-center justify-between",
+                  yt.completed
+                    ? "border-emerald-500/20 bg-emerald-950/10"
+                    : "border-rose-500/20 bg-rose-950/10"
+                )}
+              >
+                <div className="flex items-center gap-3">
+                  {yt.completed ? (
+                    <CheckCircle2 size={18} className="text-emerald-400" />
+                  ) : (
+                    <XCircle size={18} className="text-rose-400" />
+                  )}
+                  <div>
+                    <span className={clsx("text-sm font-bold", yt.completed ? "text-white" : "text-slate-300")}>
+                      {yt.description}
+                    </span>
+                    <p className="text-xs text-slate-400">{yt.minutesTarget} mins planned</p>
+                  </div>
+                </div>
+
+                <span
+                  className={clsx(
+                    "px-2.5 py-1 rounded text-xs font-black uppercase tracking-wider",
+                    yt.completed ? "bg-emerald-500/20 text-emerald-400" : "bg-rose-500/20 text-rose-400"
+                  )}
+                >
+                  {yt.completed ? "🟢 Completed" : "🔴 Missed"}
+                </span>
+              </div>
+            ))}
           </div>
         </section>
       )}

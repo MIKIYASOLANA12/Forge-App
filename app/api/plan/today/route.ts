@@ -1,54 +1,81 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
 import { getAddisNow, workoutWindowForAddisDate, getDayOfJourney300 } from '@/lib/workoutTime';
+import { ensureTodayDailyPlan } from '@/lib/dailyPlanGenerator';
+import { prisma } from '@/lib/prisma';
 
 export async function GET() {
   try {
     const addisNow = getAddisNow();
-    const { startUtc, endUtc, startAddis } = workoutWindowForAddisDate(addisNow);
+    const windowInfo = workoutWindowForAddisDate(addisNow);
     const day300 = getDayOfJourney300(addisNow);
 
-    const plan = await prisma.dailyPlan.findFirst({
-      where: { date: { gte: startUtc, lte: endUtc } },
-      include: {
-        tasks: {
-          orderBy: [{ isStudy: 'desc' }, { priority: 'asc' }],
-        },
-      },
-    });
+    const todayPlan = await ensureTodayDailyPlan();
 
-    const domains = await prisma.domain.findMany();
-    const domainMap = Object.fromEntries(domains.map((d) => [d.id, d]));
-
-    const dateFormatted = startAddis.toLocaleDateString('en-US', {
+    const dateFormatted = windowInfo.startAddis.toLocaleDateString('en-US', {
       weekday: 'long',
       month: 'long',
       day: 'numeric',
       year: 'numeric',
     });
 
-    if (plan) {
-      const tasksWithDomain = plan.tasks.map((t) => ({
-        ...t,
-        domain: domainMap[t.domainId] || { name: 'General', color: '#94a3b8', icon: 'check-circle' },
-      }));
+    const openTimeFormatted = '05:00 AM';
+    const closeTimeFormatted = '09:28 PM';
 
-      return NextResponse.json({
-        ...plan,
-        dateFormatted,
-        day300,
-        tasks: tasksWithDomain,
-      });
-    }
+    // Fetch yesterday's history for the Missed History section
+    const yesterdayAddis = new Date(windowInfo.startAddis);
+    yesterdayAddis.setDate(yesterdayAddis.getDate() - 1);
+    const yesterdayWindow = workoutWindowForAddisDate(yesterdayAddis);
+
+    const [yesterdayPlan, yesterdayWorkoutLog] = await Promise.all([
+      prisma.dailyPlan.findFirst({
+        where: { date: { gte: yesterdayWindow.startUtc, lte: yesterdayWindow.endUtc } },
+        include: { tasks: true },
+      }),
+      prisma.workoutLog.findFirst({
+        where: { completedAt: { gte: yesterdayWindow.startUtc, lte: yesterdayWindow.closeUtc } },
+        include: { workoutDay: true },
+      }),
+    ]);
+
+    const yesterdayDateFormatted = yesterdayWindow.startAddis.toLocaleDateString('en-US', {
+      weekday: 'long',
+      month: 'short',
+      day: 'numeric',
+    });
+
+    const yesterdayTasks = (yesterdayPlan?.tasks || []).map((t) => ({
+      id: t.id,
+      description: t.description,
+      completed: t.completed,
+      status: t.completed ? 'COMPLETED' : 'MISSED',
+      minutesTarget: t.minutesTarget,
+    }));
+
+    const yesterdayWorkoutStatus = yesterdayWorkoutLog
+      ? { status: 'COMPLETED', type: yesterdayWorkoutLog.workoutDay.type }
+      : { status: 'MISSED', type: 'Workout Session' };
 
     return NextResponse.json({
-      id: null,
+      planId: todayPlan.planId,
       dateFormatted,
       day300,
-      tasks: [],
+      openTimeFormatted,
+      closeTimeFormatted,
+      closeTimestamp: windowInfo.closeUtc.getTime(),
+      nextUnlockTimestamp: windowInfo.nextUnlockUtc.getTime(),
+      isOpen: windowInfo.isOpen,
+      isClosed: windowInfo.isClosed,
+      tasks: todayPlan.tasks,
+      yesterday: {
+        dateFormatted: yesterdayDateFormatted,
+        workout: yesterdayWorkoutStatus,
+        tasks: yesterdayTasks,
+        completedCount: yesterdayTasks.filter((t) => t.completed).length + (yesterdayWorkoutLog ? 1 : 0),
+        totalCount: yesterdayTasks.length + 1,
+      },
     });
   } catch (error: any) {
     console.error('Plan today error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 });
   }
 }

@@ -2,9 +2,23 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { computeLevel } from '@/lib/xp';
 import { recordProgressActivity } from '@/lib/progressEngine';
+import { getAddisNow, workoutWindowForAddisDate } from '@/lib/workoutTime';
 
 export async function POST(request: NextRequest) {
   try {
+    // Authoritative Hard 09:28 PM Cutoff Check
+    const addisNow = getAddisNow();
+    const { isClosed } = workoutWindowForAddisDate(addisNow);
+    if (isClosed) {
+      return NextResponse.json(
+        {
+          error: 'Daily workout execution window closed at 09:28 PM Ethiopia Time. Unsubmitted workouts are marked MISSED and cannot be submitted, edited, or backdated.',
+          locked: true,
+        },
+        { status: 403 }
+      );
+    }
+
     const body = await request.json();
     if (
       !body.workoutDayId ||
@@ -58,14 +72,31 @@ export async function POST(request: NextRequest) {
           workoutDayId: body.workoutDayId,
           weekNumber: body.weekNumber,
           notes: body.notes?.trim() || null,
-          exerciseLogs: { create: exercises },
+          exerciseLogs: {
+            create: exercises.map((exercise: any) => ({
+              exerciseId: exercise.exerciseId,
+              setsCompleted: exercise.setsCompleted,
+              repsCompleted: exercise.repsCompleted,
+              weightKg: exercise.weightKg,
+              checked: exercise.checked,
+              setDetails: exercise.setDetails,
+            })),
+          },
         },
-        include: { exerciseLogs: true, workoutDay: true },
+        include: {
+          exerciseLogs: {
+            include: {
+              exercise: true,
+            },
+          },
+        },
       });
 
       const profile = await transaction.userProfile.update({
         where: { id: 'singleton' },
-        data: { totalXp: { increment: xpEarned } },
+        data: {
+          totalXp: { increment: xpEarned },
+        },
       });
 
       const level = computeLevel(profile.totalXp);
@@ -75,13 +106,14 @@ export async function POST(request: NextRequest) {
           data: { level },
         });
       }
-      return log;
+
+      return { log, xpEarned };
     });
 
     await recordProgressActivity(0).catch(() => {});
-    return NextResponse.json({ log: result, xpEarned }, { status: 201 });
-  } catch (error: any) {
-    console.error('Workout log error:', error);
-    return NextResponse.json({ error: error.message || 'Failed to save workout log' }, { status: 500 });
+    return NextResponse.json(result);
+  } catch (error) {
+    console.error('Error creating workout log:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

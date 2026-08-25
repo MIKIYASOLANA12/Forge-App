@@ -156,14 +156,21 @@ model DailyPlan {
 }
 
 model PlanTask {
-  id            String    @id @default(cuid())
-  dailyPlanId   String
-  dailyPlan     DailyPlan @relation(fields: [dailyPlanId], references: [id])
-  domainId      String
-  description   String
-  minutesTarget Int
-  completed     Boolean   @default(false)
-  googleEventId String?
+  id               String    @id @default(cuid())
+  dailyPlanId      String
+  dailyPlan        DailyPlan @relation(fields: [dailyPlanId], references: [id])
+  domainId         String
+  description      String
+  minutesTarget    Int
+  completed        Boolean   @default(false)
+  googleEventId    String?
+  subject          String?   // "JavaScript" | "Chemistry" | "General"
+  topic            String?   // "Conditionals", "Stoichiometry", etc.
+  priority         String?   @default("MEDIUM") // "HIGH" | "MEDIUM" | "LOW"
+  xpTarget         Int?      @default(30)
+  plannedStartTime String?   // "06:00"
+  plannedEndTime   String?   // "07:30"
+  isStudy          Boolean   @default(false)
 }
 
 model Meal {
@@ -423,4 +430,67 @@ model PhysiqueCheckin {
   sideTricepsUrl  String?  // Pose 5: Side Chest & Triceps (Triceps Horseshoe, Chest Thickness)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+}
+
+model StudyTopicMastery {
+  id              String    @id @default(cuid())
+  subject         String    // "JavaScript" | "Chemistry"
+  topicId         String    // "conditionals", "loops", "stoichiometry", etc.
+  topicName       String
+  masteryLevel    Int       @default(1) // 1 = Understand, 2 = Recall, 3 = Apply, 4 = Mastered
+  isMastered      Boolean   @default(false)
+  masteredAt      DateTime?
+  accuracy        Float     @default(0)
+  attemptsCount   Int       @default(0)
+  correctCount    Int       @default(0)
+  lastStudiedAt   DateTime?
+  weakConcepts    String?   // JSON array of weak concept strings
+  strongConcepts  String?   // JSON array of strong concept strings
+  updatedAt       DateTime  @updatedAt
+
+  @@unique([subject, topicId])
+}
+
+model StudyQuestion {
+  id            String   @id @default(cuid())
+  subject       String   // "JavaScript" | "Chemistry"
+  topicId       String
+  topicName     String
+  subtopic      String?
+  masteryLevel  Int      @default(1) // 1, 2, 3, 4
+  difficulty    String   @default("medium") // "easy" | "medium" | "hard" | "entrance"
+  type          String   @default("multiple_choice")
+  prompt        String
+  options       String   // JSON array of options
+  correctAnswer String
+  explanation   String
+  conceptTag    String   // e.g. "limiting-reactants", "scope-chain"
+  xpReward      Int      @default(20)
+  createdAt     DateTime @default(now())
+}
+
+model StudyAnswerLog {
+  id           String   @id @default(cuid())
+  questionId   String
+  subject      String
+  topicId      String
+  userAnswer   String
+  isCorrect    Boolean
+  masteryLevel Int
+  xpAwarded    Int      @default(0)
+  conceptTag   String?
+  answeredAt   DateTime @default(now())
+}
+
+model AccountabilityRoastLog {
+  id             String   @id @default(cuid())
+  date           DateTime
+  category       String   // "WORKOUT_MISSED" | "TASK_MISSED" | "STUDY_MISSED" | "COMBINED" | "PERFECT_DAY"
+  intensity      Int      @default(3)
+  roastHash      String
+  message        String
+  sentToTelegram Boolean  @default(false)
+  createdAt      DateTime @default(now())
+
+  @@unique([date, category])
 }

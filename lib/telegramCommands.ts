@@ -20,6 +20,7 @@ import {
   workoutWindowForAddisDate,
   toUtcFromAddis,
   getWorkoutLocationForAddisDate,
+  getDayOfJourney300,
 } from './workoutTime';
 import { getDailyBreakdown, getProgressHistory } from './progressEngine';
 import { ACHIEVEMENTS_CATALOG } from './achievements';
@@ -36,6 +37,7 @@ function getTodayDateRange() {
 export async function getTodaySummary(): Promise<string> {
   const { now, todayStart, todayEnd } = getTodayDateRange();
   const breakdown = await getDailyBreakdown(now);
+  const day300 = getDayOfJourney300(now);
 
   const weekday = now.toLocaleDateString('en-US', { weekday: 'long' });
   const formattedDate = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
@@ -68,7 +70,7 @@ export async function getTodaySummary(): Promise<string> {
     : `⏳ Scheduled: ${targetType} (${locationType})`;
 
   return `🛡️ FORGE DAILY SUMMARY: ${weekday}, ${formattedDate}
-(Addis Ababa Time • 05:00 Day Boundary)
+🔥 ${day300.formatted} (${day300.percentage}%) • 05:00 AM Ethiopia Day Rollover
 
 ⚡ Character Status:
 • Level ${level} (${totalXp.toLocaleString()} XP)

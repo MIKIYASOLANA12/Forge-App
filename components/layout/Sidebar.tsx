@@ -6,12 +6,13 @@ import { useState } from "react";
 import {
   Home, BarChart3, Target, BookOpen, UtensilsCrossed,
   Library, Heart, MessageSquare, BookMarked, Settings,
-  Zap, X, Menu, Dumbbell, CalendarDays, TrendingUp, Camera,
+  Zap, X, Menu, Dumbbell, CalendarDays, TrendingUp, Camera, CheckSquare,
 } from "lucide-react";
 import { clsx } from "clsx";
 
 const NAV_ITEMS = [
   { href: "/", label: "Today", icon: Home },
+  { href: "/todo", label: "Daily Todo", icon: CheckSquare },
   { href: "/workout", label: "Workout", icon: Dumbbell },
   { href: "/physique", label: "Physique", icon: Camera },
   { href: "/plans", label: "Plans", icon: CalendarDays },

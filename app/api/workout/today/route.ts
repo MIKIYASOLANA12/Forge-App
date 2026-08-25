@@ -6,6 +6,7 @@ import {
   workoutWindowForAddisDate,
   toUtcFromAddis,
   getWorkoutLocationForAddisDate,
+  getDayOfJourney300,
 } from '@/lib/workoutTime';
 import {
   WORKOUT_DAY_TARGETS,
@@ -18,6 +19,7 @@ const ORDER = ['Push', 'Pull', 'LegsCore'];
 export async function GET() {
   const addisNow = getAddisNow();
   const windowInfo = workoutWindowForAddisDate(addisNow);
+  const day300 = getDayOfJourney300(addisNow);
 
   const [program, lastLog, days, todayLog] = await Promise.all([
     prisma.workoutProgram.findUnique({ where: { id: 'singleton' } }),
@@ -36,16 +38,13 @@ export async function GET() {
   const week = getCurrentWeek(program.startDate);
   const phase = getPhase(week);
 
-  // Determine scheduled workout
-  let activeDay = days[0];
+  // Determine scheduled workout by calendar day progression
+  // Every day has its own scheduled workout in the sequence regardless of past misses
+  const scheduledType = ORDER[(day300.dayNumber - 1) % ORDER.length];
+  let activeDay = days.find((d) => d.type === scheduledType) || days[0];
+
   if (todayLog) {
-    activeDay = days.find((d) => d.id === todayLog.workoutDayId) || days.find((d) => d.type === todayLog.workoutDay.type) || days[0];
-  } else if (lastLog) {
-    const lastIndex = ORDER.indexOf(lastLog.workoutDay.type);
-    const nextType = ORDER[(lastIndex + 1) % ORDER.length];
-    activeDay = days.find((item) => item.type === nextType) ?? days[0];
-  } else {
-    activeDay = days.find((item) => item.type === 'Push') ?? days[0];
+    activeDay = days.find((d) => d.id === todayLog.workoutDayId) || days.find((d) => d.type === todayLog.workoutDay.type) || activeDay;
   }
 
   // Location based on weekly schedule: Monday, Wednesday, Saturday = GYM; other days = HOME
@@ -75,10 +74,9 @@ export async function GET() {
     year: 'numeric',
   });
 
-  // Next workout day details
-  const activeTypeIndex = ORDER.indexOf(activeDay.type);
-  const nextDayType = ORDER[(activeTypeIndex + 1) % ORDER.length];
-  const nextDay = days.find((item) => item.type === nextDayType) ?? days[0];
+  // Next workout day details (Calendar progression to next day)
+  const nextScheduledType = ORDER[day300.dayNumber % ORDER.length];
+  const nextDay = days.find((item) => item.type === nextScheduledType) ?? days[0];
   const nextLocation = getWorkoutLocationForAddisDate(windowInfo.nextUnlockAddis);
   const nextTargetInfo = WORKOUT_DAY_TARGETS[nextDay.type] || targetInfo;
 
@@ -118,7 +116,8 @@ export async function GET() {
       }));
 
   const isCompleted = Boolean(todayLog);
-  const isMissed = windowInfo.isClosed && !isCompleted;
+  const isClosed = windowInfo.isClosed;
+  const isMissed = isClosed && !isCompleted;
 
   return NextResponse.json({
     currentDayName,
@@ -128,9 +127,10 @@ export async function GET() {
     closeTimestamp: windowInfo.closeUtc.getTime(),
     nextUnlockTimestamp: windowInfo.nextUnlockUtc.getTime(),
     isOpen: windowInfo.isOpen,
-    isClosed: windowInfo.isClosed,
+    isClosed,
     isMissed,
     completedToday: isCompleted,
+    day300,
     targetBodyParts: targetInfo.primaryBodyParts,
     focusBadges: targetInfo.focusBadges,
     targetDescription: targetInfo.description,

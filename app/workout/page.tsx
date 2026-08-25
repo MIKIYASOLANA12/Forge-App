@@ -487,7 +487,89 @@ function TodayWorkoutTab({
     );
   }
 
-  // ── CASE 1: WORKOUT COMPLETED TODAY (CLOSED & COUNTING DOWN UNTIL 05:00 AM TOMORROW) ──
+  // ── CASE 1: WORKOUT MISSED TODAY (CLOSED AT 09:28 PM & LOCKED UNTIL 05:00 AM TOMORROW) ──
+  if ((today as any).isClosed && !today.completedToday) {
+    const nextWk = today.nextWorkout;
+    return (
+      <div className="space-y-6 animate-fade-in">
+        {/* Missed Announcement & Countdown Banner */}
+        <section className="relative overflow-hidden rounded-2xl border border-rose-500/40 bg-gradient-to-br from-rose-950/40 via-slate-900/90 to-slate-950 p-6 md:p-8 shadow-2xl">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold bg-rose-500/20 text-rose-300 border border-rose-500/40">
+                  <Lock size={14} /> 🔴 WORKOUT MISSED & LOCKED
+                </span>
+                <span className="text-xs text-slate-400">
+                  Window Closed at <strong className="text-white">09:28 PM</strong> Ethiopia Time
+                </span>
+              </div>
+              <h2 className="text-3xl md:text-4xl font-extrabold text-white">
+                Daily Workout Locked as MISSED
+              </h2>
+              <p className="text-sm text-slate-300 max-w-xl leading-relaxed">
+                You had 16 hours and 28 minutes (05:00 AM – 09:28 PM) to log today's session.
+                Because the cutoff passed without submission, this workout is permanently locked and cannot be backdated or submitted.
+                The protocol advances tomorrow at <strong className="text-orange-400">05:00 AM</strong> with a fresh scheduled session.
+              </p>
+            </div>
+
+            {/* Countdown Badge to 05:00 AM Tomorrow */}
+            <div className="flex flex-col items-start md:items-end gap-2 bg-slate-950/90 p-5 rounded-2xl border border-rose-500/30 shadow-xl">
+              <span className="text-xs font-bold uppercase tracking-wider text-rose-400 flex items-center gap-1.5">
+                <Clock3 size={14} /> Next Session Unlocks In
+              </span>
+              <CountdownTimer targetTimestamp={nextWk.unlockTimestamp} />
+              <span className="text-xs text-slate-400 flex items-center gap-1 mt-1 font-semibold">
+                Tomorrow ({nextWk.dateFormatted.split(",")[0]}) at 05:00 AM
+              </span>
+            </div>
+          </div>
+        </section>
+
+        {/* Tomorrow's Workout Preview Card */}
+        <section className="relative rounded-2xl border border-slate-800 bg-slate-900/50 p-6 md:p-8 overflow-hidden">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4 border-b border-slate-800 pb-4">
+            <div>
+              <span className="text-xs font-bold uppercase tracking-wider text-orange-400">
+                Tomorrow's Scheduled Protocol · {nextWk.location}
+              </span>
+              <h3 className="text-2xl font-bold text-white mt-1">
+                {nextWk.type} Day ({nextWk.targetBodyParts || "Target Hypertrophy"})
+              </h3>
+              <p className="text-xs text-slate-400 mt-1">
+                Phase Prescription: <strong className="text-white">{nextWk.phase.sets} sets × {nextWk.phase.reps} reps</strong>
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-orange-500/10 border border-orange-500/20 text-orange-400 text-xs font-bold">
+              <Lock size={14} /> Unlocks at 05:00 AM
+            </div>
+          </div>
+
+          {/* Tomorrow's Exercises List */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+            {nextWk.exercises.map((ex, i) => (
+              <div
+                key={ex.id || i}
+                className="p-3 rounded-xl border border-slate-800/80 bg-slate-950/60 flex flex-col justify-between space-y-1.5"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-mono font-bold text-slate-500">0{i + 1}</span>
+                  <span className="text-xs font-bold text-slate-200 truncate">{ex.name}</span>
+                </div>
+                {ex.targetMuscle && (
+                  <span className="text-[10px] text-orange-400 font-medium">🎯 {ex.targetMuscle}</span>
+                )}
+              </div>
+            ))}
+          </div>
+        </section>
+      </div>
+    );
+  }
+
+  // ── CASE 2: WORKOUT COMPLETED TODAY (CLOSED & COUNTING DOWN UNTIL 05:00 AM TOMORROW) ──
   if (today.completedToday && !manualOverride) {
     const nextWk = today.nextWorkout;
     return (

@@ -75,20 +75,98 @@ const NT_PLAN = [
 ]
 
 const WORKOUT_DAYS = [
-  { id: 'workout-push', type: 'Push', exercises: ['Dumbbell Shoulder Press', 'Cable Lateral Raises (cable crossover)', 'Barbell Bench Press', 'Pec Deck Machine', 'Cable Tricep Pushdown (cable crossover)', 'Overhead Tricep Extension (EZ-bar or cable)'] },
-  { id: 'workout-pull', type: 'Pull', exercises: ['Lat Pulldown (wide grip)', 'Cable Row', 'Hammer Strength Row', 'Face Pulls (cable crossover)', 'EZ-Bar Bicep Curl', 'Hammer Curl'] },
-  { id: 'workout-legs-core', type: 'LegsCore', exercises: ['Barbell Squat', 'Hammer Strength Leg Press', 'Ab Crunch Machine', 'Hanging Knee Raises (pull-up bar)', 'Dip Bar L-Sit Hold', 'Cable Woodchop (cable crossover)'] },
-]
+  {
+    id: 'workout-push',
+    type: 'Push',
+    gymExercises: [
+      'Barbell Bench Press',
+      'Dumbbell Shoulder Press',
+      'Cable Lateral Raises (cable crossover)',
+      'Pec Deck Machine',
+      'Cable Tricep Pushdown (cable crossover)',
+      'Overhead Tricep Extension (EZ-bar or cable)',
+    ],
+    homeExercises: [
+      'Feet-Elevated Decline Push-Ups',
+      'Pike Push-Ups (or Wall Handstand Press)',
+      'Dumbbell / Water-Bottle Lateral Raises',
+      'Diamond Push-Ups (or Chair Tricep Dips)',
+      'Overhead Dumbbell / Backpack Tricep Extension',
+      'Floor Isometric Squeeze Press / Floor Flyes',
+    ],
+  },
+  {
+    id: 'workout-pull',
+    type: 'Pull',
+    gymExercises: [
+      'Lat Pulldown (wide grip)',
+      'Cable Row',
+      'Hammer Strength Row',
+      'Face Pulls (cable crossover)',
+      'EZ-Bar Bicep Curl',
+      'Hammer Curl',
+    ],
+    homeExercises: [
+      'Doorframe / Towel Inverted Rows',
+      'Prone Cobra / Floor Y-T-W Raises',
+      'Dumbbell / Backpack / Resistance Band Bicep Curls',
+      'Hammer Curls (Dumbbell or Loaded Backpack)',
+      'Bent-Over Rear Delt Flyes',
+      'Superman Lat Pulls (Floor Lat Drive)',
+    ],
+  },
+  {
+    id: 'workout-legs-core',
+    type: 'LegsCore',
+    gymExercises: [
+      'Barbell Squat',
+      'Hammer Strength Leg Press',
+      'Ab Crunch Machine',
+      'Hanging Knee Raises (pull-up bar)',
+      'Dip Bar L-Sit Hold',
+      'Cable Woodchop (cable crossover)',
+    ],
+    homeExercises: [
+      'Bulgarian Split Squats (Rear Foot on Chair)',
+      'Bodyweight / Dumbbell Goblet Squats',
+      'Single-Leg Glute Bridges / Romanian Deadlifts',
+      'Bicycle Crunches & Deadbugs',
+      'Lying Leg Raises / Reverse Crunches',
+      'Plank to Shoulder Taps & Side Planks',
+    ],
+  },
+];
 
 async function seedWorkout() {
-  const startDate = new Date()
-  startDate.setDate(startDate.getDate() - 14)
-  startDate.setHours(startDate.getHours() + 1)
-  await prisma.workoutProgram.upsert({ where: { id: 'singleton' }, update: { startDate, currentWeek: 2 }, create: { id: 'singleton', startDate, currentWeek: 2 } })
+  const startDate = new Date();
+  startDate.setDate(startDate.getDate() - 14);
+  startDate.setHours(startDate.getHours() + 1);
+  await prisma.workoutProgram.upsert({
+    where: { id: 'singleton' },
+    update: { startDate, currentWeek: 2 },
+    create: { id: 'singleton', startDate, currentWeek: 2 },
+  });
   for (const day of WORKOUT_DAYS) {
-    await prisma.workoutDay.upsert({ where: { id: day.id }, update: { type: day.type }, create: { id: day.id, type: day.type } })
-    for (const [index, name] of day.exercises.entries()) {
-      await prisma.workoutExercise.upsert({ where: { id: `${day.id}-${index + 1}` }, update: { name, order: index + 1, workoutDayId: day.id }, create: { id: `${day.id}-${index + 1}`, workoutDayId: day.id, name, order: index + 1 } })
+    await prisma.workoutDay.upsert({
+      where: { id: day.id },
+      update: { type: day.type },
+      create: { id: day.id, type: day.type },
+    });
+    // Seed GYM exercises (order 1..6)
+    for (const [index, name] of day.gymExercises.entries()) {
+      await prisma.workoutExercise.upsert({
+        where: { id: `${day.id}-${index + 1}` },
+        update: { name, order: index + 1, workoutDayId: day.id },
+        create: { id: `${day.id}-${index + 1}`, workoutDayId: day.id, name, order: index + 1 },
+      });
+    }
+    // Seed HOME exercises (order 101..106)
+    for (const [index, name] of day.homeExercises.entries()) {
+      await prisma.workoutExercise.upsert({
+        where: { id: `${day.id}-home-${index + 1}` },
+        update: { name, order: 101 + index, workoutDayId: day.id },
+        create: { id: `${day.id}-home-${index + 1}`, workoutDayId: day.id, name, order: 101 + index },
+      });
     }
   }
 }

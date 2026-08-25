@@ -7,7 +7,11 @@ import {
   toUtcFromAddis,
   getWorkoutLocationForAddisDate,
 } from '@/lib/workoutTime';
-import { WORKOUT_DAY_TARGETS, getExerciseMuscleInfo } from '@/lib/workoutMuscleTargets';
+import {
+  WORKOUT_DAY_TARGETS,
+  getExerciseMuscleInfo,
+  getProtocolExercises,
+} from '@/lib/workoutMuscleTargets';
 
 const ORDER = ['Push', 'Pull', 'LegsCore'];
 
@@ -98,6 +102,34 @@ export async function GET() {
     year: 'numeric',
   });
 
+  // Filter exercises by location: HOME (order >= 100) vs GYM (order < 100)
+  const rawActiveExercises = activeDay.exercises.filter((ex) =>
+    location === 'HOME' ? ex.order >= 100 : ex.order < 100
+  );
+
+  // Fallback to definition library if DB did not have the exact subset
+  const activeExerciseList = rawActiveExercises.length > 0
+    ? rawActiveExercises
+    : getProtocolExercises(activeDay.type, location).map((p, idx) => ({
+        id: `${activeDay.id}-${location.toLowerCase()}-${idx + 1}`,
+        workoutDayId: activeDay.id,
+        name: p.name,
+        order: location === 'HOME' ? 101 + idx : idx + 1,
+      }));
+
+  const rawNextExercises = nextDay.exercises.filter((ex) =>
+    nextLocation === 'HOME' ? ex.order >= 100 : ex.order < 100
+  );
+
+  const nextExerciseList = rawNextExercises.length > 0
+    ? rawNextExercises
+    : getProtocolExercises(nextDay.type, nextLocation).map((p, idx) => ({
+        id: `${nextDay.id}-${nextLocation.toLowerCase()}-${idx + 1}`,
+        workoutDayId: nextDay.id,
+        name: p.name,
+        order: nextLocation === 'HOME' ? 101 + idx : idx + 1,
+      }));
+
   return NextResponse.json({
     currentDayName,
     currentDateFormatted,
@@ -117,7 +149,7 @@ export async function GET() {
       location,
       targetBodyParts: targetInfo.primaryBodyParts,
       focusBadges: targetInfo.focusBadges,
-      exercises: activeDay.exercises.map((exercise) => {
+      exercises: activeExerciseList.map((exercise) => {
         const muscleInfo = getExerciseMuscleInfo(exercise.name);
         return {
           ...exercise,
@@ -135,7 +167,7 @@ export async function GET() {
       targetBodyParts: nextTargetInfo.primaryBodyParts,
       focusBadges: nextTargetInfo.focusBadges,
       phase,
-      exercises: nextDay.exercises.map((exercise) => {
+      exercises: nextExerciseList.map((exercise) => {
         const muscleInfo = getExerciseMuscleInfo(exercise.name);
         return {
           ...exercise,

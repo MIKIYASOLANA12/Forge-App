@@ -1,7 +1,12 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getCurrentWeek, getPhase } from '@/lib/workout';
-import { getAddisNow, workoutWindowForAddisDate, toUtcFromAddis } from '@/lib/workoutTime';
+import {
+  getAddisNow,
+  workoutWindowForAddisDate,
+  toUtcFromAddis,
+  getWorkoutLocationForAddisDate,
+} from '@/lib/workoutTime';
 import { WORKOUT_DAY_TARGETS, getExerciseMuscleInfo } from '@/lib/workoutMuscleTargets';
 
 const ORDER = ['Push', 'Pull', 'LegsCore'];
@@ -44,7 +49,8 @@ export async function GET() {
     activeDay = days.find((item) => item.type === 'Push') ?? days[0];
   }
 
-  const location = activeDay.type === 'LegsCore' ? 'HOME / GYM' : 'GYM';
+  // Location based on weekly schedule: Monday, Wednesday, Saturday = GYM; other days = HOME
+  const location = getWorkoutLocationForAddisDate(todayStartAddis);
   const targetInfo = WORKOUT_DAY_TARGETS[activeDay.type] || {
     primaryBodyParts: 'Full Body Hypertrophy',
     focusBadges: ['Compound Movements', 'Core Stability'],
@@ -81,7 +87,7 @@ export async function GET() {
   const activeTypeIndex = ORDER.indexOf(activeDay.type);
   const nextDayType = ORDER[(activeTypeIndex + 1) % ORDER.length];
   const nextDay = days.find((item) => item.type === nextDayType) ?? days[0];
-  const nextLocation = nextDay.type === 'LegsCore' ? 'HOME / GYM' : 'GYM';
+  const nextLocation = getWorkoutLocationForAddisDate(nextUnlockAddis);
   const nextTargetInfo = WORKOUT_DAY_TARGETS[nextDay.type] || targetInfo;
 
   const currentDayName = addisNow.toLocaleDateString('en-US', { weekday: 'long' });

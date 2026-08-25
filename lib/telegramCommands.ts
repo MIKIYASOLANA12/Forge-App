@@ -15,7 +15,12 @@ function formatTaskText(desc: string): string {
 import { prisma } from './prisma';
 import { getCurrentWeek, getPhase } from './workout';
 import { levelProgress, computeLevel } from './xp';
-import { getAddisNow, workoutWindowForAddisDate, toUtcFromAddis } from './workoutTime';
+import {
+  getAddisNow,
+  workoutWindowForAddisDate,
+  toUtcFromAddis,
+  getWorkoutLocationForAddisDate,
+} from './workoutTime';
 import { getDailyBreakdown, getProgressHistory } from './progressEngine';
 import { ACHIEVEMENTS_CATALOG } from './achievements';
 
@@ -55,7 +60,8 @@ export async function getTodaySummary(): Promise<string> {
   const lastIndex = lastLog ? ORDER.indexOf(lastLog.workoutDay.type) : -1;
   const targetType = ORDER[(lastIndex + 1) % ORDER.length];
   const targetDay = days.find((d) => d.type === targetType) ?? days[0];
-  const locationType = targetDay?.type === 'LegsCore' ? '🏠 HOME / GYM' : '🏋️‍♂️ GYM';
+  const isGym = getWorkoutLocationForAddisDate(now) === 'GYM';
+  const locationType = isGym ? '🏋️‍♂️ GYM' : '🏠 HOME';
 
   const workoutStatus = breakdown.workout.completed
     ? `✅ Completed (${breakdown.workout.type || targetType})`
@@ -151,10 +157,14 @@ export async function getWorkoutSummary(): Promise<string> {
     day: 'numeric',
   });
 
-  const locationType = targetDay.type === 'LegsCore' ? '🏠 HOME / GYM' : '🏋️‍♂️ GYM';
+  const isGymToday = getWorkoutLocationForAddisDate(now) === 'GYM';
+  const locationType = isGymToday ? '🏋️‍♂️ GYM' : '🏠 HOME';
+
+  const isGymNext = getWorkoutLocationForAddisDate(nextWorkoutDate) === 'GYM';
+  const nextLocationType = isGymNext ? '🏋️‍♂️ GYM' : '🏠 HOME';
 
   const statusHeader = todayLog
-    ? `✅ COMPLETED TODAY (${todayLog.workoutDay.type})\n⏳ Next Workout: ${nextDateFormatted} (${targetType} - ${locationType})`
+    ? `✅ COMPLETED TODAY (${todayLog.workoutDay.type})\n⏳ Next Workout: ${nextDateFormatted} (${targetType} - ${nextLocationType})`
     : `⏳ TODAY'S SCHEDULED WORKOUT: ${targetDay.type}`;
 
   return `🏋️ FORGE WORKOUT TRACKER

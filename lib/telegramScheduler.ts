@@ -11,8 +11,11 @@ function formatTaskText(desc: string): string {
   }
 }
 
-import { prisma } from './prisma';
-import { getAddisNow, workoutWindowForAddisDate } from './workoutTime';
+import {
+  getAddisNow,
+  workoutWindowForAddisDate,
+  getWorkoutLocationForAddisDate,
+} from './workoutTime';
 import { sendTelegramMessage } from './telegram';
 import { getDailyBreakdown, getProgressHistory } from './progressEngine';
 import { computeLevel, levelProgress } from './xp';
@@ -73,7 +76,7 @@ export async function sendDailyAccountabilityReminder(force: boolean = false) {
   const lastIndex = lastLog ? ORDER.indexOf(lastLog.workoutDay.type) : -1;
   const targetType = ORDER[(lastIndex + 1) % ORDER.length];
   const targetDay = days.find((d) => d.type === targetType) ?? days[0];
-  const location = targetDay?.type === 'LegsCore' ? 'HOME / GYM' : 'GYM';
+  const location = getWorkoutLocationForAddisDate(startAddis);
 
   // Incomplete tasks
   const pendingTasks = plan ? plan.tasks.filter((t) => !t.completed) : [];

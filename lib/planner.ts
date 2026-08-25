@@ -1,6 +1,7 @@
 import { prisma } from './prisma'
 import { generateGeminiJson } from './gemini'
 import { getStudyWeight, getTaperStage, getDaysToExam } from './taperCurve'
+import { isGymDay } from './workoutTime'
 import { subDays, startOfDay, format } from 'date-fns'
 
 export interface PlanTask {
@@ -45,6 +46,7 @@ export async function buildPlannerContext(date: Date) {
   const daysToExam = getDaysToExam(profile.examDate)
   const taperStage = getTaperStage(profile.examDate)
   const studyWeight = getStudyWeight(profile.examDate)
+  const workoutLocation = isGymDay(date) ? 'GYM' : 'HOME'
 
   // Aggregate sessions by domain for the last 14 days
   const sessionsByDomain = domains.map(d => {
@@ -84,6 +86,7 @@ export async function buildPlannerContext(date: Date) {
     daysToExam,
     taperStage,
     studyWeight,
+    workoutLocation,
     sessionsByDomain,
     habitStatus,
     reflections: reflectionSummary,
@@ -104,6 +107,7 @@ Rules:
 - Each task must be specific ("Solve 15 quadratic equations, 40 min") — never vague ("study math")
 - Time targets must be realistic for one day total (max 5 hours across all tasks)
 - Study gets weight ${ctx.studyWeight}x today (${ctx.taperStage}, ${ctx.daysToExam} days to exam) — reflect this in time allocation
+- Workout Location Schedule: Monday, Wednesday, Saturday are strictly GYM days; Tuesday, Thursday, Friday, Sunday are HOME workout days. Today is a ${ctx.workoutLocation} workout day. If generating a workout task, specify it as a ${ctx.workoutLocation} session.
 - If a habit isn't done today, include a task that covers it
 - Never suggest tasks the user consistently skips — check the session history
 - Domains with 0 sessions in the last 7 days need a task today unless exam pressure justifies skipping

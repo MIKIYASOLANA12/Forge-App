@@ -18,6 +18,20 @@ export function addisFromUtc(utcDate: Date): Date {
   return new Date(utcDate.getTime() + ADDIS_OFFSET_MS);
 }
 
+/**
+ * Workout Protocol Schedule:
+ * GYM Days: Monday (1), Wednesday (3), Saturday (6)
+ * HOME Days: Tuesday (2), Thursday (4), Friday (5), Sunday (0)
+ */
+export function isGymDay(addisDate: Date): boolean {
+  const dayOfWeek = addisDate.getDay();
+  return dayOfWeek === 1 || dayOfWeek === 3 || dayOfWeek === 6;
+}
+
+export function getWorkoutLocationForAddisDate(addisDate: Date): 'GYM' | 'HOME' {
+  return isGymDay(addisDate) ? 'GYM' : 'HOME';
+}
+
 // For a given Addis-local date, return the UTC window (start/end) that corresponds to the
 // workout day which begins at WORKOUT_DAY_START_HOUR in Addis timezone.
 export function workoutWindowForAddisDate(addisDate: Date) {

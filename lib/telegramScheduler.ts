@@ -1,3 +1,13 @@
+import { prisma } from './prisma';
+import {
+  getAddisNow,
+  workoutWindowForAddisDate,
+  getWorkoutLocationForAddisDate,
+} from './workoutTime';
+import { sendTelegramMessage } from './telegram';
+import { getDailyBreakdown, getProgressHistory } from './progressEngine';
+import { computeLevel, levelProgress } from './xp';
+import { getCurrentWeek, getPhase } from './workout';
 
 function formatTaskText(desc: string): string {
   try {
@@ -10,16 +20,6 @@ function formatTaskText(desc: string): string {
     return desc;
   }
 }
-
-import {
-  getAddisNow,
-  workoutWindowForAddisDate,
-  getWorkoutLocationForAddisDate,
-} from './workoutTime';
-import { sendTelegramMessage } from './telegram';
-import { getDailyBreakdown, getProgressHistory } from './progressEngine';
-import { computeLevel, levelProgress } from './xp';
-import { getCurrentWeek, getPhase } from './workout';
 
 /**
  * Sends a single daily accountability reminder to verified Telegram accounts
@@ -75,11 +75,11 @@ export async function sendDailyAccountabilityReminder(force: boolean = false) {
   const ORDER = ['Push', 'Pull', 'LegsCore'];
   const lastIndex = lastLog ? ORDER.indexOf(lastLog.workoutDay.type) : -1;
   const targetType = ORDER[(lastIndex + 1) % ORDER.length];
-  const targetDay = days.find((d) => d.type === targetType) ?? days[0];
+  const targetDay = days.find((d: any) => d.type === targetType) ?? days[0];
   const location = getWorkoutLocationForAddisDate(startAddis);
 
   // Incomplete tasks
-  const pendingTasks = plan ? plan.tasks.filter((t) => !t.completed) : [];
+  const pendingTasks = plan ? plan.tasks.filter((t: any) => !t.completed) : [];
   const nextTask = formatTaskText(pendingTasks[0]?.description || "") || 'Complete scheduled focus session';
 
   // Calculate active streak
@@ -102,7 +102,7 @@ export async function sendDailyAccountabilityReminder(force: boolean = false) {
   }
 
   const missedTasksStr = pendingTasks.length > 0
-    ? pendingTasks.slice(0, 3).map((t) => `• ${formatTaskText(t.description)} (${t.minutesTarget}m)`).join('\n')
+    ? pendingTasks.slice(0, 3).map((t: any) => `• ${formatTaskText(t.description)} (${t.minutesTarget}m)`).join('\n')
     : 'None pending';
 
   // Check if end of month physique check-in is pending

@@ -10,11 +10,11 @@ const ORDER = ['Push', 'Pull', 'LegsCore'];
  */
 export async function ensureTodayDailyPlan() {
   const addisNow = getAddisNow();
-  const { startUtc, endUtc, startAddis, isClosed, closeUtc, nextUnlockUtc } = workoutWindowForAddisDate(addisNow);
+  const windowInfo = workoutWindowForAddisDate(addisNow);
 
   // 1. Fetch existing DailyPlan for this Addis window
   let plan = await prisma.dailyPlan.findFirst({
-    where: { date: { gte: startUtc, lte: endUtc } },
+    where: { date: { gte: windowInfo.startUtc, lte: windowInfo.endUtc } },
     include: {
       tasks: {
         orderBy: [{ isStudy: 'desc' }, { priority: 'asc' }],
@@ -26,63 +26,80 @@ export async function ensureTodayDailyPlan() {
   const domainByName = new Map(domains.map((d) => [d.name.toLowerCase(), d.id]));
   const defaultDomainId = domains[0]?.id || 'singleton';
 
+  // Query masteries to compute roadmaps
+  const masteries = await prisma.studyTopicMastery.findMany();
+  const masteredTopicIds = masteries.filter((m) => m.isMastered).map((m) => m.topicId);
+  const chemPacing = calculateChemistryOneMonthPlan(masteredTopicIds);
+
+  const jsMasteredIds = masteries
+    .filter((m) => m.subject === 'JavaScript' && m.isMastered)
+    .map((m) => m.topicId);
+  const jsPacing = calculateJavaScriptPacing(jsMasteredIds);
+
   // If no plan exists or has 0 tasks, generate today's real plan
   if (!plan || plan.tasks.length === 0) {
     if (!plan) {
       plan = await prisma.dailyPlan.create({
         data: {
-          date: startUtc,
+          date: windowInfo.startUtc,
           generatedByAI: false,
         },
         include: { tasks: true },
       });
     }
 
-    // A. Query Chemistry roadmap progress
-    const masteries = await prisma.studyTopicMastery.findMany();
-    const masteredTopicIds = masteries.filter((m) => m.isMastered).map((m) => m.topicId);
-    const chemPacing = calculateChemistryOneMonthPlan(masteredTopicIds);
-
-    // B. Query JavaScript 5 Million Coders roadmap progress
-    const jsMasteredIds = masteries
-      .filter((m) => m.subject === 'JavaScript' && m.isMastered)
-      .map((m) => m.topicId);
-    const jsPacing = calculateJavaScriptPacing(jsMasteredIds);
-
-    // C. Query Workout schedule
+    // Workout schedule by calendar sequence
     const lastWorkoutLog = await prisma.workoutLog.findFirst({
       orderBy: { completedAt: 'desc' },
       include: { workoutDay: true },
     });
     const lastIndex = lastWorkoutLog ? ORDER.indexOf(lastWorkoutLog.workoutDay.type) : -1;
     const targetType = ORDER[(lastIndex + 1) % ORDER.length] || 'Push';
-    const isGym = getWorkoutLocationForAddisDate(startAddis) === 'GYM';
+    const isGym = getWorkoutLocationForAddisDate(windowInfo.startAddis) === 'GYM';
     const locationTag = isGym ? 'GYM' : 'HOME';
 
     const tasksToCreate = [
       {
         domainId: domainByName.get('study') || defaultDomainId,
-        description: `Chemistry — ${chemPacing.currentTopic.name} (Learn, Active Recall & Practice)`,
-        minutesTarget: chemPacing.minutesPerDay || 60,
+        description: JSON.stringify({
+          title: `Chemistry — ${chemPacing.currentTopic.name}`,
+          subject: 'Chemistry',
+          topic: chemPacing.currentTopic.name,
+          subtopics: chemPacing.currentTopic.subtopics,
+          practiceTarget: chemPacing.currentTopic.practiceTarget,
+          reviewTarget: chemPacing.currentTopic.reviewTarget,
+          isEntrancePriority: chemPacing.currentTopic.isEntrancePriority,
+          sessionBreakdown: chemPacing.currentTopic.sessionBreakdown,
+        }),
+        minutesTarget: chemPacing.minutesPerDay || 75,
         subject: 'Chemistry',
         topic: chemPacing.currentTopic.name,
-        priority: 'HIGH',
+        priority: chemPacing.currentTopic.isEntrancePriority ? 'HIGH' : 'MEDIUM',
         plannedStartTime: '06:00',
         plannedEndTime: '07:30',
         isStudy: true,
-        xpTarget: 75,
+        xpTarget: chemPacing.currentTopic.isEntrancePriority ? 120 : 85,
       },
       {
         domainId: domainByName.get('coding') || domainByName.get('study') || defaultDomainId,
-        description: `5 Million Coders / JavaScript — ${jsPacing.currentLesson.title}`,
-        minutesTarget: 60,
+        description: JSON.stringify({
+          title: `5 Million Coders / JavaScript — ${jsPacing.currentLesson.module}: ${jsPacing.currentLesson.mainTopic}`,
+          subject: 'JavaScript',
+          module: jsPacing.currentLesson.module,
+          mainTopic: jsPacing.currentLesson.mainTopic,
+          itemRange: jsPacing.currentLesson.itemRange,
+          subtopics: jsPacing.currentLesson.subtopics,
+          quizzes: jsPacing.currentLesson.quizzes,
+          learningTarget: jsPacing.currentLesson.learningTarget,
+        }),
+        minutesTarget: jsPacing.currentLesson.targetMinutes || 100,
         subject: 'JavaScript',
-        topic: jsPacing.currentLesson.title,
+        topic: jsPacing.currentLesson.mainTopic,
         priority: 'HIGH',
         plannedStartTime: '08:00',
-        plannedEndTime: '09:00',
+        plannedEndTime: '09:40',
         isStudy: true,
-        xpTarget: 70,
+        xpTarget: 110,
       },
       {
         domainId: domainByName.get('workout') || defaultDomainId,
@@ -126,24 +143,42 @@ export async function ensureTodayDailyPlan() {
     });
   }
 
-  // Domain map for rich client representation
+  // Domain map for client representation
   const domainMap = Object.fromEntries(domains.map((d) => [d.id, d]));
 
-  const tasksWithDomain = (plan?.tasks || []).map((t) => ({
-    ...t,
-    domain: domainMap[t.domainId] || { name: 'General', color: '#94a3b8', icon: 'check-circle' },
-    isLocked: isClosed && !t.completed, // Locked if window is closed and task was uncompleted
-    status: t.completed ? 'COMPLETED' : isClosed ? 'MISSED' : 'PENDING',
-  }));
+  const tasksWithDomain = (plan?.tasks || []).map((t) => {
+    let parsedDetails: any = null;
+    try {
+      parsedDetails = JSON.parse(t.description);
+    } catch {}
+
+    const displayTitle = parsedDetails?.title || t.description;
+    const subtopics = parsedDetails?.subtopics || [];
+    const isEntrancePriority = Boolean(parsedDetails?.isEntrancePriority);
+
+    return {
+      ...t,
+      displayTitle,
+      subtopics,
+      isEntrancePriority,
+      domain: domainMap[t.domainId] || { name: 'General', color: '#94a3b8', icon: 'check-circle' },
+      isLocked: windowInfo.isClosed && !t.completed,
+      status: t.completed ? 'COMPLETED' : windowInfo.isClosed ? 'MISSED' : 'PENDING',
+    };
+  });
 
   return {
     planId: plan?.id || null,
-    startAddis,
-    closeAddis: workoutWindowForAddisDate(addisNow).closeAddis,
-    closeUtc,
-    nextUnlockUtc,
-    isClosed,
-    isOpen: !isClosed,
+    startAddis: windowInfo.startAddis,
+    closeAddis: windowInfo.closeAddis,
+    closeUtc: windowInfo.closeUtc,
+    nextUnlockUtc: windowInfo.nextUnlockUtc,
+    isClosed: windowInfo.isClosed,
+    isOpen: windowInfo.isOpen,
     tasks: tasksWithDomain,
+    studyProgress: {
+      javascript: jsPacing,
+      chemistry: chemPacing,
+    },
   };
 }

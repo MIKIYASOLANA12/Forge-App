@@ -23,7 +23,12 @@ import {
   Layers,
   Lock,
   History,
-  XCircle
+  XCircle,
+  FlaskConical,
+  GraduationCap,
+  ChevronDown,
+  ChevronUp,
+  Sparkle
 } from "lucide-react";
 import { clsx } from "clsx";
 
@@ -32,6 +37,9 @@ type TaskItem = {
   dailyPlanId: string;
   domainId: string;
   description: string;
+  displayTitle?: string;
+  subtopics?: string[];
+  isEntrancePriority?: boolean;
   minutesTarget: number;
   completed: boolean;
   status: "COMPLETED" | "MISSED" | "PENDING";
@@ -58,6 +66,76 @@ type YesterdayData = {
   totalCount: number;
 };
 
+type StudyProgressData = {
+  javascript: {
+    dayNumber: number;
+    totalDays: number;
+    formattedDay: string;
+    completedCount: number;
+    totalItems: number;
+    percentage: number;
+    daysRemaining: number;
+    requiredItemsPerDay: number;
+    isBehind: boolean;
+    statusText: string;
+    catchUpWorkload: string;
+    currentLesson: {
+      id: string;
+      title: string;
+      module: string;
+      mainTopic: string;
+      itemRange: string;
+      subtopics: string[];
+      quizzes: string[];
+      targetMinutes: number;
+      learningTarget: string;
+    };
+    tomorrowLesson: {
+      title: string;
+      module: string;
+      mainTopic: string;
+      subtopics: string[];
+      targetMinutes: number;
+    };
+  };
+  chemistry: {
+    dayNumber: number;
+    totalDays: number;
+    formattedDay: string;
+    completedCount: number;
+    totalTopics: number;
+    percentage: number;
+    daysRemaining: number;
+    requiredTopicsPerDay: number;
+    isBehind: boolean;
+    statusText: string;
+    catchUpWorkload: string;
+    minutesPerDay: number;
+    currentTopic: {
+      id: string;
+      name: string;
+      weekNumber: number;
+      subtopics: string[];
+      difficulty: string;
+      isEntrancePriority: boolean;
+      practiceTarget: string;
+      reviewTarget: string;
+      sessionBreakdown: {
+        learnMins: number;
+        activeRecallMins: number;
+        flashcardsMins: number;
+        practiceMins: number;
+        oldTopicRecallMins: number;
+      };
+    };
+    tomorrowTopic: {
+      name: string;
+      subtopics: string[];
+      targetMinutes: number;
+    };
+  };
+};
+
 type TodayPlanData = {
   planId: string | null;
   dateFormatted: string;
@@ -75,6 +153,7 @@ type TodayPlanData = {
   isOpen: boolean;
   isClosed: boolean;
   tasks: TaskItem[];
+  studyProgress?: StudyProgressData;
   yesterday?: YesterdayData;
 };
 
@@ -127,6 +206,7 @@ export default function TodoPage() {
   const [loading, setLoading] = useState(true);
   const [completingId, setCompletingId] = useState<string | null>(null);
   const [actionError, setActionError] = useState("");
+  const [expandedTasks, setExpandedTasks] = useState<Record<string, boolean>>({});
 
   const [newTaskText, setNewTaskText] = useState("");
   const [newTaskMinutes, setNewTaskMinutes] = useState(45);
@@ -136,12 +216,7 @@ export default function TodoPage() {
   // Tomorrow planning state
   const [tomorrowTasks, setTomorrowTasks] = useState<
     Array<{ description: string; domainName: string; minutesTarget: number; priority: string; isStudy?: boolean }>
-  >([
-    { description: "Chemistry — Next Roadmap Topic (Learn, Recall & Practice)", domainName: "Study", minutesTarget: 60, priority: "HIGH", isStudy: true },
-    { description: "5 Million Coders / JavaScript — Practice & Quiz", domainName: "Coding", minutesTarget: 60, priority: "HIGH", isStudy: true },
-    { description: "Daily Scheduled Workout Session", domainName: "Workout", minutesTarget: 45, priority: "HIGH" },
-    { description: "Focused Reading & Knowledge Synthesis", domainName: "Reading", minutesTarget: 30, priority: "MEDIUM" },
-  ]);
+  >([]);
   const [savingTomorrow, setSavingTomorrow] = useState(false);
   const [tomorrowSavedMessage, setTomorrowSavedMessage] = useState("");
 
@@ -153,8 +228,42 @@ export default function TodoPage() {
       ]);
 
       if (planRes.ok) {
-        const p = await planRes.json();
+        const p: TodayPlanData = await planRes.json();
         setTodayData(p);
+
+        // Pre-populate tomorrow plan with roadmap targets if not already set
+        if (p.studyProgress) {
+          const nextChem = p.studyProgress.chemistry.tomorrowTopic;
+          const nextJs = p.studyProgress.javascript.tomorrowLesson;
+          setTomorrowTasks([
+            {
+              description: `Chemistry — ${nextChem.name} (Learn, Active Recall & Practice)`,
+              domainName: "Study",
+              minutesTarget: nextChem.targetMinutes || 85,
+              priority: "HIGH",
+              isStudy: true,
+            },
+            {
+              description: `5 Million Coders / JavaScript — ${nextJs.title}`,
+              domainName: "Coding",
+              minutesTarget: nextJs.targetMinutes || 100,
+              priority: "HIGH",
+              isStudy: true,
+            },
+            {
+              description: "Daily Scheduled Workout Session",
+              domainName: "Workout",
+              minutesTarget: 45,
+              priority: "HIGH",
+            },
+            {
+              description: "Focused Reading & Knowledge Synthesis",
+              domainName: "Reading",
+              minutesTarget: 30,
+              priority: "MEDIUM",
+            },
+          ]);
+        }
       }
       if (roastRes.ok) {
         const r = await roastRes.json();
@@ -257,10 +366,13 @@ export default function TodoPage() {
     return (
       <div className="flex h-72 items-center justify-center gap-3 text-sm text-[var(--text-muted)]">
         <LoaderCircle size={20} className="animate-spin text-orange-500" />
-        <span>Loading Daily Execution OS & Real Tasks...</span>
+        <span>Loading Daily Execution OS, Real Tasks & Study Schedules...</span>
       </div>
     );
   }
+
+  const jsProgress = todayData?.studyProgress?.javascript;
+  const chemProgress = todayData?.studyProgress?.chemistry;
 
   return (
     <div className="mx-auto w-full max-w-[1280px] animate-fade-in pb-16 space-y-6">
@@ -288,10 +400,10 @@ export default function TodoPage() {
 
           <h1 className="text-3xl font-extrabold tracking-tight text-white flex items-center gap-3">
             <CheckSquare className="text-orange-500" size={32} />
-            Daily Execution OS & Real Tasks
+            Daily Execution OS & Study Schedules
           </h1>
-          <p className="mt-1 max-w-xl text-sm text-[var(--text-secondary)]">
-            Execution Window: <strong>05:00 AM – 09:28 PM</strong> Ethiopia Time. At 09:28 PM, uncompleted items close permanently.
+          <p className="mt-1 max-w-2xl text-sm text-[var(--text-secondary)]">
+            Execution Window: <strong>05:00 AM – 09:28 PM</strong> Ethiopia Time. Chemistry (30-Day Goal) & 5 Million Coders JavaScript (14-Day Goal).
           </p>
         </div>
 
@@ -388,171 +500,356 @@ export default function TodoPage() {
         </section>
       )}
 
-      {/* ── TAB 1: TODAY'S ACTIVE TASKS ─────────────────────────────────────── */}
+      {/* ── TAB 1: TODAY'S ACTIVE EXECUTION & STUDY SCHEDULES ───────────────── */}
       {tab === "today" && (
-        <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
-          {/* Main Task List */}
-          <div className="space-y-4">
-            {/* Progress Metric Bar */}
-            <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-surface)] p-5 shadow-lg space-y-3">
+        <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
+          {/* Main Column */}
+          <div className="space-y-6">
+            {/* ── SECTION A: TODAY'S STUDY ROADMAP SCHEDULE ───────────────────────── */}
+            <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-base font-extrabold text-white">Daily Execution Progress</h3>
-                  <p className="text-xs text-slate-400">
-                    {todayData?.isClosed ? "🔒 Window closed at 09:28 PM" : "Check boxes as you finish each block"}
-                  </p>
-                </div>
-                <div className="text-right">
-                  <div className="text-2xl font-black text-orange-400">{completionPercentage}%</div>
-                  <div className="text-[11px] text-slate-500 font-bold">
-                    {completedCount} of {totalCount} completed
-                  </div>
-                </div>
+                <h3 className="text-lg font-black text-white flex items-center gap-2">
+                  <GraduationCap className="text-orange-400" size={20} />
+                  Today's Active Study Roadmaps
+                </h3>
+                <span className="text-xs font-bold text-slate-400">Exact Topic Breakdown</span>
               </div>
 
-              {/* Progress Bar */}
-              <div className="h-2.5 w-full rounded-full bg-slate-950 overflow-hidden border border-slate-800">
-                <div
-                  className="h-full bg-gradient-to-r from-orange-500 to-amber-400 transition-all duration-500"
-                  style={{ width: `${completionPercentage}%` }}
-                />
+              <div className="grid gap-4 md:grid-cols-2">
+                {/* 🧪 Chemistry Card */}
+                {chemProgress && (
+                  <div className="rounded-2xl border border-cyan-500/30 bg-gradient-to-br from-cyan-950/20 via-slate-900 to-slate-950 p-5 shadow-xl space-y-3 flex flex-col justify-between">
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between border-b border-cyan-500/20 pb-2">
+                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-cyan-500/15 text-cyan-400 border border-cyan-500/30 flex items-center gap-1">
+                          <FlaskConical size={12} /> {chemProgress.formattedDay} (30-Day Goal)
+                        </span>
+                        <span className="text-[11px] font-bold text-cyan-300">
+                          {chemProgress.statusText}
+                        </span>
+                      </div>
+
+                      <div>
+                        <h4 className="text-base font-black text-white leading-snug">
+                          {chemProgress.currentTopic.name}
+                        </h4>
+                        <div className="flex items-center gap-2 mt-1 text-xs text-slate-400">
+                          <span>⏱️ {chemProgress.minutesPerDay} mins target</span>
+                          <span>·</span>
+                          <span className="text-amber-400 font-bold">Week {chemProgress.currentTopic.weekNumber}</span>
+                          {chemProgress.currentTopic.isEntrancePriority && (
+                            <span className="px-1.5 py-0.2 rounded text-[9px] font-black bg-rose-500/20 text-rose-400 border border-rose-500/30">
+                              HIGH ENTRANCE WEIGHT
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Small Subtopics List */}
+                      <div className="rounded-xl bg-slate-950/80 border border-slate-800 p-3 space-y-1.5 text-xs">
+                        <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block">
+                          Today's Small Topics:
+                        </span>
+                        <ul className="space-y-1 text-slate-200">
+                          {chemProgress.currentTopic.subtopics.map((st, i) => (
+                            <li key={i} className="flex items-start gap-1.5">
+                              <span className="text-cyan-400 font-bold">→</span>
+                              <span>{st}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+
+                      {/* 5-Part Session Architecture Breakdown */}
+                      <div className="grid grid-cols-5 gap-1 text-[10px] text-center font-bold">
+                        <div className="p-1 rounded bg-slate-900 border border-slate-800">
+                          <div className="text-slate-400">LEARN</div>
+                          <div className="text-cyan-300">{chemProgress.currentTopic.sessionBreakdown.learnMins}m</div>
+                        </div>
+                        <div className="p-1 rounded bg-slate-900 border border-slate-800">
+                          <div className="text-slate-400">RECALL</div>
+                          <div className="text-cyan-300">{chemProgress.currentTopic.sessionBreakdown.activeRecallMins}m</div>
+                        </div>
+                        <div className="p-1 rounded bg-slate-900 border border-slate-800">
+                          <div className="text-slate-400">CARDS</div>
+                          <div className="text-cyan-300">{chemProgress.currentTopic.sessionBreakdown.flashcardsMins}m</div>
+                        </div>
+                        <div className="p-1 rounded bg-slate-900 border border-slate-800">
+                          <div className="text-slate-400">DRILL</div>
+                          <div className="text-cyan-300">{chemProgress.currentTopic.sessionBreakdown.practiceMins}m</div>
+                        </div>
+                        <div className="p-1 rounded bg-slate-900 border border-slate-800">
+                          <div className="text-slate-400">REVIEW</div>
+                          <div className="text-cyan-300">{chemProgress.currentTopic.sessionBreakdown.oldTopicRecallMins}m</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400">
+                      <span>🎯 {chemProgress.currentTopic.practiceTarget}</span>
+                    </div>
+                  </div>
+                )}
+
+                {/* 💻 5 Million Coders — JavaScript Card */}
+                {jsProgress && (
+                  <div className="rounded-2xl border border-amber-500/30 bg-gradient-to-br from-amber-950/20 via-slate-900 to-slate-950 p-5 shadow-xl space-y-3 flex flex-col justify-between">
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between border-b border-amber-500/20 pb-2">
+                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-500/15 text-amber-400 border border-amber-500/30 flex items-center gap-1">
+                          <Code2 size={12} /> {jsProgress.formattedDay} (14-Day Goal)
+                        </span>
+                        <span className="text-[11px] font-bold text-amber-300">
+                          {jsProgress.statusText}
+                        </span>
+                      </div>
+
+                      <div>
+                        <h4 className="text-base font-black text-white leading-snug">
+                          {jsProgress.currentLesson.module}
+                        </h4>
+                        <p className="text-xs font-bold text-amber-400 mt-0.5">
+                          {jsProgress.currentLesson.mainTopic} ({jsProgress.currentLesson.itemRange})
+                        </p>
+                        <div className="flex items-center gap-2 mt-1 text-xs text-slate-400">
+                          <span>⏱️ {jsProgress.currentLesson.targetMinutes} mins target</span>
+                          <span>·</span>
+                          <span className="text-slate-300 font-bold">{jsProgress.completedCount}/154 items</span>
+                        </div>
+                      </div>
+
+                      {/* JavaScript Roadmap Items List */}
+                      <div className="rounded-xl bg-slate-950/80 border border-slate-800 p-3 space-y-1.5 text-xs max-h-48 overflow-y-auto">
+                        <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block">
+                          Today's Roadmap Items:
+                        </span>
+                        <ul className="space-y-1 text-slate-200">
+                          {jsProgress.currentLesson.subtopics.map((st, i) => (
+                            <li key={i} className="flex items-start gap-1.5">
+                              <span className="text-amber-400 font-bold">→</span>
+                              <span className={clsx(st.includes("Quiz:") ? "text-amber-200 font-semibold" : "")}>{st}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+
+                    <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400">
+                      <span>🎯 {jsProgress.currentLesson.learningTarget}</span>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
-            {/* Task Cards List */}
-            <div className="space-y-3">
-              {todayData?.tasks.map((task) => (
-                <article
-                  key={task.id}
-                  className={clsx(
-                    "rounded-2xl border p-4 transition-all flex items-start gap-3.5",
-                    task.completed
-                      ? "border-emerald-500/30 bg-emerald-950/10 opacity-75"
-                      : todayData?.isClosed
-                      ? "border-rose-500/30 bg-rose-950/10 opacity-70"
-                      : "border-[var(--border)] bg-[var(--bg-surface)] hover:border-slate-700"
-                  )}
-                >
-                  {/* Checkbox Button */}
-                  <button
-                    disabled={task.completed || todayData?.isClosed || completingId === task.id}
-                    onClick={() => handleToggleTask(task)}
-                    className={clsx(
-                      "mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border-2 transition-all",
-                      task.completed
-                        ? "border-emerald-500 bg-emerald-500 text-black shadow-sm font-bold cursor-default"
-                        : todayData?.isClosed
-                        ? "border-rose-500/40 bg-rose-950 text-rose-500 cursor-not-allowed"
-                        : "border-slate-700 hover:border-orange-500 bg-slate-950 text-slate-500"
-                    )}
-                    aria-label="Toggle task completion"
-                  >
-                    {completingId === task.id ? (
-                      <LoaderCircle size={14} className="animate-spin text-orange-400" />
-                    ) : task.completed ? (
-                      <CheckCircle2 size={16} strokeWidth={3} />
-                    ) : todayData?.isClosed ? (
-                      <Lock size={12} />
-                    ) : (
-                      <Square size={14} />
-                    )}
-                  </button>
-
-                  {/* Task Info */}
-                  <div className="flex-1 space-y-1.5">
-                    <div className="flex flex-wrap items-center gap-2">
-                      {task.domain && (
-                        <span
-                          className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider border"
-                          style={{
-                            backgroundColor: `${task.domain.color}15`,
-                            borderColor: `${task.domain.color}35`,
-                            color: task.domain.color,
-                          }}
-                        >
-                          {task.domain.name}
-                        </span>
-                      )}
-                      {task.priority && (
-                        <span
-                          className={clsx(
-                            "px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider",
-                            task.priority === "HIGH"
-                              ? "bg-rose-500/10 text-rose-400 border border-rose-500/20"
-                              : "bg-slate-800 text-slate-400"
-                          )}
-                        >
-                          {task.priority}
-                        </span>
-                      )}
-                      {task.plannedStartTime && (
-                        <span className="text-[11px] font-mono text-slate-400">
-                          🕒 {task.plannedStartTime} {task.plannedEndTime ? `- ${task.plannedEndTime}` : ""}
-                        </span>
-                      )}
+            {/* ── SECTION B: DAILY TASK CHECKLIST ───────────────────────────────── */}
+            <div className="space-y-4">
+              {/* Progress Metric Bar */}
+              <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-surface)] p-5 shadow-lg space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-base font-extrabold text-white">Daily Execution Checklist</h3>
+                    <p className="text-xs text-slate-400">
+                      {todayData?.isClosed ? "🔒 Window closed at 09:28 PM" : "Check items as you complete each study and workout block"}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-2xl font-black text-orange-400">{completionPercentage}%</div>
+                    <div className="text-[11px] text-slate-500 font-bold">
+                      {completedCount} of {totalCount} completed
                     </div>
+                  </div>
+                </div>
 
-                    <h4
+                {/* Progress Bar */}
+                <div className="h-2.5 w-full rounded-full bg-slate-950 overflow-hidden border border-slate-800">
+                  <div
+                    className="h-full bg-gradient-to-r from-orange-500 to-amber-400 transition-all duration-500"
+                    style={{ width: `${completionPercentage}%` }}
+                  />
+                </div>
+              </div>
+
+              {/* Task Cards List */}
+              <div className="space-y-3">
+                {todayData?.tasks.map((task) => {
+                  const isExpanded = Boolean(expandedTasks[task.id]);
+                  const hasSubtopics = Array.isArray(task.subtopics) && task.subtopics.length > 0;
+
+                  return (
+                    <article
+                      key={task.id}
                       className={clsx(
-                        "text-sm font-bold leading-snug",
+                        "rounded-2xl border p-4 transition-all flex flex-col gap-2.5",
                         task.completed
-                          ? "line-through text-slate-400"
+                          ? "border-emerald-500/30 bg-emerald-950/10 opacity-80"
                           : todayData?.isClosed
-                          ? "text-slate-300"
-                          : "text-white"
+                          ? "border-rose-500/30 bg-rose-950/10 opacity-70"
+                          : "border-[var(--border)] bg-[var(--bg-surface)] hover:border-slate-700"
                       )}
                     >
-                      {task.description}
-                    </h4>
+                      <div className="flex items-start gap-3.5">
+                        {/* Checkbox Button */}
+                        <button
+                          disabled={task.completed || todayData?.isClosed || completingId === task.id}
+                          onClick={() => handleToggleTask(task)}
+                          className={clsx(
+                            "mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border-2 transition-all",
+                            task.completed
+                              ? "border-emerald-500 bg-emerald-500 text-black shadow-sm font-bold cursor-default"
+                              : todayData?.isClosed
+                              ? "border-rose-500/40 bg-rose-950 text-rose-500 cursor-not-allowed"
+                              : "border-slate-700 hover:border-orange-500 bg-slate-950 text-slate-500"
+                          )}
+                          aria-label="Toggle task completion"
+                        >
+                          {completingId === task.id ? (
+                            <LoaderCircle size={14} className="animate-spin text-orange-400" />
+                          ) : task.completed ? (
+                            <CheckCircle2 size={16} strokeWidth={3} />
+                          ) : todayData?.isClosed ? (
+                            <Lock size={12} />
+                          ) : (
+                            <Square size={14} />
+                          )}
+                        </button>
 
-                    <div className="flex items-center gap-3 text-xs text-slate-400 pt-0.5">
-                      <span>⏱️ {task.minutesTarget} mins</span>
-                      <span>·</span>
-                      <span className="text-amber-400 font-bold">+{task.xpTarget || Math.round(task.minutesTarget * 1.2)} XP</span>
-                      {task.completed && (
-                        <span className="text-emerald-400 font-bold text-[11px]">✓ Completed & Saved</span>
-                      )}
-                      {!task.completed && todayData?.isClosed && (
-                        <span className="text-rose-400 font-bold text-[11px]">🔴 MISSED (Closed at 09:28 PM)</span>
-                      )}
-                    </div>
-                  </div>
-                </article>
-              ))}
-            </div>
+                        {/* Task Header & Title */}
+                        <div className="flex-1 space-y-1">
+                          <div className="flex flex-wrap items-center gap-2">
+                            {task.domain && (
+                              <span
+                                className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider border"
+                                style={{
+                                  backgroundColor: `${task.domain.color}15`,
+                                  borderColor: `${task.domain.color}35`,
+                                  color: task.domain.color,
+                                }}
+                              >
+                                {task.domain.name}
+                              </span>
+                            )}
+                            {task.priority && (
+                              <span
+                                className={clsx(
+                                  "px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider",
+                                  task.priority === "HIGH"
+                                    ? "bg-rose-500/10 text-rose-400 border border-rose-500/20"
+                                    : "bg-slate-800 text-slate-400"
+                                )}
+                              >
+                                {task.priority}
+                              </span>
+                            )}
+                            {task.isEntrancePriority && (
+                              <span className="px-2 py-0.5 rounded text-[10px] font-extrabold uppercase bg-cyan-500/15 text-cyan-300 border border-cyan-500/30">
+                                🎯 ENTRANCE PRIORITY
+                              </span>
+                            )}
+                            {task.plannedStartTime && (
+                              <span className="text-[11px] font-mono text-slate-400">
+                                🕒 {task.plannedStartTime} {task.plannedEndTime ? `- ${task.plannedEndTime}` : ""}
+                              </span>
+                            )}
+                          </div>
 
-            {/* Fast Add Task Input (Only while open) */}
-            {!todayData?.isClosed && (
-              <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-surface)] p-4 space-y-3">
-                <h4 className="text-xs font-extrabold uppercase tracking-wider text-slate-400">Add Quick Task</h4>
-                <div className="flex flex-col sm:flex-row gap-2">
-                  <input
-                    type="text"
-                    placeholder="Task description (e.g. Solve 10 Chemistry Stoichiometry problems)..."
-                    value={newTaskText}
-                    onChange={(e) => setNewTaskText(e.target.value)}
-                    className="flex-1 rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-xs text-white placeholder-slate-500 focus:border-orange-500 focus:outline-none"
-                  />
-                  <input
-                    type="number"
-                    placeholder="Mins"
-                    value={newTaskMinutes}
-                    onChange={(e) => setNewTaskMinutes(Number(e.target.value))}
-                    className="w-20 rounded-xl border border-slate-700 bg-slate-950 px-2 py-2 text-xs font-mono text-center text-white focus:border-orange-500 focus:outline-none"
-                  />
-                  <button
-                    onClick={handleAddTaskToday}
-                    disabled={addingTask || !newTaskText.trim()}
-                    className="btn btn-primary btn-sm rounded-xl font-bold flex items-center gap-1 shadow-md"
-                  >
-                    <Plus size={14} /> Add Task
-                  </button>
-                </div>
+                          <h4
+                            className={clsx(
+                              "text-sm font-bold leading-snug",
+                              task.completed
+                                ? "line-through text-slate-400"
+                                : todayData?.isClosed
+                                ? "text-slate-300"
+                                : "text-white"
+                            )}
+                          >
+                            {task.displayTitle || task.description}
+                          </h4>
+
+                          <div className="flex items-center gap-3 text-xs text-slate-400 pt-0.5">
+                            <span>⏱️ {task.minutesTarget} mins</span>
+                            <span>·</span>
+                            <span className="text-amber-400 font-bold">+{task.xpTarget || Math.round(task.minutesTarget * 1.2)} XP</span>
+                            {task.completed && (
+                              <span className="text-emerald-400 font-bold text-[11px]">✓ Completed & Saved</span>
+                            )}
+                            {!task.completed && todayData?.isClosed && (
+                              <span className="text-rose-400 font-bold text-[11px]">🔴 MISSED (Closed at 09:28 PM)</span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Subtopics Toggle */}
+                        {hasSubtopics && (
+                          <button
+                            onClick={() =>
+                              setExpandedTasks((prev) => ({
+                                ...prev,
+                                [task.id]: !prev[task.id],
+                              }))
+                            }
+                            className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800"
+                            title="Toggle Subtopics"
+                          >
+                            {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Subtopics Drawer */}
+                      {hasSubtopics && isExpanded && (
+                        <div className="ml-10 mt-1 rounded-xl bg-slate-950/80 border border-slate-800 p-3 text-xs space-y-1.5">
+                          <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
+                            Included Subtopics & Drills:
+                          </span>
+                          <ul className="space-y-1 text-slate-300">
+                            {task.subtopics?.map((st, idx) => (
+                              <li key={idx} className="flex items-start gap-1.5">
+                                <span className="text-orange-400 font-bold">→</span>
+                                <span>{st}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </article>
+                  );
+                })}
               </div>
-            )}
+
+              {/* Fast Add Task Input */}
+              {!todayData?.isClosed && (
+                <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-surface)] p-4 space-y-3">
+                  <h4 className="text-xs font-extrabold uppercase tracking-wider text-slate-400">Add Quick Task</h4>
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <input
+                      type="text"
+                      placeholder="Task description (e.g. Solve 15 Chemistry Equilibrium problems)..."
+                      value={newTaskText}
+                      onChange={(e) => setNewTaskText(e.target.value)}
+                      className="flex-1 rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-xs text-white placeholder-slate-500 focus:border-orange-500 focus:outline-none"
+                    />
+                    <input
+                      type="number"
+                      placeholder="Mins"
+                      value={newTaskMinutes}
+                      onChange={(e) => setNewTaskMinutes(Number(e.target.value))}
+                      className="w-20 rounded-xl border border-slate-700 bg-slate-950 px-2 py-2 text-xs font-mono text-center text-white focus:border-orange-500 focus:outline-none"
+                    />
+                    <button
+                      onClick={handleAddTaskToday}
+                      disabled={addingTask || !newTaskText.trim()}
+                      className="btn btn-primary btn-sm rounded-xl font-bold flex items-center gap-1 shadow-md"
+                    >
+                      <Plus size={14} /> Add Task
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
 
-          {/* Sidebar Overview */}
+          {/* ── SIDEBAR OVERVIEW ──────────────────────────────────────────────── */}
           <aside className="space-y-4">
             {/* 300-Day Milestone Tracker */}
             <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-surface)] p-5 shadow-lg space-y-4">
@@ -574,6 +871,55 @@ export default function TodoPage() {
                   {todayData?.day300.daysRemaining} days remaining
                 </div>
               </div>
+            </div>
+
+            {/* 🎯 Deadline Progress Dashboard */}
+            <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-surface)] p-5 shadow-lg space-y-4">
+              <span className="text-xs font-extrabold uppercase tracking-wider text-orange-400 block border-b border-[var(--border)] pb-2">
+                Target Deadlines & Pacing
+              </span>
+
+              {/* JavaScript 14-Day Status */}
+              {jsProgress && (
+                <div className="p-3.5 rounded-xl bg-slate-950/80 border border-amber-500/30 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-black text-amber-400">💻 JavaScript (14-Day Goal)</span>
+                    <span className="text-[11px] font-bold text-slate-300">{jsProgress.formattedDay}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-slate-400">{jsProgress.completedCount} / 154 items done</span>
+                    <span className="font-bold text-white">{jsProgress.percentage}%</span>
+                  </div>
+                  <div className="h-1.5 w-full rounded-full bg-slate-800 overflow-hidden">
+                    <div className="h-full bg-amber-400" style={{ width: `${jsProgress.percentage}%` }} />
+                  </div>
+                  <div className="flex items-center justify-between text-[11px] text-slate-400 pt-1">
+                    <span>{jsProgress.daysRemaining} days left</span>
+                    <span className="font-bold text-amber-300">{jsProgress.requiredItemsPerDay} items/day</span>
+                  </div>
+                </div>
+              )}
+
+              {/* Chemistry 30-Day Status */}
+              {chemProgress && (
+                <div className="p-3.5 rounded-xl bg-slate-950/80 border border-cyan-500/30 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-black text-cyan-400">🧪 Chemistry (30-Day Goal)</span>
+                    <span className="text-[11px] font-bold text-slate-300">{chemProgress.formattedDay}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-slate-400">{chemProgress.completedCount} / 30 topics done</span>
+                    <span className="font-bold text-white">{chemProgress.percentage}%</span>
+                  </div>
+                  <div className="h-1.5 w-full rounded-full bg-slate-800 overflow-hidden">
+                    <div className="h-full bg-cyan-400" style={{ width: `${chemProgress.percentage}%` }} />
+                  </div>
+                  <div className="flex items-center justify-between text-[11px] text-slate-400 pt-1">
+                    <span>{chemProgress.daysRemaining} days left</span>
+                    <span className="font-bold text-cyan-300">{chemProgress.requiredTopicsPerDay} topic/day</span>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Protocol Execution Window Info */}
@@ -600,7 +946,7 @@ export default function TodoPage() {
               Night Planning: Design Tomorrow's Targets
             </h3>
             <p className="text-xs text-slate-400">
-              Set tomorrow's workout, chemistry, javascript, and study blocks before 05:00 AM.
+              Tomorrow's study schedule is automatically derived from the 14-day JS and 30-day Chemistry roadmaps.
             </p>
           </div>
 

@@ -43,13 +43,21 @@ export async function GET() {
       day: 'numeric',
     });
 
-    const yesterdayTasks = (yesterdayPlan?.tasks || []).map((t) => ({
-      id: t.id,
-      description: t.description,
-      completed: t.completed,
-      status: t.completed ? 'COMPLETED' : 'MISSED',
-      minutesTarget: t.minutesTarget,
-    }));
+    const yesterdayTasks = (yesterdayPlan?.tasks || []).map((t) => {
+      let title = t.description;
+      try {
+        const parsed = JSON.parse(t.description);
+        title = parsed.title || t.description;
+      } catch {}
+
+      return {
+        id: t.id,
+        description: title,
+        completed: t.completed,
+        status: t.completed ? 'COMPLETED' : 'MISSED',
+        minutesTarget: t.minutesTarget,
+      };
+    });
 
     const yesterdayWorkoutStatus = yesterdayWorkoutLog
       ? { status: 'COMPLETED', type: yesterdayWorkoutLog.workoutDay.type }
@@ -66,6 +74,7 @@ export async function GET() {
       isOpen: windowInfo.isOpen,
       isClosed: windowInfo.isClosed,
       tasks: todayPlan.tasks,
+      studyProgress: todayPlan.studyProgress,
       yesterday: {
         dateFormatted: yesterdayDateFormatted,
         workout: yesterdayWorkoutStatus,

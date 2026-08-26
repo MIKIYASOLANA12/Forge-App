@@ -5,6 +5,7 @@ import {
   answerTelegramCallbackQuery,
   editTelegramMessageText,
 } from './telegram';
+import { resolveAccountabilityByMessage } from './accountabilityRecheck';
 import {
   getTodaySummary,
   getProgressSummary,
@@ -73,6 +74,13 @@ export async function handleTelegramWebhookUpdate(update: any): Promise<void> {
   });
 
   if (linkedAccount && linkedAccount.active) {
+    // 2a. Handle explicit accountability acknowledgement (spec section 5/7).
+    // Command messages (starting with "/") are never acknowledgement text.
+    if (!text.startsWith('/')) {
+      const ack = await resolveAccountabilityByMessage(text);
+      if (ack.found) return;
+    }
+
     // Verified user commands
     const cmd = text.split(' ')[0].toLowerCase();
 

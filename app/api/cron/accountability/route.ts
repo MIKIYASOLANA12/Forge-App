@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { processAccountabilityCron, sendDailyAccountabilityReminder, sendDailyCompletionReport } from '@/lib/telegramScheduler';
+import { runAccountabilityRecheck } from '@/lib/accountabilityRecheck';
 
 export async function GET(req: NextRequest) {
   try {
@@ -24,6 +25,9 @@ export async function GET(req: NextRequest) {
       result = await sendDailyAccountabilityReminder(force);
     } else if (action === 'report') {
       result = await sendDailyCompletionReport(force);
+    } else if (action === 'recheck' || action === 'accountability') {
+      // Reliable recheck: detect misses, verify delivery, retry/remind.
+      result = await runAccountabilityRecheck({ force });
     } else {
       result = await processAccountabilityCron();
     }

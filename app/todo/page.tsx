@@ -175,6 +175,17 @@ type TodayPlanData = {
   readingStatus?: any;
   demoSubjects?: DemoSubject[];
   yesterday?: YesterdayData;
+  accountability?: {
+    status: 'PENDING' | 'RESOLVED';
+    addisDateKey: string;
+    missedItems: string[];
+    roast: string | null;
+    acknowledged: boolean;
+    acknowledgementText: string | null;
+    acknowledgementAt: string | null;
+    resolvedAt: string | null;
+    reminderCount: number;
+  };
 };
 
 type RoastData = {
@@ -398,6 +409,57 @@ export default function TodoPage() {
 
   return (
     <div className="mx-auto w-full max-w-[1280px] animate-fade-in pb-16 space-y-6">
+      {/* ── ACCOUNTABILITY STATUS (spec section 10) ─────────────────────────── */}
+      {todayData?.accountability && (
+        <section
+          className={clsx(
+            "rounded-2xl border p-4 flex flex-col gap-2 shadow-xl",
+            todayData.accountability.status === "PENDING" ? "border-rose-500/40 bg-rose-950/30" : "border-emerald-500/40 bg-emerald-950/20"
+          )}
+        >
+          <div className="flex flex-wrap items-center gap-2">
+            <span
+              className={clsx(
+                "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider border",
+                todayData.accountability.status === "PENDING"
+                  ? "bg-rose-500/15 text-rose-300 border-rose-500/40"
+                  : "bg-emerald-500/15 text-emerald-300 border-emerald-500/40"
+              )}
+            >
+              {todayData.accountability.status === "PENDING" ? "🟡 Accountability pending" : "🟢 Accountability resolved"}
+            </span>
+            {todayData.accountability.status === "PENDING" && (
+              <span className="text-xs text-rose-300/80">Reminders sent: {todayData.accountability.reminderCount}</span>
+            )}
+          </div>
+          {todayData.accountability.status === "PENDING" ? (
+            <div className="text-sm space-y-1">
+              <p className="font-bold text-rose-200">
+                Missed date: <span className="font-mono text-rose-300">{todayData.accountability.addisDateKey}</span>
+              </p>
+              <p className="text-rose-200/90">
+                Missed:{" "}
+                {todayData.accountability.missedItems.length > 0
+                  ? todayData.accountability.missedItems.map((m) => `❌ ${m}`).join(" · ")
+                  : "—"}
+              </p>
+              {todayData.accountability.roast && (
+                <p className="italic text-rose-300/70">"{todayData.accountability.roast}"</p>
+              )}
+              <p className="text-rose-200/70 text-xs">
+                Acknowledge by replying to Forge on Telegram: "I&apos;m so sorry, I will not do it again".
+              </p>
+            </div>
+          ) : (
+            <p className="text-sm text-emerald-200/90">
+              {todayData.accountability.acknowledged
+                ? `Acknowledged ✓ — ${todayData.accountability.acknowledgementText ?? "Apology accepted"}.`
+                : "No outstanding accountability holds. All closed-day misses have been acknowledged."}
+            </p>
+          )}
+        </section>
+      )}
+
       {/* ── HEADER / DAILY ACTIVE WINDOW BANNER ──────────────────────────────── */}
       <section className="flex flex-col justify-between gap-5 border-b border-[var(--border)] pb-6 lg:flex-row lg:items-end">
         <div>

@@ -182,15 +182,25 @@ ${pendingTasks.length > 0 ? pendingTasks.slice(0, 4).map((t) => `• [ ] ${forma
 ⏳ Submit all activities before 09:28 PM to lock in your score!`;
   }
 
-  // Deliver to linked Telegram accounts
+  // Deliver to linked Telegram accounts; only mark SENT on confirmed API success.
+  let confirmed = false;
+  let lastMsgId: number | null = null;
+  let firstChat: string | null = null;
+  let firstError: string | undefined;
+
   for (const acc of accounts) {
     const targetChatId = acc.chatId || acc.telegramId;
-    if (targetChatId) {
-      await sendTelegramMessage(targetChatId, message);
+    if (!targetChatId) continue;
+    if (!firstChat || firstChat === undefined) firstChat = String(targetChatId);
+    const delivered = await sendTelegramMessage(targetChatId, message);
+    if (delivered.ok && typeof delivered.result?.message_id === 'number') {
+      if (!confirmed) lastMsgId = Number(delivered.result.message_id);
+      confirmed = confirmed || true;
     }
+    if (!delivered.ok && !firstError) firstError = delivered?.description || 'Unknown telegram error';
   }
 
-  // Record in TelegramNotificationLog
+  // Record in TelegramNotificationLog (status reflects actual confirmed delivery).
   await prisma.telegramNotificationLog.upsert({
     where: {
       date_type: {
@@ -201,16 +211,23 @@ ${pendingTasks.length > 0 ? pendingTasks.slice(0, 4).map((t) => `• [ ] ${forma
     create: {
       date: normalizedDateKey,
       type: notificationType,
-      chatId: accounts[0].chatId || accounts[0].telegramId,
+      chatId: firstChat ?? (accounts[0]?.chatId || accounts[0]?.telegramId),
       message,
+      status: confirmed ? 'SENT' : 'DELIVERY_FAILED',
+      telegramMessageId: lastMsgId,
+      errorMessage: confirmed ? null : firstError,
+      retryCount: confirmed ? 0 : 1,
     },
     update: {
       sentAt: new Date(),
       message,
+      status: confirmed ? 'SENT' : 'DELIVERY_FAILED',
+      telegramMessageId: lastMsgId ?? undefined,
+      errorMessage: confirmed ? null : firstError,
     },
   });
 
-  return { sent: true, count: accounts.length, notificationType, message };
+  return { sent: confirmed, count: confirmed ? accounts.length : 0, notificationType, message, deliveryState: confirmed ? 'SENT' : 'DELIVERY_FAILED' };
 }
 
 /**
@@ -222,7 +239,9 @@ export async function sendDailyCompletionReport(force: boolean = false) {
 
 /**
  * Master cron runner executed on schedule by Vercel Cron.
+ * Routed through the reliable recheck engine (Addis-time authoritative, idempotent).
  */
 export async function processAccountabilityCron() {
-  return sendDailyAccountabilityReminder(false);
+  const { runAccountabilityRecheck } = await import('./accountabilityRecheck');
+  return runAccountabilityRecheck({ force: false });
 }

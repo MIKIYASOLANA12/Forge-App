@@ -3,6 +3,7 @@ import { getAddisNow, workoutWindowForAddisDate, getDayOfJourney300 } from '@/li
 import { ensureTodayDailyPlan } from '@/lib/dailyPlanGenerator';
 import { prisma } from '@/lib/prisma';
 import { get2027DeadlineMetrics } from '@/lib/readingEngine';
+import { getAccountabilityStatus } from '@/lib/accountabilityRecheck';
 
 export async function GET() {
   try {
@@ -12,6 +13,7 @@ export async function GET() {
     const deadline2027 = get2027DeadlineMetrics(addisNow);
 
     const todayPlan = await ensureTodayDailyPlan();
+    const accountability = await getAccountabilityStatus();
 
     const dateFormatted = windowInfo.startAddis.toLocaleDateString('en-US', {
       weekday: 'long',
@@ -80,6 +82,7 @@ export async function GET() {
       studyProgress: todayPlan.studyProgress,
       readingStatus: todayPlan.readingStatus,
       demoSubjects: todayPlan.demoSubjects,
+      accountability,
       yesterday: {
         dateFormatted: yesterdayDateFormatted,
         workout: yesterdayWorkoutStatus,

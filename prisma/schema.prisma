@@ -438,14 +438,37 @@ model MonthlyProgressReport {
 }
 
 model TelegramNotificationLog {
-  id        String   @id @default(cuid())
-  date      DateTime
-  type      String   // "DAILY_REMINDER" | "COMPLETION_REPORT"
-  sentAt    DateTime @default(now())
-  chatId    String
-  message   String?
+  id                String   @id @default(cuid())
+  date              DateTime
+  type              String   // "DAILY_REMINDER" | "COMPLETION_REPORT" | "ACCOUNTABILITY" | "ACCOUNTABILITY_REMINDER"
+  sentAt            DateTime @default(now())
+  chatId            String
+  message           String?
+  status            String   @default("UNKNOWN") // "NOT_SENT" | "SENT" | "DELIVERY_FAILED" | "UNKNOWN"
+  telegramMessageId Int? // Telegram's numeric message_id — only set on confirmed API success
+  errorMessage      String?
+  retryCount        Int      @default(0)
 
   @@unique([date, type])
+}
+
+model AccountabilitySession {
+  id                  String    @id @default(cuid())
+  // Normalized Addis window date key (unique → one session per day, no duplicates).
+  addisDateKey        String    @unique
+  userId              String
+  state               String    @default("PENDING") // "PENDING" | "RESOLVED"
+  missedItems         String // JSON array of missed activity names
+  initialRoast        String
+  acknowledgementText String?
+  acknowledgementAt   DateTime?
+  resolvedAt          DateTime?
+  reminderCount       Int       @default(0)
+  lastReminderAt      DateTime?
+  lastReminderRoast   String?
+  telegramMessageId   Int?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
 }
 
 model PhysiqueCheckin {

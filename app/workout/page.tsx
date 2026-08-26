@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Check,
   Clock3,
@@ -45,6 +45,10 @@ import {
   loadLocalWorkoutState,
   syncLocalWorkoutToServer,
   generateClientId,
+  cacheTodayProtocol,
+  loadCachedTodayProtocol,
+  mergeSetsByClientId,
+  ensureSetClientId,
 } from "@/lib/offlineWorkoutStore";
 
 type Exercise = {
@@ -58,6 +62,14 @@ type Exercise = {
     repsCompleted: number;
     weightKg: number | null;
     setDetails?: string | null;
+  } | null;
+  todayLog?: {
+    setsCompleted: number;
+    repsCompleted: number;
+    weightKg: number | null;
+    checked: boolean;
+    setDetails?: string | null;
+    clientId?: string | null;
   } | null;
 };
 
@@ -107,6 +119,12 @@ type TodayData = {
     goal: string;
   };
   isNewPhase: boolean;
+  isOpen?: boolean;
+  isClosed?: boolean;
+  isMissed?: boolean;
+  missedToday?: boolean;
+  sessionInProgress?: boolean;
+  closeTimestamp?: number;
 };
 
 type HistoryLog = {
@@ -179,96 +197,170 @@ export default function WorkoutPage() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [manualOverride, setManualOverride] = useState(false);
-  const [syncStatus, setSyncStatus] = useState<OfflineSyncStatus>("SYNCED");
+  const [syncStatus, setSyncStatus] = useState<OfflineSyncStatus>("LOCAL_ONLY");
   const [isOnline, setIsOnline] = useState(true);
+  const [hydrated, setHydrated] = useState(false);
 
   const todayDateKey = getTodayDateKey();
+  const todayRef = useRef<TodayData | null>(null);
+  const exerciseSetsRef = useRef<Record<string, SetEntry[]>>({});
+  const checkedExercisesRef = useRef<Record<string, boolean>>({});
+  const notesRef = useRef("");
 
-  // Online / Offline listener
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      setIsOnline(navigator.onLine);
-      const handleOnline = async () => {
-        setIsOnline(true);
-        setSyncStatus("SYNCING");
-        const res = await syncLocalWorkoutToServer(todayDateKey);
-        setSyncStatus(res.status);
-        if (res.success && res.message) {
-          setMessage(res.message);
-        }
-      };
-      const handleOffline = () => {
-        setIsOnline(false);
-        setSyncStatus("LOCAL_ONLY");
-      };
+  todayRef.current = today;
+  exerciseSetsRef.current = exerciseSets;
+  checkedExercisesRef.current = checkedExercises;
+  notesRef.current = notes;
 
-      window.addEventListener("online", handleOnline);
-      window.addEventListener("offline", handleOffline);
-      return () => {
-        window.removeEventListener("online", handleOnline);
-        window.removeEventListener("offline", handleOffline);
-      };
+  const persistLocal = (
+    nextSets: Record<string, SetEntry[]>,
+    nextChecked: Record<string, boolean>,
+    nextNotes: string,
+    status: OfflineSyncStatus = "LOCAL_ONLY"
+  ) => {
+    const dayId = todayRef.current?.day?.id || "pending";
+    const weekNumber = todayRef.current?.weekNumber || 1;
+    saveLocalWorkoutState(todayDateKey, dayId, weekNumber, nextNotes, nextSets, nextChecked, status);
+    setSyncStatus(status);
+  };
+
+  const parseSetDetails = (raw?: string | null): SetEntry[] => {
+    if (!raw) return [];
+    try {
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
     }
+  };
+
+  const buildInitialSets = (data: TodayData, localSaved: ReturnType<typeof loadLocalWorkoutState>) => {
+    const defaultSetsCount = data.phase?.sets || 3;
+    const defaultReps = Number(String(data.phase?.reps || "8-10").split("-")[0]) || 8;
+    const initialSetsState: Record<string, SetEntry[]> = { ...(localSaved?.exerciseSets || {}) };
+    const initialChecked: Record<string, boolean> = { ...(localSaved?.checkedExercises || {}) };
+
+    data.day.exercises.forEach((ex) => {
+      const serverToday = parseSetDetails(ex.todayLog?.setDetails);
+      const previous = parseSetDetails(ex.lastLog?.setDetails);
+      const local = initialSetsState[ex.id] || [];
+      const merged = mergeSetsByClientId(local, serverToday);
+
+      if (merged.length > 0) {
+        initialSetsState[ex.id] = merged.map((s) => ensureSetClientId(ex.id, s));
+      } else {
+        const setsArray: SetEntry[] = [];
+        for (let s = 1; s <= defaultSetsCount; s++) {
+          const lastSet = previous[s - 1];
+          setsArray.push(
+            ensureSetClientId(ex.id, {
+              setNumber: s,
+              weightKg: lastSet?.weightKg ?? ex.lastLog?.weightKg ?? "",
+              reps: lastSet?.reps ?? defaultReps,
+              notes: lastSet?.notes ?? "",
+              completed: false,
+            })
+          );
+        }
+        initialSetsState[ex.id] = setsArray;
+      }
+
+      initialChecked[ex.id] = Boolean(initialChecked[ex.id] || ex.todayLog?.checked);
+    });
+
+    return { initialSetsState, initialChecked, notes: localSaved?.notes || data.todayLog?.notes || "" };
+  };
+
+  // Restore locally saved sets BEFORE any network so leaving/re-entering never blanks the form.
+  useEffect(() => {
+    const cached = loadCachedTodayProtocol(todayDateKey) as TodayData | null;
+    const localSaved = loadLocalWorkoutState(todayDateKey);
+    if (cached?.day) {
+      setToday(cached);
+      const built = buildInitialSets(cached, localSaved);
+      setExerciseSets(built.initialSetsState);
+      setCheckedExercises(built.initialChecked);
+      setNotes(built.notes);
+      setSyncStatus(localSaved?.syncStatus || (typeof navigator !== "undefined" && !navigator.onLine ? "LOCAL_ONLY" : "SYNCED"));
+    } else if (localSaved) {
+      setExerciseSets(localSaved.exerciseSets);
+      setCheckedExercises(localSaved.checkedExercises || {});
+      setNotes(localSaved.notes || "");
+      setSyncStatus(localSaved.syncStatus || "LOCAL_ONLY");
+    }
+    if (typeof navigator !== "undefined") setIsOnline(navigator.onLine);
+    setHydrated(true);
+  }, [todayDateKey]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const handleOnline = async () => {
+      setIsOnline(true);
+      setSyncStatus("SYNCING");
+      const res = await syncLocalWorkoutToServer(todayDateKey);
+      setSyncStatus(res.status);
+      setMessage(res.message || (res.success ? "Synchronized with cloud" : "OFFLINE — Saved on this device"));
+    };
+    const handleOffline = () => {
+      setIsOnline(false);
+      setSyncStatus("LOCAL_ONLY");
+      setMessage("OFFLINE — Saved on this device");
+    };
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
   }, [todayDateKey]);
 
   const loadTodayData = async () => {
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), 5000);
     try {
-      const response = await fetch("/api/workout/today");
+      const response = await fetch("/api/workout/today", { signal: controller.signal });
       if (response.ok) {
         const data = (await response.json()) as TodayData;
+        cacheTodayProtocol(todayDateKey, data as unknown as Record<string, unknown>);
         setToday(data);
 
-        // Check local device storage first to avoid losing sets if returning to exercise
         const localSaved = loadLocalWorkoutState(todayDateKey, data.day?.id || "");
-        if (localSaved && Object.keys(localSaved.exerciseSets).length > 0) {
-          setExerciseSets(localSaved.exerciseSets);
-          setCheckedExercises(localSaved.checkedExercises || {});
-          setNotes(localSaved.notes || "");
-          setSyncStatus(localSaved.syncStatus || "LOCAL_ONLY");
-        } else if (data?.day?.exercises) {
-          // Initialize defaults
-          const defaultSetsCount = data.phase?.sets || 3;
-          const defaultReps = Number(String(data.phase?.reps || "8-10").split("-")[0]) || 8;
-          const initialSetsState: Record<string, SetEntry[]> = {};
-          const initialChecked: Record<string, boolean> = {};
+        const built = buildInitialSets(data, localSaved);
+        setExerciseSets(built.initialSetsState);
+        setCheckedExercises(built.initialChecked);
+        setNotes(built.notes);
+        saveLocalWorkoutState(
+          todayDateKey,
+          data.day.id,
+          data.weekNumber || 1,
+          built.notes,
+          built.initialSetsState,
+          built.initialChecked,
+          localSaved?.syncStatus === "LOCAL_ONLY" || localSaved?.syncStatus === "SYNC_ERROR"
+            ? localSaved.syncStatus
+            : typeof navigator !== "undefined" && navigator.onLine
+            ? "SYNCED"
+            : "LOCAL_ONLY"
+        );
 
-          data.day.exercises.forEach((ex) => {
-            let lastDetails: SetEntry[] = [];
-            if (ex.lastLog?.setDetails) {
-              try {
-                lastDetails = JSON.parse(ex.lastLog.setDetails);
-              } catch {}
-            }
-
-            const setsArray: SetEntry[] = [];
-            for (let s = 1; s <= defaultSetsCount; s++) {
-              const lastSet = lastDetails[s - 1];
-              setsArray.push({
-                setNumber: s,
-                weightKg: lastSet?.weightKg ?? (ex.lastLog?.weightKg ?? ""),
-                reps: lastSet?.reps ?? defaultReps,
-                completed: false,
-                clientId: generateClientId(`set-${ex.id}-${s}`),
-              });
-            }
-            initialSetsState[ex.id] = setsArray;
-            initialChecked[ex.id] = false;
-          });
-
-          setExerciseSets(initialSetsState);
-          setCheckedExercises(initialChecked);
+        if (typeof navigator !== "undefined" && navigator.onLine && localSaved && localSaved.syncStatus !== "SYNCED") {
+          const res = await syncLocalWorkoutToServer(todayDateKey);
+          setSyncStatus(res.status);
         }
       }
-    } catch (err) {
-      console.error(err);
-      // If offline when loading, load from local storage
-      const localSaved = loadLocalWorkoutState(todayDateKey, "");
+    } catch {
+      const cached = loadCachedTodayProtocol(todayDateKey) as TodayData | null;
+      const localSaved = loadLocalWorkoutState(todayDateKey);
+      if (cached?.day) setToday(cached);
       if (localSaved) {
         setExerciseSets(localSaved.exerciseSets);
         setCheckedExercises(localSaved.checkedExercises || {});
         setNotes(localSaved.notes || "");
         setSyncStatus("LOCAL_ONLY");
+        setMessage("OFFLINE — Saved on this device");
       }
+    } finally {
+      window.clearTimeout(timeout);
     }
   };
 
@@ -301,32 +393,23 @@ export default function WorkoutPage() {
   }, [rest]);
 
   // Set-by-Set Management Handlers with Immediate Offline Persistence
+  const loggingLocked = Boolean((today?.isClosed || today?.isMissed || today?.missedToday) && !manualOverride);
+
   const handleUpdateSet = (exerciseId: string, setIndex: number, field: keyof SetEntry, value: any) => {
+    if (loggingLocked) return;
     setExerciseSets((prev) => {
       const currentSets = prev[exerciseId] ? [...prev[exerciseId]] : [];
       if (currentSets[setIndex]) {
         currentSets[setIndex] = { ...currentSets[setIndex], [field]: value };
       }
       const updated = { ...prev, [exerciseId]: currentSets };
-
-      // Immediately persist to local device storage
-      if (today?.day?.id) {
-        saveLocalWorkoutState(
-          todayDateKey,
-          today.day.id,
-          today.weekNumber || 1,
-          notes,
-          updated,
-          checkedExercises,
-          "LOCAL_ONLY"
-        );
-        setSyncStatus("LOCAL_ONLY");
-      }
+      persistLocal(updated, checkedExercisesRef.current, notesRef.current, "LOCAL_ONLY");
       return updated;
     });
   };
 
   const handleToggleSetComplete = (exerciseId: string, setIndex: number) => {
+    if (loggingLocked) return;
     setExerciseSets((prev) => {
       const currentSets = prev[exerciseId] ? [...prev[exerciseId]] : [];
       if (currentSets[setIndex]) {
@@ -338,111 +421,61 @@ export default function WorkoutPage() {
         }
       }
       const updated = { ...prev, [exerciseId]: currentSets };
-
-      // Check if all sets for this exercise are done and update checked state
-      const allSetsDone = currentSets.length > 0 && currentSets.every((s) => s.completed);
-      const updatedChecked = { ...checkedExercises, [exerciseId]: allSetsDone };
-      setCheckedExercises(updatedChecked);
-
-      if (today?.day?.id) {
-        saveLocalWorkoutState(
-          todayDateKey,
-          today.day.id,
-          today.weekNumber || 1,
-          notes,
-          updated,
-          updatedChecked,
-          "LOCAL_ONLY"
-        );
-        setSyncStatus("LOCAL_ONLY");
-      }
-
+      persistLocal(updated, checkedExercisesRef.current, notesRef.current, "LOCAL_ONLY");
       return updated;
     });
   };
 
   const handleToggleCheckIn = (exerciseId: string) => {
-    const isNowChecked = !checkedExercises[exerciseId];
-    const updatedChecked = { ...checkedExercises, [exerciseId]: isNowChecked };
+    if (loggingLocked) return;
+    const isNowChecked = !checkedExercisesRef.current[exerciseId];
+    const updatedChecked = { ...checkedExercisesRef.current, [exerciseId]: isNowChecked };
     setCheckedExercises(updatedChecked);
 
-    // If checked, mark all sets completed
-    setExerciseSets((prev) => {
-      const currentSets = prev[exerciseId] ? [...prev[exerciseId]] : [];
-      const updatedSets = currentSets.map((s) => ({ ...s, completed: isNowChecked }));
-      const updated = { ...prev, [exerciseId]: updatedSets };
+    const currentSets = exerciseSetsRef.current[exerciseId] || [];
+    persistLocal(exerciseSetsRef.current, updatedChecked, notesRef.current, "LOCAL_ONLY");
 
-      if (today?.day?.id) {
-        saveLocalWorkoutState(
-          todayDateKey,
-          today.day.id,
-          today.weekNumber || 1,
-          notes,
-          updated,
-          updatedChecked,
-          "LOCAL_ONLY"
-        );
-        setSyncStatus("LOCAL_ONLY");
-      }
-      return updated;
-    });
-
-    // Attempt background sync if online
     if (typeof navigator !== "undefined" && navigator.onLine) {
-      void triggerManualSync();
+      const allChecked =
+        (todayRef.current?.day.exercises || []).length > 0 &&
+        (todayRef.current?.day.exercises || []).every((ex) => Boolean(updatedChecked[ex.id]));
+      void syncLocalWorkoutToServer(todayDateKey, { sessionSubmitted: allChecked }).then((res) => {
+        setSyncStatus(res.status);
+        if (res.message) setMessage(res.message);
+      });
     }
   };
 
   const handleAddSet = (exerciseId: string) => {
+    if (loggingLocked) return;
     setExerciseSets((prev) => {
       const currentSets = prev[exerciseId] ? [...prev[exerciseId]] : [];
       const nextSetNum = currentSets.length + 1;
       const lastSet = currentSets[currentSets.length - 1];
-      currentSets.push({
-        setNumber: nextSetNum,
-        weightKg: lastSet?.weightKg ?? "",
-        reps: lastSet?.reps ?? 8,
-        completed: false,
-        clientId: generateClientId(`set-${exerciseId}-${nextSetNum}`),
-      });
+      currentSets.push(
+        ensureSetClientId(exerciseId, {
+          setNumber: nextSetNum,
+          weightKg: lastSet?.weightKg ?? "",
+          reps: lastSet?.reps ?? 8,
+          notes: "",
+          completed: false,
+        })
+      );
       const updated = { ...prev, [exerciseId]: currentSets };
-
-      if (today?.day?.id) {
-        saveLocalWorkoutState(
-          todayDateKey,
-          today.day.id,
-          today.weekNumber || 1,
-          notes,
-          updated,
-          checkedExercises,
-          "LOCAL_ONLY"
-        );
-        setSyncStatus("LOCAL_ONLY");
-      }
+      persistLocal(updated, checkedExercisesRef.current, notesRef.current, "LOCAL_ONLY");
       return updated;
     });
   };
 
   const handleRemoveSet = (exerciseId: string) => {
+    if (loggingLocked) return;
     setExerciseSets((prev) => {
       const currentSets = prev[exerciseId] ? [...prev[exerciseId]] : [];
       if (currentSets.length > 1) {
         currentSets.pop();
       }
       const updated = { ...prev, [exerciseId]: currentSets };
-
-      if (today?.day?.id) {
-        saveLocalWorkoutState(
-          todayDateKey,
-          today.day.id,
-          today.weekNumber || 1,
-          notes,
-          updated,
-          checkedExercises,
-          "LOCAL_ONLY"
-        );
-        setSyncStatus("LOCAL_ONLY");
-      }
+      persistLocal(updated, checkedExercisesRef.current, notesRef.current, "LOCAL_ONLY");
       return updated;
     });
   };
@@ -453,81 +486,49 @@ export default function WorkoutPage() {
     setSyncStatus(res.status);
     if (res.success) {
       setMessage(`✅ ${res.message || "Synchronized with cloud"}`);
+    } else if (res.status === "SYNC_ERROR") {
+      setMessage(`⚠️ ${res.message || "Sync error — sets remain on this device"}`);
     } else {
-      setMessage(`📱 ${res.message || "Saved on this device"}`);
+      setMessage(`📴 OFFLINE — Saved on this device`);
     }
   };
 
   const finishSession = async () => {
-    if (!today) return;
+    if (!today || loggingLocked) return;
     setSaving(true);
 
-    // Save locally first
+    const allChecked: Record<string, boolean> = { ...checkedExercisesRef.current };
+    today.day.exercises.forEach((ex) => {
+      allChecked[ex.id] = true;
+    });
+    setCheckedExercises(allChecked);
+    persistLocal(exerciseSetsRef.current, allChecked, notesRef.current, "SYNCING");
     saveLocalWorkoutState(
       todayDateKey,
       today.day.id,
       today.weekNumber || 1,
-      notes,
-      exerciseSets,
-      checkedExercises,
-      "SYNCING"
+      notesRef.current,
+      exerciseSetsRef.current,
+      allChecked,
+      "SYNCING",
+      { sessionSubmitted: true }
     );
 
-    const payloadExercises = today.day.exercises.map((ex) => {
-      const sets = exerciseSets[ex.id] || [];
-      const completedSets = sets.filter((s) => s.completed);
-      const isChecked = Boolean(checkedExercises[ex.id]) || completedSets.length > 0;
-
-      const numericWeights = sets
-        .map((s) => Number(s.weightKg))
-        .filter((w) => !isNaN(w) && w > 0);
-      const topWeight = numericWeights.length > 0 ? Math.max(...numericWeights) : null;
-      const avgReps = sets.length > 0
-        ? Math.round(sets.reduce((sum, s) => sum + (Number(s.reps) || 8), 0) / sets.length)
-        : Number(today.phase.reps.split("-")[0] || 8);
-
-      return {
-        exerciseId: ex.id,
-        setsCompleted: completedSets.length || sets.length,
-        repsCompleted: avgReps,
-        weightKg: topWeight,
-        checked: isChecked,
-        setDetails: JSON.stringify(sets),
-        clientId: sets[0]?.clientId || generateClientId(`ex-${ex.id}`),
-      };
-    });
-
     try {
-      const response = await fetch("/api/workout/log", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          workoutDayId: today.day.id,
-          weekNumber: today.weekNumber,
-          notes,
-          exerciseLogs: payloadExercises,
-        }),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setSyncStatus("SYNCED");
-        setMessage(`🎉 Workout Completed & Synced! +${data.xpEarned} XP`);
-        setNotes("");
+      const res = await syncLocalWorkoutToServer(todayDateKey, { sessionSubmitted: true });
+      setSyncStatus(res.status);
+      if (res.success) {
+        setMessage(`🎉 Workout submitted & synced${res.xpEarned ? ` (+${res.xpEarned} XP)` : ""}`);
         await loadTodayData();
         await loadHistory();
+      } else if (res.status === "LOCAL_ONLY") {
+        setMessage("📴 OFFLINE — Saved on this device. Will sync when internet returns.");
       } else {
-        const errJson = await response.json();
-        if (errJson.locked) {
-          setMessage(`🔒 ${errJson.error}`);
-        } else {
-          setSyncStatus("LOCAL_ONLY");
-          setMessage("📱 Saved on this device (offline mode active).");
-        }
+        setMessage(`⚠️ ${res.message || "Saved on this device"}`);
       }
-    } catch (err) {
+    } catch {
       setSyncStatus("LOCAL_ONLY");
-      setMessage("📱 Offline mode: Workout saved locally on your device.");
+      setMessage("📴 OFFLINE — Saved on this device");
     } finally {
       setSaving(false);
     }
@@ -539,13 +540,15 @@ export default function WorkoutPage() {
     return (
       <div className="flex h-72 items-center justify-center gap-3 text-sm text-[var(--text-muted)]">
         <LoaderCircle size={20} className="animate-spin text-orange-500" />
-        <span>Loading Workout Protocol & Offline Sync Engine...</span>
+        <span>{hydrated && !isOnline ? "Offline — waiting for cached workout protocol..." : "Loading Workout Protocol & Offline Sync Engine..."}</span>
       </div>
     );
   }
 
+  const missedLocked = Boolean((today.isMissed || today.missedToday || (today.isClosed && !today.completedToday)) && !manualOverride);
+
   // ── CASE 1: WORKOUT MISSED TODAY (LOCKED AT 09:28 PM) ────────────────────────
-  if ((today as any).missedToday && !manualOverride) {
+  if (missedLocked) {
     const nextWk = today.nextWorkout;
     return (
       <div className="space-y-6 animate-fade-in">

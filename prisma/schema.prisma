@@ -52,13 +52,14 @@ model WorkoutExercise {
 }
 
 model WorkoutLog {
-  id           String        @id @default(cuid())
-  workoutDayId String
-  workoutDay   WorkoutDay    @relation(fields: [workoutDayId], references: [id])
-  completedAt  DateTime      @default(now())
-  weekNumber   Int
-  notes        String?
-  exerciseLogs ExerciseLog[]
+  id             String        @id @default(cuid())
+  workoutDayId   String
+  workoutDay     WorkoutDay    @relation(fields: [workoutDayId], references: [id])
+  completedAt    DateTime      @default(now())
+  weekNumber     Int
+  notes          String?
+  submittedAt    DateTime?     // Full session submit before 09:28 PM; null = in-progress sets only
+  exerciseLogs   ExerciseLog[]
 }
 
 model ExerciseLog {

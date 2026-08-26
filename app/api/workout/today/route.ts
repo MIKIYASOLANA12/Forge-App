@@ -115,8 +115,23 @@ export async function GET() {
         order: nextLocation === 'HOME' ? 101 + idx : idx + 1,
       }));
 
-  const isCompleted = Boolean(todayLog);
   const isClosed = windowInfo.isClosed;
+  const allExercisesChecked =
+    Boolean(todayLog) &&
+    activeExerciseList.length > 0 &&
+    activeExerciseList.every((exercise) =>
+      Boolean(todayLog?.exerciseLogs.find((el) => el.exerciseId === exercise.id && el.checked))
+    );
+  const submittedBeforeCutoff = Boolean(
+    todayLog?.submittedAt && todayLog.submittedAt.getTime() <= windowInfo.closeUtc.getTime()
+  );
+  const legacyFullLogBeforeCutoff = Boolean(
+    todayLog &&
+      !todayLog.submittedAt &&
+      allExercisesChecked &&
+      todayLog.completedAt.getTime() <= windowInfo.closeUtc.getTime()
+  );
+  const isCompleted = submittedBeforeCutoff || (!isClosed && allExercisesChecked) || legacyFullLogBeforeCutoff;
   const isMissed = isClosed && !isCompleted;
 
   return NextResponse.json({
@@ -130,6 +145,8 @@ export async function GET() {
     isClosed,
     isMissed,
     completedToday: isCompleted,
+    missedToday: isMissed,
+    sessionInProgress: Boolean(todayLog) && !isCompleted,
     day300,
     targetBodyParts: targetInfo.primaryBodyParts,
     focusBadges: targetInfo.focusBadges,
@@ -148,11 +165,22 @@ export async function GET() {
       focusBadges: targetInfo.focusBadges,
       exercises: activeExerciseList.map((exercise) => {
         const muscleInfo = getExerciseMuscleInfo(exercise.name);
+        const todayExerciseLog = todayLog?.exerciseLogs.find((el) => el.exerciseId === exercise.id) ?? null;
         return {
           ...exercise,
           targetMuscle: muscleInfo.muscle,
           masterCue: muscleInfo.cue,
           lastLog: lastByExercise.get(exercise.id) ?? null,
+          todayLog: todayExerciseLog
+            ? {
+                setsCompleted: todayExerciseLog.setsCompleted,
+                repsCompleted: todayExerciseLog.repsCompleted,
+                weightKg: todayExerciseLog.weightKg,
+                checked: todayExerciseLog.checked,
+                setDetails: todayExerciseLog.setDetails,
+                clientId: todayExerciseLog.clientId,
+              }
+            : null,
         };
       }),
     },

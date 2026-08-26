@@ -71,7 +71,8 @@ model ExerciseLog {
   repsCompleted Int
   weightKg      Float?
   checked       Boolean         @default(false)
-  setDetails    String?         // JSON array of individual set entries: [{ set: 1, weightKg: 60, reps: 8, completed: true }]
+  setDetails    String?         // JSON array of individual set entries: [{ set: 1, weightKg: 60, reps: 8, completed: true, clientId: "..." }]
+  clientId      String?         // Client-generated ID for offline deduplication
 }
 
 model Habit {
@@ -197,15 +198,44 @@ model FoodItem {
 }
 
 model Book {
-  id          String        @id @default(cuid())
-  title       String
-  author      String?
-  sourceFile  String?
-  chunks      String?       // JSON array of text chunks indexed by chapter
-  order       Int
-  status      String        @default("queued") // queued | reading | finished
-  currentPage Int           @default(0)
-  checkIns    BookCheckIn[]
+  id                 String                @id @default(cuid())
+  title              String
+  author             String?
+  sourceFile         String?
+  chunks             String?               // JSON array of text chunks indexed by chapter
+  order              Int
+  status             String                @default("queued") // queued | reading | finished
+  currentPage        Int                   @default(0)
+  totalPages         Int                   @default(320)
+  startPage          Int                   @default(1)
+  deadlineDays       Int                   @default(30)
+  startDate          DateTime?
+  targetFinishDate   DateTime?
+  category           String?               // discipline, communication, business, money, investing, etc.
+  goals              String?               // JSON array or text of core learning goals
+  competencyTags     String?               // JSON array of competencies: ["Discipline", "Leadership"]
+  completedAt        DateTime?
+  finalReview        String?               // JSON object of 7 final review test questions and answers
+  checkIns           BookCheckIn[]
+  reflections        BookDailyReflection[]
+}
+
+model BookDailyReflection {
+  id               String   @id @default(cuid())
+  bookId           String
+  book             Book     @relation(fields: [bookId], references: [id])
+  date             DateTime @default(now())
+  pagesReadToday   Int      @default(0)
+  startPage        Int      @default(1)
+  endPage          Int      @default(1)
+  q1Understood     String?
+  q2MainIdea       String?
+  q3RealLifeUse    String?
+  q4Confused       String?
+  q5ChangeTomorrow String?
+  actionItem       String?
+  actionApplied    Boolean  @default(false)
+  xpAwarded        Int      @default(35)
 }
 
 model BookCheckIn {

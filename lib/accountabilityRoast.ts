@@ -112,6 +112,11 @@ export const ROAST_CATALOG: RoastTemplate[] = [
   },
   {
     category: 'COMBINED_MISSED',
+    intensity: 4,
+    text: "You skipped the workout, chemistry, JavaScript and reading. At this point your Todo list isn't unfinished. It's being actively ignored.",
+  },
+  {
+    category: 'COMBINED_MISSED',
     intensity: 3,
     text: "Today's plan has officially entered the missing-persons registry. Let's make sure tomorrow isn't an unsolved mystery.",
   },

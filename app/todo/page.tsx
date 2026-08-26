@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import {
   CheckSquare,
   Square,
@@ -28,7 +29,8 @@ import {
   GraduationCap,
   ChevronDown,
   ChevronUp,
-  Sparkle
+  Sparkle,
+  Compass
 } from "lucide-react";
 import { clsx } from "clsx";
 
@@ -136,6 +138,14 @@ type StudyProgressData = {
   };
 };
 
+type DemoSubject = {
+  subject: string;
+  demoTask: string;
+  targetMinutes: number;
+  progress: string;
+  isDemo: boolean;
+};
+
 type TodayPlanData = {
   planId: string | null;
   dateFormatted: string;
@@ -146,6 +156,14 @@ type TodayPlanData = {
     percentage: number;
     daysRemaining: number;
   };
+  deadline2027?: {
+    targetDateFormatted: string;
+    daysRemaining: number;
+    daysPassed: number;
+    totalJourneyDays: number;
+    percentage: number;
+    journeyFormatted: string;
+  };
   openTimeFormatted: string;
   closeTimeFormatted: string;
   closeTimestamp: number;
@@ -154,6 +172,8 @@ type TodayPlanData = {
   isClosed: boolean;
   tasks: TaskItem[];
   studyProgress?: StudyProgressData;
+  readingStatus?: any;
+  demoSubjects?: DemoSubject[];
   yesterday?: YesterdayData;
 };
 
@@ -200,7 +220,7 @@ function CountdownClock({ targetTimestamp, isClosed }: { targetTimestamp: number
 }
 
 export default function TodoPage() {
-  const [tab, setTab] = useState<"today" | "tomorrow" | "history">("today");
+  const [tab, setTab] = useState<"today" | "tomorrow" | "demo" | "history">("today");
   const [todayData, setTodayData] = useState<TodayPlanData | null>(null);
   const [roastData, setRoastData] = useState<RoastData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -257,7 +277,7 @@ export default function TodoPage() {
               priority: "HIGH",
             },
             {
-              description: "Focused Reading & Knowledge Synthesis",
+              description: `📚 Reading — ${p.readingStatus?.activeBook?.title || 'Atomic Habits'} (Next Daily Pages)`,
               domainName: "Reading",
               minutesTarget: 30,
               priority: "MEDIUM",
@@ -373,6 +393,8 @@ export default function TodoPage() {
 
   const jsProgress = todayData?.studyProgress?.javascript;
   const chemProgress = todayData?.studyProgress?.chemistry;
+  const readingBook = todayData?.readingStatus?.activeBook;
+  const deadline2027 = todayData?.deadline2027;
 
   return (
     <div className="mx-auto w-full max-w-[1280px] animate-fade-in pb-16 space-y-6">
@@ -382,6 +404,9 @@ export default function TodoPage() {
           <div className="flex flex-wrap items-center gap-2 mb-2">
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-orange-500/15 text-orange-400 border border-orange-500/30">
               <Flame size={14} /> {todayData?.day300.formatted || "DAY 1 / 300"}
+            </span>
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-purple-500/15 text-purple-300 border border-purple-500/30">
+              <Target size={14} /> {deadline2027?.daysRemaining || 303} Days Until June 25, 2027 ({deadline2027?.journeyFormatted || "Day 1 / 303"})
             </span>
             <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold text-slate-300 bg-slate-900 border border-slate-800">
               <Calendar size={13} /> {todayData?.dateFormatted}
@@ -400,10 +425,10 @@ export default function TodoPage() {
 
           <h1 className="text-3xl font-extrabold tracking-tight text-white flex items-center gap-3">
             <CheckSquare className="text-orange-500" size={32} />
-            Daily Execution OS & Study Schedules
+            Daily Execution OS & Multi-Subject Engine
           </h1>
           <p className="mt-1 max-w-2xl text-sm text-[var(--text-secondary)]">
-            Execution Window: <strong>05:00 AM – 09:28 PM</strong> Ethiopia Time. Chemistry (30-Day Goal) & 5 Million Coders JavaScript (14-Day Goal).
+            Execution Window: <strong>05:00 AM – 09:28 PM</strong> Ethiopia Time. Chemistry (30-Day Goal), 5 Million Coders JavaScript (14-Day Goal) & Life Reading.
           </p>
         </div>
 
@@ -420,7 +445,7 @@ export default function TodoPage() {
             />
           </div>
 
-          <div className="flex rounded-xl border border-[var(--border)] bg-[var(--bg-surface)] p-1">
+          <div className="flex flex-wrap rounded-xl border border-[var(--border)] bg-[var(--bg-surface)] p-1">
             <button
               className={`btn btn-sm ${
                 tab === "today"
@@ -430,6 +455,16 @@ export default function TodoPage() {
               onClick={() => setTab("today")}
             >
               Today ({completedCount}/{totalCount})
+            </button>
+            <button
+              className={`btn btn-sm ${
+                tab === "demo"
+                  ? "bg-[var(--bg-elevated)] text-[var(--text-primary)] shadow-sm font-bold"
+                  : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+              }`}
+              onClick={() => setTab("demo")}
+            >
+              Demo Subjects (4)
             </button>
             <button
               className={`btn btn-sm ${
@@ -559,30 +594,6 @@ export default function TodoPage() {
                           ))}
                         </ul>
                       </div>
-
-                      {/* 5-Part Session Architecture Breakdown */}
-                      <div className="grid grid-cols-5 gap-1 text-[10px] text-center font-bold">
-                        <div className="p-1 rounded bg-slate-900 border border-slate-800">
-                          <div className="text-slate-400">LEARN</div>
-                          <div className="text-cyan-300">{chemProgress.currentTopic.sessionBreakdown.learnMins}m</div>
-                        </div>
-                        <div className="p-1 rounded bg-slate-900 border border-slate-800">
-                          <div className="text-slate-400">RECALL</div>
-                          <div className="text-cyan-300">{chemProgress.currentTopic.sessionBreakdown.activeRecallMins}m</div>
-                        </div>
-                        <div className="p-1 rounded bg-slate-900 border border-slate-800">
-                          <div className="text-slate-400">CARDS</div>
-                          <div className="text-cyan-300">{chemProgress.currentTopic.sessionBreakdown.flashcardsMins}m</div>
-                        </div>
-                        <div className="p-1 rounded bg-slate-900 border border-slate-800">
-                          <div className="text-slate-400">DRILL</div>
-                          <div className="text-cyan-300">{chemProgress.currentTopic.sessionBreakdown.practiceMins}m</div>
-                        </div>
-                        <div className="p-1 rounded bg-slate-900 border border-slate-800">
-                          <div className="text-slate-400">REVIEW</div>
-                          <div className="text-cyan-300">{chemProgress.currentTopic.sessionBreakdown.oldTopicRecallMins}m</div>
-                        </div>
-                      </div>
                     </div>
 
                     <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400">
@@ -650,7 +661,7 @@ export default function TodoPage() {
                   <div>
                     <h3 className="text-base font-extrabold text-white">Daily Execution Checklist</h3>
                     <p className="text-xs text-slate-400">
-                      {todayData?.isClosed ? "🔒 Window closed at 09:28 PM" : "Check items as you complete each study and workout block"}
+                      {todayData?.isClosed ? "🔒 Window closed at 09:28 PM" : "Check items as you complete each study, reading, and workout block"}
                     </p>
                   </div>
                   <div className="text-right">
@@ -675,6 +686,7 @@ export default function TodoPage() {
                 {todayData?.tasks.map((task) => {
                   const isExpanded = Boolean(expandedTasks[task.id]);
                   const hasSubtopics = Array.isArray(task.subtopics) && task.subtopics.length > 0;
+                  const isReadingTask = task.domain?.name.toLowerCase() === "reading" || task.description.toLowerCase().includes("reading");
 
                   return (
                     <article
@@ -746,11 +758,6 @@ export default function TodoPage() {
                                 🎯 ENTRANCE PRIORITY
                               </span>
                             )}
-                            {task.plannedStartTime && (
-                              <span className="text-[11px] font-mono text-slate-400">
-                                🕒 {task.plannedStartTime} {task.plannedEndTime ? `- ${task.plannedEndTime}` : ""}
-                              </span>
-                            )}
                           </div>
 
                           <h4
@@ -766,10 +773,18 @@ export default function TodoPage() {
                             {task.displayTitle || task.description}
                           </h4>
 
-                          <div className="flex items-center gap-3 text-xs text-slate-400 pt-0.5">
+                          <div className="flex flex-wrap items-center gap-3 text-xs text-slate-400 pt-0.5">
                             <span>⏱️ {task.minutesTarget} mins</span>
                             <span>·</span>
                             <span className="text-amber-400 font-bold">+{task.xpTarget || Math.round(task.minutesTarget * 1.2)} XP</span>
+                            {isReadingTask && (
+                              <Link
+                                href="/reading"
+                                className="text-purple-400 hover:text-purple-300 font-bold flex items-center gap-1 underline"
+                              >
+                                Open Reading OS & Reflections <ArrowRight size={12} />
+                              </Link>
+                            )}
                             {task.completed && (
                               <span className="text-emerald-400 font-bold text-[11px]">✓ Completed & Saved</span>
                             )}
@@ -824,7 +839,7 @@ export default function TodoPage() {
                   <div className="flex flex-col sm:flex-row gap-2">
                     <input
                       type="text"
-                      placeholder="Task description (e.g. Solve 15 Chemistry Equilibrium problems)..."
+                      placeholder="Task description..."
                       value={newTaskText}
                       onChange={(e) => setNewTaskText(e.target.value)}
                       className="flex-1 rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-xs text-white placeholder-slate-500 focus:border-orange-500 focus:outline-none"
@@ -851,93 +866,132 @@ export default function TodoPage() {
 
           {/* ── SIDEBAR OVERVIEW ──────────────────────────────────────────────── */}
           <aside className="space-y-4">
-            {/* 300-Day Milestone Tracker */}
-            <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-surface)] p-5 shadow-lg space-y-4">
-              <div className="flex items-center justify-between border-b border-[var(--border)] pb-2">
-                <span className="text-xs font-extrabold uppercase tracking-wider text-orange-400 flex items-center gap-1.5">
-                  <Target size={14} /> 300-Day Journey
+            {/* 2027 Countdown Tracker */}
+            <div className="rounded-2xl border border-purple-500/30 bg-gradient-to-br from-purple-950/20 via-slate-900 to-slate-950 p-5 shadow-lg space-y-4">
+              <div className="flex items-center justify-between border-b border-purple-500/20 pb-2">
+                <span className="text-xs font-extrabold uppercase tracking-wider text-purple-300 flex items-center gap-1.5">
+                  <Target size={14} /> June 25, 2027 Deadline
                 </span>
-                <span className="text-xs font-bold font-mono text-slate-400">
-                  {todayData?.day300.percentage}% Done
+                <span className="text-xs font-bold font-mono text-purple-400">
+                  {deadline2027?.percentage || 0}% Elapsed
                 </span>
               </div>
 
               <div className="text-center py-2">
-                <div className="text-4xl font-black text-white">{todayData?.day300.dayNumber}</div>
+                <div className="text-4xl font-black text-white font-mono">{deadline2027?.daysRemaining || 303}</div>
                 <div className="text-[11px] font-extrabold text-slate-400 uppercase tracking-widest mt-1">
-                  Days Completed of 300
+                  Days Remaining Before 2027
                 </div>
-                <div className="text-xs text-slate-500 mt-2 font-semibold">
-                  {todayData?.day300.daysRemaining} days remaining
+                <div className="text-xs text-purple-300 mt-2 font-semibold">
+                  {deadline2027?.journeyFormatted || "Day 1 / 303"} of Journey
                 </div>
               </div>
             </div>
 
-            {/* 🎯 Deadline Progress Dashboard */}
+            {/* 📚 Active Life Book Card */}
+            {readingBook && (
+              <div className="rounded-2xl border border-purple-500/30 bg-slate-900/80 p-5 shadow-lg space-y-3">
+                <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+                  <span className="text-xs font-black uppercase tracking-wider text-purple-400 flex items-center gap-1.5">
+                    <BookOpen size={14} /> Current Life Book
+                  </span>
+                  <span className="text-[11px] font-mono text-slate-400">{readingBook.pacing?.percentage}%</span>
+                </div>
+
+                <div>
+                  <h4 className="text-sm font-extrabold text-white">{readingBook.title}</h4>
+                  <p className="text-xs text-slate-400">{readingBook.author}</p>
+                </div>
+
+                {readingBook.pacing?.todayChunk && (
+                  <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 text-xs space-y-1">
+                    <div className="text-purple-300 font-bold">
+                      Today: Pages {readingBook.pacing.todayChunk.startPage}–{readingBook.pacing.todayChunk.endPage}
+                    </div>
+                    <div className="text-slate-400">
+                      Target: {readingBook.pacing.todayChunk.pagesCount} pages · ~{readingBook.pacing.todayChunk.estimatedMinutes} mins
+                    </div>
+                  </div>
+                )}
+
+                <Link
+                  href="/reading"
+                  className="btn btn-ghost btn-xs w-full text-xs font-bold text-purple-300 hover:text-white border border-purple-500/30 flex items-center justify-center gap-1 mt-2"
+                >
+                  Daily Reflections & 12 Areas <ArrowRight size={12} />
+                </Link>
+              </div>
+            )}
+
+            {/* 300-Day Milestone Tracker */}
             <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-surface)] p-5 shadow-lg space-y-4">
-              <span className="text-xs font-extrabold uppercase tracking-wider text-orange-400 block border-b border-[var(--border)] pb-2">
-                Target Deadlines & Pacing
-              </span>
+              <div className="flex items-center justify-between border-b border-[var(--border)] pb-2">
+                <span className="text-xs font-extrabold uppercase tracking-wider text-orange-400 flex items-center gap-1.5">
+                  <Flame size={14} /> 300-Day Discipline
+                </span>
+                <span className="text-xs font-bold font-mono text-slate-400">
+                  {todayData?.day300.percentage}%
+                </span>
+              </div>
 
-              {/* JavaScript 14-Day Status */}
-              {jsProgress && (
-                <div className="p-3.5 rounded-xl bg-slate-950/80 border border-amber-500/30 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-black text-amber-400">💻 JavaScript (14-Day Goal)</span>
-                    <span className="text-[11px] font-bold text-slate-300">{jsProgress.formattedDay}</span>
-                  </div>
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-slate-400">{jsProgress.completedCount} / 154 items done</span>
-                    <span className="font-bold text-white">{jsProgress.percentage}%</span>
-                  </div>
-                  <div className="h-1.5 w-full rounded-full bg-slate-800 overflow-hidden">
-                    <div className="h-full bg-amber-400" style={{ width: `${jsProgress.percentage}%` }} />
-                  </div>
-                  <div className="flex items-center justify-between text-[11px] text-slate-400 pt-1">
-                    <span>{jsProgress.daysRemaining} days left</span>
-                    <span className="font-bold text-amber-300">{jsProgress.requiredItemsPerDay} items/day</span>
-                  </div>
+              <div className="text-center py-2">
+                <div className="text-3xl font-black text-white">{todayData?.day300.dayNumber}</div>
+                <div className="text-[11px] font-extrabold text-slate-400 uppercase tracking-widest mt-1">
+                  Days Completed of 300
                 </div>
-              )}
-
-              {/* Chemistry 30-Day Status */}
-              {chemProgress && (
-                <div className="p-3.5 rounded-xl bg-slate-950/80 border border-cyan-500/30 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-black text-cyan-400">🧪 Chemistry (30-Day Goal)</span>
-                    <span className="text-[11px] font-bold text-slate-300">{chemProgress.formattedDay}</span>
-                  </div>
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-slate-400">{chemProgress.completedCount} / 30 topics done</span>
-                    <span className="font-bold text-white">{chemProgress.percentage}%</span>
-                  </div>
-                  <div className="h-1.5 w-full rounded-full bg-slate-800 overflow-hidden">
-                    <div className="h-full bg-cyan-400" style={{ width: `${chemProgress.percentage}%` }} />
-                  </div>
-                  <div className="flex items-center justify-between text-[11px] text-slate-400 pt-1">
-                    <span>{chemProgress.daysRemaining} days left</span>
-                    <span className="font-bold text-cyan-300">{chemProgress.requiredTopicsPerDay} topic/day</span>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Protocol Execution Window Info */}
-            <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-4 space-y-2 text-xs">
-              <span className="text-[10px] font-extrabold uppercase tracking-widest text-orange-400 block">
-                Execution Window Protocol
-              </span>
-              <ul className="space-y-1.5 text-slate-300 leading-relaxed list-disc list-inside">
-                <li>Opens: <strong>05:00 AM</strong> Addis Time</li>
-                <li>Closes: <strong>09:28 PM</strong> Addis Time</li>
-                <li>Unsubmitted items lock as <strong>MISSED</strong> at 09:28 PM.</li>
-              </ul>
+              </div>
             </div>
           </aside>
         </div>
       )}
 
-      {/* ── TAB 2: PLAN TOMORROW ────────────────────────────────────────────── */}
+      {/* ── TAB 2: DEMO SUBJECTS HUB (BIOLOGY, MATH, PHYSICS, ENGLISH) ────── */}
+      {tab === "demo" && (
+        <section className="rounded-2xl border border-[var(--border)] bg-[var(--bg-surface)] p-6 space-y-6 shadow-xl">
+          <div className="border-b border-[var(--border)] pb-4 space-y-1">
+            <h3 className="text-xl font-extrabold text-white flex items-center gap-2">
+              <GraduationCap className="text-orange-400" size={22} />
+              Demo Study Subjects (Pending Detailed Roadmaps)
+            </h3>
+            <p className="text-xs text-slate-400">
+              When you provide the real topic lists for Biology, Mathematics, Physics, and English, Forge will seamlessly upgrade these into exact daily schedules without altering existing progress.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {(todayData?.demoSubjects || []).map((subj) => (
+              <div
+                key={subj.subject}
+                className="p-5 rounded-2xl bg-slate-950 border border-slate-800 space-y-3 shadow-lg"
+              >
+                <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+                  <span className="text-sm font-extrabold text-white flex items-center gap-2">
+                    <Sparkle className="text-orange-400" size={16} />
+                    {subj.subject}
+                  </span>
+                  <span className="px-2.5 py-0.5 rounded text-[10px] font-extrabold uppercase bg-slate-900 text-slate-400 border border-slate-800">
+                    DEMO STRUCTURE
+                  </span>
+                </div>
+
+                <div className="space-y-1">
+                  <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
+                    Today's Demo Task:
+                  </span>
+                  <div className="text-sm font-semibold text-slate-200">{subj.demoTask}</div>
+                </div>
+
+                <div className="flex items-center justify-between text-xs text-slate-400 pt-2 border-t border-slate-900">
+                  <span>⏱️ {subj.targetMinutes} mins target</span>
+                  <span className="text-amber-400 font-medium">Pending topic list</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* ── TAB 3: PLAN TOMORROW ────────────────────────────────────────────── */}
       {tab === "tomorrow" && (
         <section className="rounded-2xl border border-[var(--border)] bg-[var(--bg-surface)] p-6 space-y-6 shadow-xl">
           <div className="border-b border-[var(--border)] pb-4 space-y-1">
@@ -946,7 +1000,7 @@ export default function TodoPage() {
               Night Planning: Design Tomorrow's Targets
             </h3>
             <p className="text-xs text-slate-400">
-              Tomorrow's study schedule is automatically derived from the 14-day JS and 30-day Chemistry roadmaps.
+              Tomorrow's study schedule is automatically derived from the 14-day JS, 30-day Chemistry, and sequential reading roadmaps.
             </p>
           </div>
 
@@ -1024,7 +1078,7 @@ export default function TodoPage() {
         </section>
       )}
 
-      {/* ── TAB 3: YESTERDAY'S RESULTS & MISSED HISTORY ───────────────────────── */}
+      {/* ── TAB 4: YESTERDAY'S RESULTS & MISSED HISTORY ───────────────────────── */}
       {tab === "history" && todayData?.yesterday && (
         <section className="rounded-2xl border border-[var(--border)] bg-[var(--bg-surface)] p-6 space-y-6 shadow-xl">
           <div className="border-b border-[var(--border)] pb-4 space-y-1">

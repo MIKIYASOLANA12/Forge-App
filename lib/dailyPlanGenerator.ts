@@ -1,8 +1,40 @@
 import { prisma } from './prisma';
 import { getAddisNow, workoutWindowForAddisDate, getWorkoutLocationForAddisDate } from './workoutTime';
 import { calculateChemistryOneMonthPlan, calculateJavaScriptPacing } from './studyRoadmaps';
+import { getReadingSystemStatus } from './readingEngine';
 
 const ORDER = ['Push', 'Pull', 'LegsCore'];
+
+export const DEMO_STUDY_SUBJECTS = [
+  {
+    subject: 'Biology',
+    demoTask: 'Cell Structure & Membrane Transport Drill',
+    targetMinutes: 45,
+    progress: 'Demo Structure · Pending User Topic List',
+    isDemo: true,
+  },
+  {
+    subject: 'Mathematics',
+    demoTask: 'Calculus: Limits & Differential Problem Sets',
+    targetMinutes: 60,
+    progress: 'Demo Structure · Pending User Topic List',
+    isDemo: true,
+  },
+  {
+    subject: 'Physics',
+    demoTask: 'Kinematics & Newton’s Laws Core Drills',
+    targetMinutes: 50,
+    progress: 'Demo Structure · Pending User Topic List',
+    isDemo: true,
+  },
+  {
+    subject: 'English',
+    demoTask: 'Advanced Vocabulary & Reading Comprehension',
+    targetMinutes: 30,
+    progress: 'Demo Structure · Pending User Topic List',
+    isDemo: true,
+  },
+];
 
 /**
  * Ensures today's DailyPlan is populated with the user's real scheduled tasks.
@@ -35,6 +67,11 @@ export async function ensureTodayDailyPlan() {
     .filter((m) => m.subject === 'JavaScript' && m.isMastered)
     .map((m) => m.topicId);
   const jsPacing = calculateJavaScriptPacing(jsMasteredIds);
+
+  // Reading status
+  const readingStatus = await getReadingSystemStatus();
+  const activeBook = readingStatus.activeBook;
+  const bookChunk = activeBook?.pacing?.todayChunk || { startPage: 1, endPage: 12, pagesCount: 12, estimatedMinutes: 25 };
 
   // If no plan exists or has 0 tasks, generate today's real plan
   if (!plan || plan.tasks.length === 0) {
@@ -113,8 +150,14 @@ export async function ensureTodayDailyPlan() {
       },
       {
         domainId: domainByName.get('reading') || defaultDomainId,
-        description: 'Focused Reading & Daily Knowledge Synthesis',
-        minutesTarget: 30,
+        description: JSON.stringify({
+          title: `📚 Reading — ${activeBook?.title || 'Atomic Habits'} (Pages ${bookChunk.startPage}–${bookChunk.endPage})`,
+          subject: 'Reading',
+          bookTitle: activeBook?.title || 'Atomic Habits',
+          pagesTarget: `${bookChunk.startPage}–${bookChunk.endPage}`,
+          pagesCount: bookChunk.pagesCount,
+        }),
+        minutesTarget: bookChunk.estimatedMinutes || 25,
         priority: 'MEDIUM',
         plannedStartTime: '20:30',
         plannedEndTime: '21:00',
@@ -180,5 +223,7 @@ export async function ensureTodayDailyPlan() {
       javascript: jsPacing,
       chemistry: chemPacing,
     },
+    readingStatus,
+    demoSubjects: DEMO_STUDY_SUBJECTS,
   };
 }

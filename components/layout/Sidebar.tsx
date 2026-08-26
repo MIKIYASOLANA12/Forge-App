@@ -22,7 +22,7 @@ const NAV_ITEMS = [
   { href: "/habits", label: "Habits", icon: Target },
   { href: "/learn", label: "Learn", icon: BookOpen },
   { href: "/meals", label: "Nutrition", icon: UtensilsCrossed },
-  { href: "/books", label: "Books", icon: Library },
+  { href: "/reading", label: "Reading & Life", icon: Library },
   { href: "/faith", label: "Faith", icon: Heart },
   { href: "/agent", label: "Agent", icon: MessageSquare },
   { href: "/journal", label: "Journal", icon: BookMarked },

@@ -2,12 +2,14 @@ import { NextResponse } from 'next/server';
 import { getAddisNow, workoutWindowForAddisDate, getDayOfJourney300 } from '@/lib/workoutTime';
 import { ensureTodayDailyPlan } from '@/lib/dailyPlanGenerator';
 import { prisma } from '@/lib/prisma';
+import { get2027DeadlineMetrics } from '@/lib/readingEngine';
 
 export async function GET() {
   try {
     const addisNow = getAddisNow();
     const windowInfo = workoutWindowForAddisDate(addisNow);
     const day300 = getDayOfJourney300(addisNow);
+    const deadline2027 = get2027DeadlineMetrics(addisNow);
 
     const todayPlan = await ensureTodayDailyPlan();
 
@@ -67,6 +69,7 @@ export async function GET() {
       planId: todayPlan.planId,
       dateFormatted,
       day300,
+      deadline2027,
       openTimeFormatted,
       closeTimeFormatted,
       closeTimestamp: windowInfo.closeUtc.getTime(),
@@ -75,6 +78,8 @@ export async function GET() {
       isClosed: windowInfo.isClosed,
       tasks: todayPlan.tasks,
       studyProgress: todayPlan.studyProgress,
+      readingStatus: todayPlan.readingStatus,
+      demoSubjects: todayPlan.demoSubjects,
       yesterday: {
         dateFormatted: yesterdayDateFormatted,
         workout: yesterdayWorkoutStatus,

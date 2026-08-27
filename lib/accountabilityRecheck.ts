@@ -5,17 +5,31 @@ import {
   getDayOfJourney300,
 } from './workoutTime';
 import { sendTelegramMessage } from './telegram';
-import { getDailyBreakdown } from './progressEngine';
+import { getDailyBreakdown, getProgressHistory } from './progressEngine';
 import { computeLevel } from './xp';
-import { getAccountabilityRoast } from './accountabilityRoast';
+import { getAccountabilityRoast, RoastCategory } from './accountabilityRoast';
 
+export type WorkoutWindow = ReturnType<typeof workoutWindowForAddisDate>;
 export type AccountabilityDeliveryState = 'NOT_SENT' | 'SENT' | 'DELIVERY_FAILED' | 'UNKNOWN';
 
 const ACCOUNTABILITY_TYPES = ['ACCOUNTABILITY', 'MISSED_DAY_REPORT', 'COMPLETION_REPORT'];
 
 export const REMINDER_MIN_INTERVAL_MS = 3 * 60 * 1000;
-export const DELIVERY_RETRY_MIN_INTERVAL_MS = 60 * 1000;
 export const MAX_REMINDERS_PER_DAY = 24;
+
+// Controlled delivery retry schedule (spec section 8). Index = retryCount.
+// Escalating backoff so we never spam Telegram (>=1 msg/sec per chat).
+export const DELIVERY_RETRY_BACKOFF_MS = [
+  0,
+  2 * 60 * 1000, // +2 minutes
+  5 * 60 * 1000, // +5 minutes
+  10 * 60 * 1000,
+  30 * 60 * 1000,
+  60 * 60 * 1000,
+  2 * 60 * 60 * 1000,
+  4 * 60 * 60 * 1000,
+];
+export const MAX_DELIVERY_RETRIES = DELIVERY_RETRY_BACKOFF_MS.length;
 
 /** Distinct reminder roasts (spec section 6) — rotate to avoid repeats. */
 export const REMINDER_ROASTS: string[] = [
@@ -31,6 +45,27 @@ export const REMINDER_ROASTS: string[] = [
   'Missed items stay missed until you own them. This is that moment.',
 ];
 
+// ── Report types ─────────────────────────────────────────────────────────────
+
+export type MissedTaskItem = {
+  label: string;
+  category: string;
+  taskId?: string;
+};
+
+export type MissedReport = {
+  addisDateKey: string;
+  window: WorkoutWindow;
+  workoutMissed: boolean;
+  workoutType: string | null;
+  workoutSubmitted: boolean;
+  missedTasks: MissedTaskItem[];
+  completedTasks: string[];
+  habits: { completed: number; total: number; missedNames: string[] };
+  missedAll: string[];
+  completedAll: string[];
+  notRequired: string[];
+};
 export function normalizedDateKeyFromAddis(date: Date): string {
   const y = date.getFullYear();
   const m = String(date.getMonth() + 1).padStart(2, '0');
@@ -39,9 +74,7 @@ export function normalizedDateKeyFromAddis(date: Date): string {
 }
 
 /** UTC-midnight normalized date used as TelegramNotificationLog `date` (matches scheduler). */
-export function getLogDateForWindow(
-  windowInfo: ReturnType<typeof workoutWindowForAddisDate>
-): Date {
+export function getLogDateForWindow(windowInfo: WorkoutWindow): Date {
   return new Date(
     Date.UTC(windowInfo.startAddis.getFullYear(), windowInfo.startAddis.getMonth(), windowInfo.startAddis.getDate())
   );
@@ -95,28 +128,79 @@ export function isAcknowledgementText(text: string): string | null {
   return null;
 }
 
-function labelOf(description: string): { title?: string; bookTitle?: string } {
+/**
+ * Which Addis day we grade. At/after the 21:28 close we grade the day that
+ * just closed. Before 05:00 (or during an open day) we grade the *previous*
+ * closed day — we never grade the current open day. This keeps a delayed cron
+ * from rechecking the freshly-unlocked day and dropping yesterday's missed list
+ * (spec sections 12/13).
+ */
+export function windowToGrade(now: Date = getAddisNow()): WorkoutWindow {
+  const win = workoutWindowForAddisDate(now);
+  if (win.isClosed) return win;
+  const prevAddis = new Date(win.startAddis);
+  prevAddis.setDate(prevAddis.getDate() - 1);
+  return workoutWindowForAddisDate(prevAddis);
+}
+function labelOf(description: string): { title?: string; bookTitle?: string; pagesTarget?: string; subject?: string; mainTopic?: string } {
   try {
     const parsed = typeof description === 'string' ? JSON.parse(description) : description;
     return {
       title: parsed?.title ? String(parsed.title) : undefined,
       bookTitle: parsed?.bookTitle ? String(parsed.bookTitle) : undefined,
+      pagesTarget: parsed?.pagesTarget ? String(parsed.pagesTarget) : undefined,
+      subject: parsed?.subject ? String(parsed.subject) : undefined,
+      mainTopic: parsed?.mainTopic ? String(parsed.mainTopic) : undefined,
     };
   } catch {
     return {};
   }
 }
-/**
- * Detect which required activities were missed for a given Addis day window.
- * Keyed off the window (not "now"), so a delayed cron still flags the same day.
- */
-export async function detectMissedActivities(
-  windowInfo: ReturnType<typeof workoutWindowForAddisDate>
-): Promise<string[]> {
-  const missedKeys = new Map<string, boolean>();
-  const otherMissed: string[] = [];
 
-  const [workoutLog, planres] = await Promise.all([
+/** Classify a task into a category by subject/title (never hard-coded to one subject). */
+function classifyTask(subjectRaw?: string | null, titleRaw = '', descriptionRaw = ''): string {
+  const s = `${subjectRaw || ''} ${titleRaw} ${descriptionRaw}`.toLowerCase();
+  if (/workout|gym|legs|push|pull/i.test(s)) return 'Workout';
+  if (/chem/i.test(s)) return 'Chemistry';
+  if (/javascript|js\s?cod|5 million/i.test(s)) return 'JavaScript';
+  if (/reading|book/i.test(s)) return 'Reading';
+  if (/biolog/i.test(s)) return 'Biology';
+  if (/math|calculus|geometry/i.test(s)) return 'Mathematics';
+  if (/physics|kinematics|newton/i.test(s)) return 'Physics';
+  if (/english|vocab/i.test(s)) return 'English';
+  if (/habit/i.test(s)) return 'Habit';
+  return 'Other';
+}
+
+/** Per-item display line (e.g. "Chemistry — Stoichiometry", "Reading — Book (pages 42–53)"). */
+function taskDisplayLabel(category: string, t: { subject?: string | null; topic?: string | null; description: string }): string {
+  const meta = labelOf(t.description);
+  const title = meta.title || t.description;
+  const topic = t.topic || meta.mainTopic;
+
+  if (category === 'Chemistry') return `Chemistry${topic ? ` — ${topic}` : ''}`;
+  if (category === 'JavaScript') return `JavaScript${topic && topic !== title ? ` — ${topic}` : ''}`;
+  if (category === 'Reading') {
+    const book = meta.bookTitle;
+    const pages = meta.pagesTarget;
+    return `Reading${book ? ` — ${book}` : ''}${pages ? ` (pages ${pages})` : ''}`;
+  }
+  if (category === 'Biology' || category === 'Mathematics' || category === 'Physics' || category === 'English') {
+    const clean = title.replace(new RegExp(`^(?:${category})\\s*[-—:]?\\s*`, 'i'), '').trim();
+    return `${category}${clean ? ` — ${clean}` : ''}`;
+  }
+  return title.replace(/\s+/g, ' ').trim();
+}
+/**
+ * Detect ALL missed + completed required activities for a closed Addis day
+ * window (spec sections 1-4). Checks Workout independently, every scheduled
+ * PlanTask by real category/subject/topic, and Habits. Returns a full report,
+ * not just "Chemistry".
+ */
+export async function detectMissedActivities(windowInfo: WorkoutWindow): Promise<MissedReport> {
+  const addisDateKey = normalizedDateKeyFromAddis(windowInfo.startAddis);
+
+  const [workoutLog, planres, activeHabits, doneHabits] = await Promise.all([
     prisma.workoutLog.findFirst({
       where: { completedAt: { gte: windowInfo.startUtc, lte: windowInfo.endUtc } },
       include: { workoutDay: true },
@@ -125,44 +209,80 @@ export async function detectMissedActivities(
       where: { date: { gte: windowInfo.startUtc, lte: windowInfo.endUtc } },
       include: { tasks: true },
     }),
+    prisma.habit.findMany({ where: { active: true } }),
+    prisma.habitLog.findMany({
+      where: { date: { gte: windowInfo.startUtc, lte: windowInfo.endUtc }, completed: true },
+    }),
   ]);
 
-  if (!workoutLog) missedKeys.set('Workout', true);
+  const workoutMissed = !workoutLog;
+  const workoutType = workoutLog?.workoutDay?.type ?? null;
+  const workoutSubmitted = Boolean(workoutLog);
 
+  const missedTasks: MissedTaskItem[] = [];
+  const completedTasks: string[] = [];
   for (const t of planres?.tasks ?? []) {
-    if (t.completed) continue;
     const meta = labelOf(t.description);
-    const label = meta.title || t.description;
-    const subj = (t.subject || label).toLowerCase();
-
-    if (subj.includes('chemistry')) {
-      missedKeys.set('Chemistry', true);
-    } else if (subj.includes('javascript') || subj.includes('5 million coders') || subj.includes('coding')) {
-      missedKeys.set('JavaScript / 5 Million Coders', true);
-    } else if (subj.includes('reading')) {
-      missedKeys.set(`Reading${meta.bookTitle ? ` — ${meta.bookTitle}` : ''}`, true);
-    } else if (
-      subj.includes('biology') ||
-      subj.includes('physics') ||
-      subj.includes('mathematics') ||
-      subj.includes(' math') ||
-      subj.includes('english')
-    ) {
-      missedKeys.set(label, true);
+    const category = classifyTask(t.subject, meta.title || t.description, t.description);
+    const label = taskDisplayLabel(category, t);
+    if (t.completed) {
+      completedTasks.push(label);
     } else {
-      otherMissed.push(label);
+      missedTasks.push({ label, category, taskId: t.id });
     }
   }
 
-  for (const o of otherMissed.slice(0, 4)) missedKeys.set(o, true);
+  const doneHabitIds = new Set(doneHabits.map((hl) => hl.habitId));
+  const missedHabits = activeHabits.filter((h) => !doneHabitIds.has(h.id)).map((h) => h.name);
+  const doneHabitNames = activeHabits.filter((h) => doneHabitIds.has(h.id)).map((h) => h.name);
 
-  const missed: string[] = [];
-  for (const [key, val] of missedKeys.entries()) {
-    if (val) missed.push(key);
-  }
-  return missed;
+  const missedAll: string[] = [];
+  const seen = new Set<string>();
+  const pushMissed = (line: string) => {
+    const k = line.toLowerCase();
+    if (line && !seen.has(k)) {
+      seen.add(k);
+      missedAll.push(line);
+    }
+  };
+  if (workoutMissed) pushMissed('Workout');
+  for (const m of missedTasks) pushMissed(m.label);
+  missedHabits.forEach(pushMissed);
+
+  const completedAll: string[] = [];
+  const cseen = new Set<string>();
+  const pushCompleted = (line: string) => {
+    const k = line.toLowerCase();
+    if (line && !cseen.has(k)) {
+      cseen.add(k);
+      completedAll.push(line);
+    }
+  };
+  if (!workoutMissed && workoutType) pushCompleted(`Workout (${workoutType})`);
+  completedTasks.forEach(pushCompleted);
+  doneHabitNames.forEach(pushCompleted);
+
+  const scheduled = new Set<string>(['Workout']);
+  missedTasks.forEach((m) => scheduled.add(m.category));
+  completedTasks.forEach((c) => scheduled.add(classifyTask(null, c)));
+  if (activeHabits.length > 0) scheduled.add('Habit');
+  const ALL_CATEGORIES = ['Workout', 'Chemistry', 'JavaScript', 'Reading', 'Biology', 'Mathematics', 'Physics', 'English', 'Habit'];
+  const notRequired = ALL_CATEGORIES.filter((c) => !scheduled.has(c));
+
+  return {
+    addisDateKey,
+    window: windowInfo,
+    workoutMissed,
+    workoutType,
+    workoutSubmitted,
+    missedTasks,
+    completedTasks,
+    habits: { completed: doneHabitIds.size, total: activeHabits.length, missedNames: missedHabits },
+    missedAll,
+    completedAll,
+    notRequired,
+  };
 }
-
 /** Ensure exactly one accountability session exists for a given day (no duplicates). */
 async function ensureSession(userId: string, addisDateKey: string, missed: string[], roast: string) {
   return prisma.accountabilitySession.upsert({
@@ -178,10 +298,7 @@ async function ensureSession(userId: string, addisDateKey: string, missed: strin
   });
 }
 
-function deliveryStatusOf(log?: {
-  status: string;
-  telegramMessageId?: number | null;
-}): AccountabilityDeliveryState {
+function deliveryStatusOf(log?: { status: string; telegramMessageId?: number | null }): AccountabilityDeliveryState {
   if (!log) return 'NOT_SENT';
   if (log.status === 'SENT' && log.telegramMessageId != null) return 'SENT';
   if (log.status === 'DELIVERY_FAILED') return 'DELIVERY_FAILED';
@@ -202,23 +319,78 @@ async function getTargetChat(): Promise<string | null> {
   return null;
 }
 
-/** Combined accountability message (spec section 9). */
-async function buildMissedMessage(
-  windowInfo: ReturnType<typeof workoutWindowForAddisDate>,
-  missed: string[]
-): Promise<string> {
+/** Days with consistency >= 60 formed a streak (matches the existing scheduler). */
+function computeActiveStreak(history: { consistencyScore: number }[]): number {
+  let streak = 0;
+  for (let i = history.length - 1; i >= 0; i--) {
+    if (history[i].consistencyScore >= 60) streak++;
+    else break;
+  }
+  return streak;
+}
+
+/** Choose a roast category from the ACTUAL misses (spec section 5 — never just one hard-coded subject). */
+function singleCategory(report: MissedReport): RoastCategory {
+  if (report.missedAll.length === 0 || report.missedAll.length > 1) return 'COMBINED_MISSED';
+  const c = (report.missedTasks[0]?.category ?? report.missedAll[0] ?? '').toLowerCase();
+  if (c.includes('chem')) return 'CHEMISTRY_MISSED';
+  if (c.includes('javascript') || c.includes('cod')) return 'JAVASCRIPT_MISSED';
+  if (c.includes('read')) return 'READING_MISSED';
+  return 'WORKOUT_MISSED';
+}
+
+function celebrateText(): string {
+  return 'Flawless execution today: every scheduled task locked in. Unstoppable momentum — keep this standard. 🚀';
+}
+
+/** Best-effort "Tomorrow" focus list from the next open day's scheduled plan. */
+async function buildTomorrowFocus(windowInfo: WorkoutWindow): Promise<string> {
+  const nextAddis = new Date(windowInfo.startAddis);
+  nextAddis.setDate(nextAddis.getDate() + 1);
+  try {
+    const nextWindow = workoutWindowForAddisDate(nextAddis);
+    const plan = await prisma.dailyPlan.findFirst({
+      where: { date: { gte: nextWindow.startUtc, lte: nextWindow.endUtc } },
+      include: { tasks: true },
+    });
+    if (plan && plan.tasks.length > 0) {
+      return plan.tasks
+        .map((t) => `• ${taskDisplayLabel(classifyTask(t.subject, t.description, t.description), t)}`)
+        .join('\n');
+    }
+  } catch {
+    /* fall through */
+  }
+  return ['Workout', 'Chemistry', 'JavaScript', 'Reading'].join('\n');
+}
+
+/**
+ * Combined accountability message (spec section 6). Contains EVERY actual
+ * missed item (all ❌ lines) + completed (✅ lines), consistency/XP/level/streak,
+ * a contextual roast, and tomorrow's focus. Exported so tests can verify the
+ * message actually contains every missed category.
+ */
+export async function buildMissedMessage(windowInfo: WorkoutWindow, report: MissedReport): Promise<string> {
   const day300 = getDayOfJourney300(windowInfo.startAddis);
-  const [breakdown, profile] = await Promise.all([
+  const [breakdown, profile, history, tomorrow] = await Promise.all([
     getDailyBreakdown(windowInfo.startAddis),
     prisma.userProfile.findUnique({ where: { id: 'singleton' } }),
+    getProgressHistory(7),
+    buildTomorrowFocus(windowInfo),
   ]);
   const totalXp = profile?.totalXp ?? 0;
   const level = profile?.level ?? computeLevel(totalXp);
+  const activeStreak = computeActiveStreak(history);
 
-  const roast =
-    missed.length > 1
-      ? await getAccountabilityRoast({ category: 'COMBINED_MISSED', intensity: 3, missedItems: missed })
-      : await getAccountabilityRoast({ category: 'WORKOUT_MISSED', intensity: 3, missedItems: missed });
+  const missedLines = report.missedAll.length > 0 ? report.missedAll.map((m) => `❌ ${m}`) : ['(nothing missed)'];
+  const completedLines = report.completedAll.length > 0 ? report.completedAll.map((c) => `✅ ${c}`) : ['(none)'];
+
+  const roast = await getAccountabilityRoast({
+    category: singleCategory(report),
+    intensity: 3,
+    missedItems: report.missedAll,
+  });
+  const roastText = report.missedAll.length === 0 ? celebrateText() : roast.message;
 
   const formattedDate = windowInfo.startAddis.toLocaleDateString('en-US', {
     weekday: 'long',
@@ -228,66 +400,80 @@ async function buildMissedMessage(
 
   return (
     '🔥 FORGE ACCOUNTABILITY\n' +
-    `${formattedDate} \u2022 ${day300.formatted}\n\n` +
+    `DAY ${day300.dayNumber} / ${day300.totalDays}\n` +
+    `${formattedDate}\n\n` +
     'MISSED:\n' +
-    missed.map((m) => `❌ ${m}`).join('\n') +
+    missedLines.join('\n') +
+    '\n\nCompleted:\n' +
+    completedLines.join('\n') +
     '\n\n' +
-    `Consistency:\n${breakdown.consistencyScore}%\n` +
-    `XP:\n${totalXp}\n` +
-    `Level:\n${level}\n\n` +
-    'ROAST:\n' +
-    `${roast.message}\n\n` +
-    'Reply with "I\'m so sorry, I will not do it again" to acknowledge.'
+    `Consistency: ${breakdown.consistencyScore}%\n` +
+    `XP: ${totalXp}\n` +
+    `Level: ${level}\n` +
+    `Streak: ${activeStreak}\n\n` +
+    '🔥 ROAST:\n' +
+    roastText +
+    '\n\nTomorrow:\n' +
+    (tomorrow || '—') +
+    '\n\nReply with "I\'m so sorry, I will not do it again" to acknowledge.'
   );
 }
-async function verifyNotification(windowInfo: ReturnType<typeof workoutWindowForAddisDate>) {
+async function verifyNotification(windowInfo: WorkoutWindow) {
   const logDate = getLogDateForWindow(windowInfo);
   const logs = await prisma.telegramNotificationLog.findMany({
     where: { date: logDate, type: { in: ACCOUNTABILITY_TYPES } },
     orderBy: { sentAt: 'desc' },
   });
-  return { state: deliveryStatusOf((logs[0] as { status: string; telegramMessageId?: number | null } | undefined)), logs };
+  return { state: deliveryStatusOf(logs[0] as { status: string; telegramMessageId?: number | null } | undefined), logs };
 }
 
-/** Determine current accountability delivery state from the DB (spec section 2). */
+/**
+ * Determine current accountability delivery state from the DB (spec section 2).
+ */
 export async function verifyAccountabilityDelivery(
-  windowInfo: ReturnType<typeof workoutWindowForAddisDate>
+  windowInfo: WorkoutWindow
 ): Promise<{ state: AccountabilityDeliveryState; log: unknown }> {
   const { state, logs } = await verifyNotification(windowInfo);
   return { state, log: (logs[0] as { status: string; telegramMessageId?: number | null } | undefined) ?? null };
 }
 
 /**
- * Deliver (or retry) the missed-day accountability message. Only marks SENT when
- * Telegram's API confirms success with a message_id (spec section 3).
+ * Deliver (or retry) the missed-day accountability message (spec sections 3/7/8).
+ * - Duplicate prevention: one `ACCOUNTABILITY` log per day, unless the first
+ *   delivery genuinely failed (DELIVERY_FAILED) and needs a retry.
+ * - Only marks SENT when Telegram confirms success with a message_id.
+ * - Uses escalating backoff (DELIVERY_RETRY_BACKOFF_MS) to respect rate limits.
  */
 async function deliverMissedMessage(
   session: Awaited<ReturnType<typeof ensureSession>>,
-  windowInfo: ReturnType<typeof workoutWindowForAddisDate>,
-  missed: string[],
-  opts?: { force?: boolean }
+  windowInfo: WorkoutWindow,
+  report: MissedReport
 ): Promise<{ delivered: boolean; state: AccountabilityDeliveryState; messageId?: number }> {
   const logDate = getLogDateForWindow(windowInfo);
-  const { state } = await verifyNotification(windowInfo);
-  if (state === 'SENT' && !opts?.force) return { delivered: false, state };
-
-  const chat = await getTargetChat();
-  if (!chat) return { delivered: false, state: 'NOT_SENT' };
-
-  const message = await buildMissedMessage(windowInfo, missed);
   const existing = await prisma.telegramNotificationLog.findUnique({
     where: { date_type: { date: logDate, type: 'ACCOUNTABILITY' } },
   });
-  const retryCount = existing ? existing.retryCount : 0;
 
-  // Controlled retry interval to respect Telegram rate limits (spec section 4).
-  if (retryCount > 0 && existing?.sentAt && !opts?.force) {
+  // Already confirmed SENT => done (duplicate prevention, spec section 9).
+  if (existing && existing.status === 'SENT' && existing.telegramMessageId != null) {
+    return { delivered: false, state: 'SENT', messageId: existing.telegramMessageId ?? undefined };
+  }
+
+  // Retry pacing (spec section 8).
+  const retryCount = existing ? existing.retryCount : 0;
+  const backoffMs =
+    DELIVERY_RETRY_BACKOFF_MS[Math.min(retryCount, MAX_DELIVERY_RETRIES - 1)] ?? 0;
+  if (retryCount > 0 && existing?.sentAt && backoffMs > 0) {
     const last = new Date(existing.sentAt).getTime();
-    if (Date.now() - last < DELIVERY_RETRY_MIN_INTERVAL_MS) {
+    if (Date.now() - last < backoffMs) {
       return { delivered: false, state: 'DELIVERY_FAILED' };
     }
   }
 
+  const chat = await getTargetChat();
+  if (!chat) return { delivered: false, state: 'NOT_SENT' };
+
+  const message = await buildMissedMessage(windowInfo, report);
   const res = await sendTelegramMessage(chat, message);
   const ok = res.ok && typeof res.result?.message_id === 'number';
   const msgId = ok ? Number(res.result.message_id) : null;
@@ -310,20 +496,20 @@ async function deliverMissedMessage(
       chatId: chat,
       message,
       status: ok ? 'SENT' : 'DELIVERY_FAILED',
-      telegramMessageId: ok ? msgId : (existing?.telegramMessageId ?? null),
+      telegramMessageId: ok ? msgId : undefined,
       errorMessage: ok ? null : (res?.description ?? undefined),
       retryCount: nextRetry,
     },
   });
 
-  if (ok) {
+  if (ok && msgId != null) {
     await prisma.accountabilitySession.update({
       where: { id: session.id },
       data: { telegramMessageId: msgId },
     });
-    return { delivered: true, state: 'SENT', messageId: msgId as number };
+    return { delivered: true, state: 'SENT', messageId: msgId };
   }
-  return { delivered: false, state: (res as any)?.ok === false ? 'DELIVERY_FAILED' : 'UNKNOWN' };
+  return { delivered: false, state: res?.ok === false ? 'DELIVERY_FAILED' : 'UNKNOWN' };
 }
 /** Send another distinct roast/reminder while a session is still PENDING (spec section 6). */
 async function sendRepeatedReminder(
@@ -356,7 +542,7 @@ async function sendRepeatedReminder(
   const res = await sendTelegramMessage(chat, text);
   const ok = res.ok && typeof res.result?.message_id === 'number';
   const msgId = ok ? Number(res.result.message_id) : null;
-  const logDate = getLogDateForWindow(getAddisWindow());
+  const logDate = getLogDateForWindow(windowToGrade());
 
   await prisma.telegramNotificationLog.upsert({
     where: { date_type: { date: logDate, type: 'ACCOUNTABILITY_REMINDER' } },
@@ -383,58 +569,66 @@ async function sendRepeatedReminder(
   }
   return { sent: false };
 }
-
-function getAddisWindow(): ReturnType<typeof workoutWindowForAddisDate> {
-  return workoutWindowForAddisDate(getAddisNow());
-}
 /**
- * Main reliable recheck entry point. Safe under repeated/delayed cron triggers:
- * idempotent, Addis-time authoritative, delivery-confirmed, rate-limited.
+ * Main reliable recheck entry point (spec sections 4/7/8/9). Safe under
+ * repeated/delayed cron triggers: idempotent, Addis-authoritative, always
+ * grades the last CLOSED day, delivery-confirmed, and rate-limited.
  */
 export async function runAccountabilityRecheck(opts?: { force?: boolean }): Promise<any> {
   const now = getAddisNow();
-  const windowInfo = workoutWindowForAddisDate(now);
+  const windowInfo = windowToGrade(now);
   const addisDateKey = normalizedDateKeyFromAddis(windowInfo.startAddis);
 
-  // Only enforce after the authoritative 09:28 PM close (spec section 13).
+  // Only enforce after the authoritative 21:28 close of the graded day.
   if (!windowInfo.isClosed && !opts?.force) {
     return { status: 'OPEN', message: 'Execution window still open (closes 21:28 Addis)', addisDateKey };
   }
 
-  const missed = await detectMissedActivities(windowInfo);
-  if (missed.length === 0) {
-    return { status: 'NO_MISSED', addisDateKey, missedItems: [] };
+  const report = await detectMissedActivities(windowInfo);
+
+  // No misses at all -> no missed-day roast (spec section 15). Reuse the
+  // existing completion/celebration behavior and still record a session.
+  if (report.missedAll.length === 0) {
+    const session = await ensureSession('singleton', addisDateKey, [], '');
+    return {
+      status: 'NO_MISSED',
+      addisDateKey,
+      missedItems: [],
+      completedItems: report.completedAll,
+      deliveryState: 'NOT_SENT',
+      delivered: false,
+    };
   }
 
-  // One session per day (no duplicates — spec section 8).
-  const session = await ensureSession('singleton', addisDateKey, missed, missed.join(', '));
+  // Exactly one accountability session per day (duplicate prevention, spec 9).
+  const stale = await ensureSession('singleton', addisDateKey, report.missedAll, report.missedAll.join(', '));
 
   // Verify delivery; deliver or retry only if not confirmed SENT.
-  const delivery = await deliverMissedMessage(session, windowInfo, missed, { force: opts?.force });
+  const delivery = await deliverMissedMessage(stale, windowInfo, report);
 
   let reminder: { sent: boolean; roast?: string } | undefined;
-  if (session.state === 'PENDING') {
-    reminder = await sendRepeatedReminder(session);
+  if (stale.state === 'PENDING') {
+    reminder = await sendRepeatedReminder(stale);
   }
 
   const fresh = await prisma.accountabilitySession.findUnique({ where: { addisDateKey } });
   return {
     status: fresh?.state ?? 'PENDING',
     addisDateKey,
-    missedItems: missed,
+    missedItems: report.missedAll,
+    completedItems: report.completedAll,
     deliveryState: delivery.state,
     delivered: delivery.delivered,
-    telegramMessageId: delivery.messageId ?? session.telegramMessageId,
+    telegramMessageId: delivery.messageId ?? fresh?.telegramMessageId ?? null,
     reminderSent: reminder?.sent ?? false,
-    reminderRoast: reminder?.roast ?? session.lastReminderRoast,
-    reminderCount: fresh?.reminderCount ?? session.reminderCount,
+    reminderRoast: reminder?.roast ?? fresh?.lastReminderRoast ?? null,
+    reminderCount: fresh?.reminderCount ?? 0,
   };
 }
 
-/** Status for the website /today + /todo (spec section 10). */
+/** Status / missed history for the website /today + /todo (spec section 10/11). */
 export async function getAccountabilityStatus() {
-  const now = getAddisNow();
-  const windowInfo = workoutWindowForAddisDate(now);
+  const windowInfo = windowToGrade(getAddisNow());
   const addisDateKey = normalizedDateKeyFromAddis(windowInfo.startAddis);
 
   const session = await prisma.accountabilitySession.findUnique({ where: { addisDateKey } });

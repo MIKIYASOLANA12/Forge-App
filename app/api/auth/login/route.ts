@@ -101,6 +101,19 @@ export async function POST(req: NextRequest) {
       },
     });
 
+    // 6b. Record login attempt/notification activity (for the Security feed).
+    await prisma.loginActivity.create({
+      data: {
+        userId: user.id,
+        sessionId,
+        email: user.email,
+        ipAddress: rawIp,
+        userAgent: deviceStr,
+        location: locationStr,
+        status: 'ACTIVE',
+      },
+    });
+
     // 7. Establish Authenticated Session Token
     const sessionToken = await createSessionToken(
       user.id,

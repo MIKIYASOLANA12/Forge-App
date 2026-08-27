@@ -3,7 +3,7 @@ import { getAddisNow, workoutWindowForAddisDate, getDayOfJourney300 } from '@/li
 import { ensureTodayDailyPlan } from '@/lib/dailyPlanGenerator';
 import { prisma } from '@/lib/prisma';
 import { get2027DeadlineMetrics } from '@/lib/readingEngine';
-import { getAccountabilityStatus } from '@/lib/accountabilityRecheck';
+import { getAccountabilityStatus, detectMissedActivities } from '@/lib/accountabilityRecheck';
 
 export async function GET() {
   try {
@@ -67,6 +67,10 @@ export async function GET() {
       ? { status: 'COMPLETED', type: yesterdayWorkoutLog.workoutDay.type }
       : { status: 'MISSED', type: 'Workout Session' };
 
+    // Full missed/completed report for yesterday (workout + every scheduled
+    // task + habits) so /todo and /workout show ALL actually-missed items.
+    const yesterdayReport = await detectMissedActivities(yesterdayWindow);
+
     return NextResponse.json({
       planId: todayPlan.planId,
       dateFormatted,
@@ -89,6 +93,10 @@ export async function GET() {
         tasks: yesterdayTasks,
         completedCount: yesterdayTasks.filter((t) => t.completed).length + (yesterdayWorkoutLog ? 1 : 0),
         totalCount: yesterdayTasks.length + 1,
+        habits: yesterdayReport.habits,
+        missedItems: yesterdayReport.missedAll,
+        completedItems: yesterdayReport.completedAll,
+        workoutMissed: yesterdayReport.workoutMissed,
       },
     });
   } catch (error: any) {

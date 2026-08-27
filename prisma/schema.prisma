@@ -321,6 +321,8 @@ model User {
   tokens        AuthToken[]
   sessions      UserSession[]
   telegram      TelegramAccount?
+  loginActivity LoginActivity[]
+  securityLog   SecurityAuditLog[]
 }
 
 model AuthToken {
@@ -374,6 +376,42 @@ model UserSession {
   revokedAt   DateTime?
   createdAt   DateTime  @default(now())
   lastActiveAt DateTime @default(now())
+}
+
+// Login attempt / device activity feed shown in the Security panel.
+// status: "PENDING" (awaiting ALLOW) | "ACTIVE" (session granted) |
+//         "APPROVED" (explicitly allowed) | "REVOKED" (terminated)
+model LoginActivity {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sessionId   String?   // links to UserSession.sessionToken when a session was granted
+  email       String?
+  ipAddress   String?
+  userAgent   String?
+  location    String?
+  status      String    @default("ACTIVE")
+  approvedAt  DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+// Audit trail for security actions. Never stores secrets/tokens/passwords.
+// targetType: "SESSION" | "LOGIN_ATTEMPT"
+// action: "TERMINATE_SESSION" | "APPROVE_SESSION" | "TERMINATE_ATTEMPT" | "APPROVE_ATTEMPT"
+model SecurityAuditLog {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  actorId    String
+  action     String
+  targetType String
+  targetId   String
+  result     String   // "SUCCESS" | "FAILED"
+  detail     String?
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
 }
 
 model Achievement {

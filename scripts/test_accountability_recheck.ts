@@ -48,8 +48,9 @@ async function main() {
 
   // ── 2. Missed detection runs without throwing ──
   console.log('\n[2] Missed-activity detection:');
-  const missed = await detectMissedActivities(windowInfo);
-  assert(Array.isArray(missed), 'detection returns an array');
+  const report = await detectMissedActivities(windowInfo);
+  const missed = report.missedAll;
+  assert(Array.isArray(missed), 'detection returns a missed list');
   console.log(`  - Missed items for today's window: ${missed.length ? missed.join(', ') : '(none / all complete)'}`);
 
   // ── 3. One session per day (no duplicates) ──

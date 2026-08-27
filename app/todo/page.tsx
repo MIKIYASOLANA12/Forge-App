@@ -66,6 +66,10 @@ type YesterdayData = {
   tasks: Array<{ id: string; description: string; completed: boolean; status: "COMPLETED" | "MISSED"; minutesTarget: number }>;
   completedCount: number;
   totalCount: number;
+  habits?: { completed: number; total: number; missedNames: string[] };
+  missedItems?: string[];
+  completedItems?: string[];
+  workoutMissed?: boolean;
 };
 
 type StudyProgressData = {
@@ -1157,6 +1161,42 @@ export default function TodoPage() {
               Audit log of completed vs missed targets from the previous 05:00 AM – 09:28 PM window.
             </p>
           </div>
+
+          {/* YESTERDAY'S MISSED ITEMS summary (all categories, incl. habits) */}
+          {(() => {
+            const missedLines = todayData.yesterday.missedItems?.length
+              ? todayData.yesterday.missedItems
+              : [
+                  ...(todayData.yesterday.workoutMissed ? ["Workout"] : []),
+                  ...todayData.yesterday.tasks.filter((t) => !t.completed).map((t) => t.description),
+                  ...(todayData.yesterday.habits?.missedNames ?? []),
+                ];
+            const completedLines = todayData.yesterday.completedItems ?? [];
+            return (
+              <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-surface)] p-4">
+                <h4 className="text-xs font-black uppercase tracking-widest text-rose-400 mb-3">
+                  🔴 Yesterday's Missed Items — LOCKED
+                </h4>
+                {missedLines.length === 0 ? (
+                  <p className="text-sm text-emerald-400 font-semibold">✅ Nothing missed — full completion.</p>
+                ) : (
+                  <ul className="space-y-1.5">
+                    {missedLines.map((m) => (
+                      <li key={m} className="flex items-center justify-between text-sm text-rose-300">
+                        <span className="font-semibold">🔴 {m}</span>
+                        <span className="text-[10px] font-bold text-rose-500 uppercase">MISSED / LOCKED</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                {completedLines.length > 0 && (
+                  <p className="mt-2 text-xs text-emerald-400">
+                    Completed: {completedLines.map((c) => `✅ ${c}`).join(" · ")}
+                  </p>
+                )}
+              </div>
+            );
+          })()}
 
           <div className="space-y-3">
             {/* Workout Status */}

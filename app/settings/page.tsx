@@ -12,6 +12,7 @@ import {
   Unlink,
   MessageSquare,
 } from "lucide-react";
+import { SecurityPanel } from "@/components/security/SecurityPanel";
 import { useEffect, useState } from "react";
 
 type Settings = {
@@ -274,6 +275,9 @@ export default function SettingsPage() {
             Edit targets in Nutrition
           </Link>
         </section>
+
+        {/* Security */}
+        <SecurityPanel />
 
         {/* Danger Zone */}
         <section className="card border-[rgba(239,68,68,0.25)]">

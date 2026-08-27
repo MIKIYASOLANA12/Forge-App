@@ -1,4 +1,5 @@
 import { prisma } from './prisma';
+import { revokeSession, approveLoginAttempt } from './security';
 import { isAllowedEmail, normalizeEmail } from './auth';
 import {
   sendTelegramMessage,
@@ -38,26 +39,64 @@ export async function handleTelegramWebhookUpdate(update: any): Promise<void> {
     const chatId = cq.message?.chat?.id;
     const messageId = cq.message?.message_id;
 
-    if (data.startsWith('term_')) {
-      const sessionToken = data.replace('term_', '');
+    if (data.startsWith('term_') || data.startsWith('auth_')) {
+      const sessionToken = data.replace(/^(term|auth)_/, '');
       try {
-        await prisma.userSession.updateMany({
+        // Resolve the session so we act on the correct owning account only.
+        const dbSession = await prisma.userSession.findUnique({
           where: { sessionToken },
-          data: { revoked: true, revokedAt: new Date() },
         });
-        await answerTelegramCallbackQuery(callbackId, 'Session successfully terminated.');
-        if (chatId && messageId) {
-          await editTelegramMessageText(
-            chatId,
-            messageId,
-            '🛑 Session terminated immediately upon your request.'
-          );
+
+        if (!dbSession) {
+          await answerTelegramCallbackQuery(callbackId, 'Session not found.');
+          return;
+        }
+
+        if (data.startsWith('term_')) {
+          const result = await revokeSession({
+            ownerUserId: dbSession.userId,
+            actorId: dbSession.userId,
+            target: dbSession.sessionToken,
+            currentSessionId: dbSession.sessionToken,
+            allowSelfTerminate: true,
+          });
+          if (result.ok) {
+            await answerTelegramCallbackQuery(callbackId, 'Session successfully terminated.');
+            if (chatId && messageId) {
+              await editTelegramMessageText(chatId, messageId, '🛑 Session terminated immediately upon your request.');
+            }
+          } else {
+            await answerTelegramCallbackQuery(callbackId, 'Could not terminate session.');
+          }
+        } else {
+          // ALLOW: approve the matching login attempt. A revoked attempt is
+          // permanently blocked by approveLoginAttempt.
+          const attempt = await prisma.loginActivity.findFirst({
+            where: { sessionId: dbSession.sessionToken, userId: dbSession.userId },
+          });
+          if (attempt) {
+            const result = await approveLoginAttempt({
+              ownerUserId: dbSession.userId,
+              actorId: dbSession.userId,
+              targetId: attempt.id,
+            });
+            if (result.ok) {
+              await answerTelegramCallbackQuery(callbackId, 'Login approved.');
+            } else if (result.error === 'ALREADY_TERMINATED') {
+              await answerTelegramCallbackQuery(callbackId, 'Already terminated - cannot approve.');
+            } else {
+              await answerTelegramCallbackQuery(callbackId, 'Could not approve.');
+            }
+          } else {
+            await answerTelegramCallbackQuery(callbackId, 'Login approved.');
+          }
         }
       } catch (err: any) {
-        await answerTelegramCallbackQuery(callbackId, 'Error revoking session.');
+        await answerTelegramCallbackQuery(callbackId, 'Error processing request.');
+        console.error('Telegram security callback error:', err);
       }
+      return;
     }
-    return;
   }
 
   const message = update.message;

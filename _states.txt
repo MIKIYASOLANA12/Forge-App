@@ -1,0 +1,26 @@
+293:       state: 'PENDING',
+301: function deliveryStatusOf(log?: { status: string; telegramMessageId?: number | null }): AccountabilityDeliveryState {
+427:   return { state: deliveryStatusOf(logs[0] as { status: string; telegramMessageId?: number | null } | undefined), logs };
+435: ): Promise<{ state: AccountabilityDeliveryState; log: unknown }> {
+437:   return { state, log: (logs[0] as { status: string; telegramMessageId?: number | null } | undefined) ?? null };
+451: ): Promise<{ delivered: boolean; state: AccountabilityDeliveryState; messageId?: number }> {
+459:     return { delivered: false, state: 'SENT', messageId: existing.telegramMessageId ?? undefined };
+469:       return { delivered: false, state: 'DELIVERY_FAILED' };
+474:   if (!chat) return { delivered: false, state: 'NOT_SENT' };
+489:       status: ok ? 'SENT' : 'DELIVERY_FAILED',
+498:       status: ok ? 'SENT' : 'DELIVERY_FAILED',
+510:     return { delivered: true, state: 'SENT', messageId: msgId };
+512:   return { delivered: false, state: res?.ok === false ? 'DELIVERY_FAILED' : 'UNKNOWN' };
+549:     create: { date: logDate, type: 'ACCOUNTABILITY_REMINDER', chatId: chat, message: text, status: ok ? 'SENT' : 'DELIVERY_FAILED', telegramMessageId: ok ? msgId : null, errorMessage: ok ? null : (res?.description ?? undefined) },
+550:     update: { sentAt: new Date(), message: text, status: ok ? 'SENT' : 'DELIVERY_FAILED', telegramMessageId: ok ? msgId : undefined, errorMessage: ok ? null : (res?.description ?? undefined) },
+584:     return { status: 'OPEN', message: 'Execution window still open (closes 21:28 Addis)', addisDateKey };
+594:       status: 'NO_MISSED',
+598:       deliveryState: 'NOT_SENT',
+616:     status: fresh?.state ?? 'PENDING',
+620:     deliveryState: delivery.state,
+638:     status: active ? 'PENDING' : 'RESOLVED',
+645:     resolvedAt: session?.resolvedAt ?? null,
+647:     state: session?.state ?? null,
+663:     where: { state: 'PENDING' },
+671:       state: 'RESOLVED',
+674:       resolvedAt: new Date(),

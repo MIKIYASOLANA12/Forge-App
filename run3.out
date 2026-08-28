@@ -1,0 +1,20 @@
+==================================================
+🧪 FORGE: MISSED-TASK DETECTION + RECHECK TEST
+==================================================
+prisma:error 
+Invalid `prisma.domain.findFirst()` invocation in
+C:\Users\mikiy\OneDrive\Desktop\MY APP\forge\scripts\test_missed_tasks.ts:61:39
+
+  58 console.log('==================================================');
+  59 console.log('🧪 FORGE: MISSED-TASK DETECTION + RECHECK TEST');
+  60 console.log('==================================================');
+→ 61 const domain = (await prisma.domain.findFirst(
+error: Environment variable not found: DATABASE_URL.
+  -->  schema.prisma:7
+   | 
+ 6 |   provider  = "postgresql"
+ 7 |   url       = env("DATABASE_URL")
+   | 
+
+Validation Error Count: 1
+EXITCODE=0  

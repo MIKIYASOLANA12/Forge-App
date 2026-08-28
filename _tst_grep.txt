@@ -1,0 +1,1 @@
+61: await prisma.planTask.deleteMany({ where: { dailyPlanId: p.id } });

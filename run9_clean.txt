@@ -1,0 +1,35 @@
+==================================================
+=ƒº¬ FORGE: MISSED-TASK DETECTION + RECHECK TEST
+==================================================
+[1] Multiple misses GÇö ALL four categories must be detected:
+  G£ö Workout is in missed list
+  G£ö Chemistry is in missed list
+  G£ö JavaScript is in missed list
+  G£ö Reading is in missed list
+  G£ö at least 4 distinct missed items
+  G£ö English is in completed list
+  G£ö Workout listed exactly once
+  G£ö message contains Workout
+  G£ö message contains Chemistry
+  G£ö message contains JavaScript
+  G£ö message contains Reading
+  G£ö message contains completed G£à English
+  G£ö message has DAY X / 300
+  G£ö message has consistency/XP/level/streak
+[2] Deterministic across runs (recheck produces no duplicates):
+  G£ö detection list identical across repeated runs
+[3] Single miss GÇö only JavaScript reported:
+  G£ö workout log added for single-miss window
+  G£ö JavaScript is reported missed
+  G£ö Chemistry NOT falsely reported
+  G£ö Workout NOT falsely reported
+  G£ö Reading NOT falsely reported
+[4] No misses -> celebration (no missed-day roast):
+  G£ö no missed items when everything is completed
+  G£ö no missed roast list for a complete day
+  G£ö celebration message used
+==================================================
+G£à ALL MISSED-TASK / RECHECK TESTS PASSED
+==================================================
+=ƒº¦ synthetic test data cleaned up
+EXITCODE=0

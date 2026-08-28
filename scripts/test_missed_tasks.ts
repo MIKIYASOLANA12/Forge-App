@@ -14,9 +14,11 @@
  * Does NOT send real Telegram messages.
  * Run: npx ts-node --project tsconfig.seed.json -r tsconfig-paths/register scripts/test_missed_tasks.ts
  */
+import { config as loadEnv } from 'dotenv';
+loadEnv({ path: '.env.local' });
 import { prisma } from '../lib/prisma';
-import { workoutWindowForAddisDate, type WorkoutWindow } from '../lib/workoutTime';
-import { detectMissedActivities, buildMissedMessage } from '../lib/accountabilityRecheck';
+import { workoutWindowForAddisDate } from '../lib/workoutTime';
+import { detectMissedActivities, buildMissedMessage, type WorkoutWindow } from '../lib/accountabilityRecheck';
 
 function assert(cond: boolean, msg: string) {
   if (!cond) {
@@ -49,10 +51,29 @@ async function addWorkoutLog(w: WorkoutWindow) {
 
 async function wipe(day: number): Promise<WorkoutWindow> {
   const w = windowFor(day);
-  await prisma.dailyPlan.deleteMany({ where: { date: { gte: w.startUtc, lte: w.endUtc } } });
+  await deleteSynthetic(w);
+  return w;
+}
+
+async function deleteSynthetic(w: WorkoutWindow) {
+  const plans = await prisma.dailyPlan.findMany({ where: { date: { gte: w.startUtc, lte: w.endUtc } } });
+  for (const p of plans) {
+    await prisma.planTask.deleteMany({ where: { dailyPlanId: p.id } });
+    await prisma.dailyPlan.delete({ where: { id: p.id } });
+  }
   await prisma.habitLog.deleteMany({ where: { date: { gte: w.startUtc, lte: w.endUtc } } });
   await prisma.workoutLog.deleteMany({ where: { completedAt: { gte: w.startUtc, lte: w.endUtc } } });
-  return w;
+  // Historical completions must NOT be back-filled by the recheck — verify no
+  // synthetic task/habit was retroactively marked completed after the recheck ran.
+  const plansAfter = await prisma.dailyPlan.findMany({
+    where: { date: { gte: w.startUtc, lte: w.endUtc } },
+    include: { tasks: true },
+  });
+  for (const p of plansAfter) {
+    for (const t of p.tasks) {
+      assert(!t.completed, `no historical completion back-filled for task "${t.subject ?? t.description}"`);
+    }
+  }
 }
 async function main() {
   console.log('==================================================');
@@ -162,9 +183,7 @@ const report3 = await detectMissedActivities(w3);
 
   // Cleanup synthetic rows (plans, habit logs, workout logs in test windows).
   for (const w of [w1, w3, w4]) {
-    await prisma.dailyPlan.deleteMany({ where: { date: { gte: w.startUtc, lte: w.endUtc } } });
-    await prisma.habitLog.deleteMany({ where: { date: { gte: w.startUtc, lte: w.endUtc } } });
-    await prisma.workoutLog.deleteMany({ where: { completedAt: { gte: w.startUtc, lte: w.endUtc } } });
+    await deleteSynthetic(w);
   }
   console.log('🧹 synthetic test data cleaned up');
 }

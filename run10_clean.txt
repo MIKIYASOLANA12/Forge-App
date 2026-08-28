@@ -1,0 +1,124 @@
+==================================================
+=ƒº¬ FORGE: SESSION TERMINATION FIX GÇö REAL BEHAVIOR TEST
+==================================================
+Using account: mikiyasolana382@gmail.com
+[1] Both devices are valid before termination:
+  G£ö device A token grants access BEFORE termination
+  G£ö device B token grants access BEFORE termination
+[2] Current-device protection (no accidental self-termination):
+  G£ö terminating the current device without confirmation is blocked
+  G£ö device A (current) still has access after blocked self-terminate
+[3] Ownership enforcement (never an arbitrary session):
+prisma:error 
+Invalid `prisma.securityAuditLog.create()` invocation in
+C:\Users\mikiy\OneDrive\Desktop\MY APP\forge\lib\security.ts:42:35
+  39 
+  40 async function writeAuditLog(input: AuditInput): Promise<void> {
+  41   try {
+GåÆ 42     await prisma.securityAuditLog.create(
+Foreign key constraint violated on the constraint: `SecurityAuditLog_userId_fkey`
+node.exe : Failed to write 
+security audit log: PrismaC
+lientKnownRequestError: 
+At C:\Program 
+Files\nodejs\npx.ps1:29 
+char:3
++   & $NODE_EXE 
+$NPX_CLI_JS $args
++   ~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~
+    + CategoryInfo         
+     : NotSpecified: (Fai  
+  led to write...nReques   
+ tError: :String) [], R    
+emoteException
+    + FullyQualifiedErrorI 
+   d : NativeCommandError
+Invalid `prisma.securityAud
+itLog.create()` invocation 
+in
+C:\Users\mikiy\OneDrive\Des
+ktop\MY APP\forge\lib\secur
+ity.ts:42:35
+  39 
+  40 async function 
+writeAuditLog(input: 
+AuditInput): Promise<void> 
+{
+  41   try {
+GåÆ 42     await prisma.sec
+urityAuditLog.create(
+Foreign key constraint 
+violated on the 
+constraint: `SecurityAuditL
+og_userId_fkey`
+    at 
+ei.handleRequestError (C:\U
+sers\mikiy\OneDrive\Desktop
+\MY APP\forge\node_modules\
+@prisma\client\src\runtime\
+RequestHandler.ts:228:13)
+    at ei.handleAndLogReque
+stError (C:\Users\mikiy\One
+Drive\Desktop\MY APP\forge\
+node_modules\@prisma\client
+\src\runtime\RequestHandler
+.ts:174:12)
+    at ei.request (C:\Users
+\mikiy\OneDrive\Desktop\MY 
+APP\forge\node_modules\@pri
+sma\client\src\runtime\Requ
+estHandler.ts:143:12)
+    at async a (C:\Users\mi
+kiy\OneDrive\Desktop\MY APP
+\forge\node_modules\@prisma
+\client\src\runtime\getPris
+maClient.ts:833:24)
+    at async writeAuditLog 
+(C:\Users\mikiy\OneDrive\De
+sktop\MY APP\forge\lib\secu
+rity.ts:42:5)
+    at async revokeSession 
+(C:\Users\mikiy\OneDrive\De
+sktop\MY APP\forge\lib\secu
+rity.ts:103:5)
+    at async main (C:\Users
+\mikiy\OneDrive\Desktop\MY 
+APP\forge\scripts\test_sess
+ion_termination.ts:94:20) {
+  code: 'P2003',
+  meta: {
+    modelName: 
+'SecurityAuditLog',
+    constraint: 'SecurityAu
+ditLog_userId_fkey'
+  },
+  clientVersion: '6.19.0'
+}
+  G£ö cannot terminate a session the caller does not own
+[4] Admin clicks TERMINATE on device B:
+  G£ö server confirms the session was actually revoked (no false success)
+  G£ö device B session row is revoked = true in DB
+  G£ö device B revokedAt timestamp is set
+[5] Result is not just hidden in the dashboard GÇö it is real:
+  G£ö device B no longer appears in active (non-revoked) sessions
+  G£ö device A still appears as active
+[6] Device B tries to reuse its old token (refresh / protected page / protected API):
+  G£ö device B old token is now REJECTED for protected access
+  G£ö token signature still verifies, but DB revocation is the enforced gate
+  G£ö device B login activity feed updated to REVOKED
+[7] Pending login attempt can be terminated and never approved later:
+  G£ö pending attempt terminated
+  G£ö pending attempt marked REVOKED in DB
+  G£ö terminated attempt CANNOT be approved later
+[8] Audit log recorded (and holds no secrets):
+  G£ö audit log entries recorded for sessions + attempt termination
+  G£ö audit logs contain no session token, cookie, or password
+    -+ TERMINATE_SESSION GåÆ SUCCESS | SESSION sesterm-1787GÇª | 2026-08-27T21:48:27.661Z
+    -+ TERMINATE_SESSION GåÆ FAILED | SESSION sesterm-1787GÇª | 2026-08-27T21:48:24.987Z
+    -+ TERMINATE_SESSION GåÆ SUCCESS | SESSION sesterm-1787GÇª | 2026-08-27T21:45:06.781Z
+  (cleaning up test rows)
+==================================================
+G£à ALL SESSION TERMINATION TESTS PASSED
+==================================================
+EXITCODE=0

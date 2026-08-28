@@ -1,0 +1,45 @@
+==================================================
+🧪 FORGE: MISSED-TASK DETECTION + RECHECK TEST
+==================================================
+prisma:error 
+Invalid `prisma.domain.findFirst()` invocation in
+C:\Users\mikiy\OneDrive\Desktop\MY APP\forge\scripts\test_missed_tasks.ts:61:39
+
+  58 console.log('==================================================');
+  59 console.log('🧪 FORGE: MISSED-TASK DETECTION + RECHECK TEST');
+  60 console.log('==================================================');
+→ 61 const domain = (await prisma.domain.findFirst(
+error: Environment variable not found: DATABASE_URL.
+  -->  schema.prisma:7
+   | 
+ 6 |   provider  = "postgresql"
+ 7 |   url       = env("DATABASE_URL")
+   | 
+
+Validation Error Count: 1
+❌ Test failed: PrismaClientInitializationError: 
+Invalid `prisma.domain.findFirst()` invocation in
+C:\Users\mikiy\OneDrive\Desktop\MY APP\forge\scripts\test_missed_tasks.ts:61:39
+
+  58 console.log('==================================================');
+  59 console.log('🧪 FORGE: MISSED-TASK DETECTION + RECHECK TEST');
+  60 console.log('==================================================');
+→ 61 const domain = (await prisma.domain.findFirst(
+error: Environment variable not found: DATABASE_URL.
+  -->  schema.prisma:7
+   | 
+ 6 |   provider  = "postgresql"
+ 7 |   url       = env("DATABASE_URL")
+   | 
+
+Validation Error Count: 1
+    at ei.handleRequestError (C:\Users\mikiy\OneDrive\Desktop\MY APP\forge\node_modules\@prisma\client\src\runtime\RequestHandler.ts:242:13)
+    at ei.handleAndLogRequestError (C:\Users\mikiy\OneDrive\Desktop\MY APP\forge\node_modules\@prisma\client\src\runtime\RequestHandler.ts:174:12)
+    at ei.request (C:\Users\mikiy\OneDrive\Desktop\MY APP\forge\node_modules\@prisma\client\src\runtime\RequestHandler.ts:143:12)
+    at async a (C:\Users\mikiy\OneDrive\Desktop\MY APP\forge\node_modules\@prisma\client\src\runtime\getPrismaClient.ts:833:24)
+    at async main (C:\Users\mikiy\OneDrive\Desktop\MY APP\forge\scripts\test_missed_tasks.ts:61:19) {
+  clientVersion: '6.19.0',
+  errorCode: undefined,
+  retryable: undefined
+}
+EXITCODE=0 

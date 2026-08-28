@@ -1,0 +1,33 @@
+target graded window start=2026-08-25T02:00:00.000Z closed=true
+  OK a domain exists for task seeding
+[1] Recheck #1 (real Telegram sendMessage):
+  status=PENDING deliveryState=SENT msgId=190
+  OK recheck returned a missed list
+  OK Workout found missed
+  OK Chemistry found missed
+  OK JavaScript found missed
+  OK Reading found missed
+  OK delivery state is SENT (Telegram confirmed)
+  OK Telegram returned a real message_id (190)
+  OK TelegramNotificationLog records the successful notification
+  OK logged message contains the missed Workout line
+[2] Recheck #2 (duplicate prevention):
+  OK second recheck does NOT re-send (delivered=false, state stays SENT)
+node.exe : FAIL: exactly 
+one ACCOUNTABILITY 
+notification log exists (2)
+At C:\Program 
+Files\nodejs\npx.ps1:29 
+char:3
++   & $NODE_EXE 
+$NPX_CLI_JS $args
++   ~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~
+    + CategoryInfo         
+     : NotSpecified: (FAI  
+  L: exactly o... log ex   
+ ists (2):String) [], R    
+emoteException
+    + FullyQualifiedErrorI 
+   d : NativeCommandError
+EXITCODE=1

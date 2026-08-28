@@ -1,0 +1,7 @@
+run2.out 0
+run3.out 764
+run4.out 2123
+run5.out 5138
+run6.out 5138
+run7.out 5150
+run8.out 8366

@@ -1,0 +1,97 @@
+  // existing completion/celebration behavior and still record a session.
+  if (report.missedAll.length === 0) {
+    const session = await ensureSession('singleton', addisDateKey, [], '');
+    return {
+      status: 'NO_MISSED',
+      addisDateKey,
+      missedItems: [],
+      completedItems: report.completedAll,
+      deliveryState: 'NOT_SENT',
+      delivered: false,
+    };
+  }
+
+  // Exactly one accountability session per day (duplicate prevention, spec 9).
+  const stale = await ensureSession('singleton', addisDateKey, report.missedAll, report.missedAll.join(', '));
+
+  // Verify delivery; deliver or retry only if not confirmed SENT.
+  const delivery = await deliverMissedMessage(stale, windowInfo, report);
+
+  let reminder: { sent: boolean; roast?: string } | undefined;
+  if (stale.state === 'PENDING') {
+    reminder = await sendRepeatedReminder(stale);
+  }
+
+  const fresh = await prisma.accountabilitySession.findUnique({ where: { addisDateKey } });
+  return {
+    status: fresh?.state ?? 'PENDING',
+    addisDateKey,
+    missedItems: report.missedAll,
+    completedItems: report.completedAll,
+    deliveryState: delivery.state,
+    delivered: delivery.delivered,
+    telegramMessageId: delivery.messageId ?? fresh?.telegramMessageId ?? null,
+    reminderSent: reminder?.sent ?? false,
+    reminderRoast: reminder?.roast ?? fresh?.lastReminderRoast ?? null,
+    reminderCount: fresh?.reminderCount ?? 0,
+  };
+}
+
+/** Status / missed history for the website /today + /todo (spec section 10/11). */
+export async function getAccountabilityStatus() {
+  const windowInfo = windowToGrade(getAddisNow());
+  const addisDateKey = normalizedDateKeyFromAddis(windowInfo.startAddis);
+
+  const session = await prisma.accountabilitySession.findUnique({ where: { addisDateKey } });
+  const active = session && session.state === 'PENDING' ? session : null;
+
+  return {
+    status: active ? 'PENDING' : 'RESOLVED',
+    addisDateKey,
+    missedItems: session ? JSON.parse(session.missedItems || '[]') : [],
+    roast: session?.initialRoast ?? null,
+    acknowledged: Boolean(session?.acknowledgementText),
+    acknowledgementText: session?.acknowledgementText ?? null,
+    acknowledgementAt: session?.acknowledgementAt ?? null,
+    resolvedAt: session?.resolvedAt ?? null,
+    reminderCount: session?.reminderCount ?? 0,
+    state: session?.state ?? null,
+  };
+}
+
+/**
+ * Resolve a PENDING session when the user explicitly acknowledges (spec section 5/7).
+ * `found:false` when there is no pending session or the text is not an acknowledgement.
+ */
+export async function resolveAccountabilityByMessage(text: string): Promise<{
+  found: boolean;
+  acknowledged?: Awaited<ReturnType<typeof ensureSession>>;
+}> {
+  const phrase = isAcknowledgementText(text);
+  if (!phrase) return { found: false };
+
+  const pending = await prisma.accountabilitySession.findFirst({
+    where: { state: 'PENDING' },
+    orderBy: { createdAt: 'desc' },
+  });
+  if (!pending) return { found: false };
+
+  const updated = await prisma.accountabilitySession.update({
+    where: { id: pending.id },
+    data: {
+      state: 'RESOLVED',
+      acknowledgementText: phrase,
+      acknowledgementAt: new Date(),
+      resolvedAt: new Date(),
+    },
+  });
+
+  const chat = await getTargetChat();
+  if (chat) {
+    await sendTelegramMessage(
+      chat,
+      "Apology accepted. Tomorrow's checklist is waiting. Let's see if the checkbox survives this time."
+    ).catch(() => {});
+  }
+  return { found: true, acknowledged: updated };
+}

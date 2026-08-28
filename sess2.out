@@ -1,0 +1,81 @@
+==================================================
+🧪 FORGE: SESSION TERMINATION FIX — REAL BEHAVIOR TEST
+==================================================
+
+Using account: mikiyasolana382@gmail.com
+
+[1] Both devices are valid before termination:
+  ✔ device A token grants access BEFORE termination
+  ✔ device B token grants access BEFORE termination
+
+[2] Current-device protection (no accidental self-termination):
+  ✔ terminating the current device without confirmation is blocked
+  ✔ device A (current) still has access after blocked self-terminate
+
+[3] Ownership enforcement (never an arbitrary session):
+prisma:error 
+Invalid `prisma.securityAuditLog.create()` invocation in
+c:\Users\mikiy\OneDrive\Desktop\MY APP\forge\lib\security.ts:42:35
+
+  39 
+  40 async function writeAuditLog(input: AuditInput): Promise<void> {
+  41   try {
+→ 42     await prisma.securityAuditLog.create(
+Foreign key constraint violated on the constraint: `SecurityAuditLog_userId_fkey`
+Failed to write security audit log: PrismaClientKnownRequestError: 
+Invalid `prisma.securityAuditLog.create()` invocation in
+c:\Users\mikiy\OneDrive\Desktop\MY APP\forge\lib\security.ts:42:35
+
+  39 
+  40 async function writeAuditLog(input: AuditInput): Promise<void> {
+  41   try {
+→ 42     await prisma.securityAuditLog.create(
+Foreign key constraint violated on the constraint: `SecurityAuditLog_userId_fkey`
+    at ei.handleRequestError (c:\Users\mikiy\OneDrive\Desktop\MY APP\forge\node_modules\@prisma\client\src\runtime\RequestHandler.ts:228:13)
+    at ei.handleAndLogRequestError (c:\Users\mikiy\OneDrive\Desktop\MY APP\forge\node_modules\@prisma\client\src\runtime\RequestHandler.ts:174:12)
+    at ei.request (c:\Users\mikiy\OneDrive\Desktop\MY APP\forge\node_modules\@prisma\client\src\runtime\RequestHandler.ts:143:12)
+    at async a (c:\Users\mikiy\OneDrive\Desktop\MY APP\forge\node_modules\@prisma\client\src\runtime\getPrismaClient.ts:833:24)
+    at async writeAuditLog (c:\Users\mikiy\OneDrive\Desktop\MY APP\forge\lib\security.ts:42:5)
+    at async revokeSession (c:\Users\mikiy\OneDrive\Desktop\MY APP\forge\lib\security.ts:103:5)
+    at async main (c:\Users\mikiy\OneDrive\Desktop\MY APP\forge\scripts\test_session_termination.ts:94:20) {
+  code: 'P2003',
+  meta: {
+    modelName: 'SecurityAuditLog',
+    constraint: 'SecurityAuditLog_userId_fkey'
+  },
+  clientVersion: '6.19.0'
+}
+  ✔ cannot terminate a session the caller does not own
+
+[4] Admin clicks TERMINATE on device B:
+  ✔ server confirms the session was actually revoked (no false success)
+  ✔ device B session row is revoked = true in DB
+  ✔ device B revokedAt timestamp is set
+
+[5] Result is not just hidden in the dashboard — it is real:
+  ✔ device B no longer appears in active (non-revoked) sessions
+  ✔ device A still appears as active
+
+[6] Device B tries to reuse its old token (refresh / protected page / protected API):
+  ✔ device B old token is now REJECTED for protected access
+  ✔ token signature still verifies, but DB revocation is the enforced gate
+  ✔ device B login activity feed updated to REVOKED
+
+[7] Pending login attempt can be terminated and never approved later:
+  ✔ pending attempt terminated
+  ✔ pending attempt marked REVOKED in DB
+  ✔ terminated attempt CANNOT be approved later
+
+[8] Audit log recorded (and holds no secrets):
+  ✔ audit log entries recorded for sessions + attempt termination
+  ✔ audit logs contain no session token, cookie, or password
+    · TERMINATE_SESSION → SUCCESS | SESSION sesterm-1787… | 2026-08-27T21:45:06.781Z
+    · TERMINATE_SESSION → FAILED | SESSION sesterm-1787… | 2026-08-27T21:45:03.980Z
+    · TERMINATE_SESSION → SUCCESS | SESSION sesterm-1787… | 2026-08-27T19:34:26.743Z
+
+  (cleaning up test rows)
+
+==================================================
+✅ ALL SESSION TERMINATION TESTS PASSED
+==================================================
+EXITCODE=0  

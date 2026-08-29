@@ -11,6 +11,7 @@ const PUBLIC_PATHS = [
   '/auth/reset-password',
   '/api/auth/login',
   '/api/auth/verify',
+  '/api/auth/validate',
   '/api/auth/resend-verification',
   '/api/auth/forgot-password',
   '/api/auth/reset-password',
@@ -74,7 +75,39 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  // 7. Authenticated & verified user accessing protected route
+  // 7. Enforce real server-side session revocation check on protected requests.
+  if (session.sessionId) {
+    try {
+      const validateUrl = new URL('/api/auth/validate', req.url);
+      const validateRes = await fetch(validateUrl, {
+        headers: {
+          cookie: `${SESSION_COOKIE_NAME}=${sessionCookie}`,
+        },
+        cache: 'no-store',
+      });
+
+      if (!validateRes.ok) {
+        if (pathname.startsWith('/api/')) {
+          const res = NextResponse.json(
+            { error: 'Unauthorized: Session terminated.' },
+            { status: 401 }
+          );
+          res.cookies.delete(SESSION_COOKIE_NAME);
+          return res;
+        }
+
+        const loginUrl = new URL('/login', req.url);
+        loginUrl.searchParams.set('reason', 'terminated');
+        const res = NextResponse.redirect(loginUrl);
+        res.cookies.delete(SESSION_COOKIE_NAME);
+        return res;
+      }
+    } catch {
+      // If validation endpoint subrequest fails unexpectedly, allow proceed
+    }
+  }
+
+  // 8. Authenticated & verified user accessing protected route
   return NextResponse.next();
 }
 

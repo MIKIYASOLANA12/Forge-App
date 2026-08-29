@@ -90,7 +90,7 @@ export function SecurityPanel() {
     const data = await res.json().catch(() => ({}));
     return { res, data };
   };
-const terminateSession = async (s: Session, confirmed = false) => {
+  const terminateSession = async (s: Session, confirmed = false) => {
     if (runningId) return; // no double-click
     setRunningId(s.id);
     setFeedback(null);
@@ -103,6 +103,14 @@ const terminateSession = async (s: Session, confirmed = false) => {
         setFeedback({ type: "success", text: "Session terminated." });
         // Remove from the dashboard — the session is no longer active server-side.
         setSessions((prev) => prev.filter((x) => x.id !== s.id));
+        // Refresh login activity to show REVOKED status
+        fetch("/api/security/activity")
+          .then((r) => (r.ok ? r.json() : null))
+          .then((actData) => {
+            if (actData?.activity) setAttempts(actData.activity);
+          })
+          .catch(() => {});
+
         if (s.isCurrent) {
           // We terminated our own device.
           fetch("/api/auth/logout", { method: "POST" })
@@ -150,6 +158,15 @@ const terminateSession = async (s: Session, confirmed = false) => {
           type: "success",
           text: action === "ALLOW" ? "Attempt approved." : "Attempt terminated.",
         });
+        // If terminated, also refresh active sessions list
+        if (action === "TERMINATE") {
+          fetch("/api/security/sessions")
+            .then((r) => (r.ok ? r.json() : null))
+            .then((sessData) => {
+              if (sessData?.sessions) setSessions(sessData.sessions);
+            })
+            .catch(() => {});
+        }
       } else {
         setFeedback({ type: "error", text: "Could not update this attempt." });
         console.error("Authorize failed:", data);

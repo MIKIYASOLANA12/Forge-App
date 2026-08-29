@@ -28,7 +28,8 @@ export async function POST(req: NextRequest) {
 
       if (user) {
         const rawToken = await createAuthToken(user.id, 'PASSWORD_RESET');
-        const sent = await sendPasswordResetEmail(user.email, rawToken);
+        const originUrl = req.headers.get('origin') || req.nextUrl.origin;
+        const sent = await sendPasswordResetEmail(user.email, rawToken, originUrl);
 
         // If the provider rejected the message, surface a failure so callers
         // know the email delivery failed. This avoids returning a misleading

@@ -1,4 +1,4 @@
-﻿export interface SendEmailOptions {
+export interface SendEmailOptions {
   to: string;
   subject: string;
   html: string;
@@ -53,8 +53,8 @@ export async function sendEmail({ to, subject, html, text }: SendEmailOptions): 
   return true;
 }
 
-export async function sendVerificationEmail(email: string, rawToken: string, name?: string): Promise<boolean> {
-  const baseUrl = getAppBaseUrl();
+export async function sendVerificationEmail(email: string, rawToken: string, name?: string, originUrl?: string): Promise<boolean> {
+  const baseUrl = (originUrl || getAppBaseUrl()).replace(/\/$/, '');
   const verificationUrl = `${baseUrl}/verify-email?token=${rawToken}`;
   const firstName = name?.trim() || 'Mikiyas';
 
@@ -99,12 +99,12 @@ If you did not request this, you can ignore this email.`;
   return sendEmail({ to: email, subject, text, html });
 }
 
-export async function sendActivationEmail(email: string, rawToken: string): Promise<boolean> {
-  return sendVerificationEmail(email, rawToken, 'Mikiyas');
+export async function sendActivationEmail(email: string, rawToken: string, originUrl?: string): Promise<boolean> {
+  return sendVerificationEmail(email, rawToken, 'Mikiyas', originUrl);
 }
 
-export async function sendPasswordResetEmail(email: string, rawToken: string): Promise<boolean> {
-  const baseUrl = getAppBaseUrl();
+export async function sendPasswordResetEmail(email: string, rawToken: string, originUrl?: string): Promise<boolean> {
+  const baseUrl = (originUrl || getAppBaseUrl()).replace(/\/$/, '');
   const resetUrl = `${baseUrl}/auth/reset-password?token=${rawToken}&email=${encodeURIComponent(email)}`;
 
   const subject = 'Reset your FORGE password';

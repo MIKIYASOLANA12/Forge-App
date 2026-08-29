@@ -152,7 +152,7 @@ export async function getSessionUserFromCookie(): Promise<SessionPayload | null>
       const dbSession = await prisma.userSession.findUnique({
         where: { sessionToken: session.sessionId },
       });
-      if (dbSession?.revoked) {
+      if (!dbSession || dbSession.revoked) {
         return null;
       }
     }
@@ -184,7 +184,7 @@ export async function getSessionUserFromRequest(req: NextRequest | Request): Pro
       const dbSession = await prisma.userSession.findUnique({
         where: { sessionToken: session.sessionId },
       });
-      if (dbSession?.revoked) {
+      if (!dbSession || dbSession.revoked) {
         return null;
       }
     }

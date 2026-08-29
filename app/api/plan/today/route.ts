@@ -1,11 +1,17 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
+import { getSessionUserFromRequest } from '@/lib/auth';
 import { getAddisNow, workoutWindowForAddisDate, getDayOfJourney300 } from '@/lib/workoutTime';
 import { ensureTodayDailyPlan } from '@/lib/dailyPlanGenerator';
 import { prisma } from '@/lib/prisma';
 import { get2027DeadlineMetrics } from '@/lib/readingEngine';
 import { getAccountabilityStatus, detectMissedActivities } from '@/lib/accountabilityRecheck';
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  const session = await getSessionUserFromRequest(req);
+  if (!session) {
+    return NextResponse.json({ error: 'Unauthorized: Session revoked or invalid.' }, { status: 401 });
+  }
+
   try {
     const addisNow = getAddisNow();
     const windowInfo = workoutWindowForAddisDate(addisNow);

@@ -17,26 +17,63 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (isAuthPage) return;
 
-    let cancelled = false;
-    const checkSession = async () => {
+    let isTerminated = false;
+    const forceLogout = () => {
+      if (isTerminated) return;
+      isTerminated = true;
       try {
-        const res = await fetch("/api/auth/me");
-        if (res.status === 401 && !cancelled) {
-          window.location.href = "/login?reason=terminated";
+        fetch("/api/auth/logout", { method: "POST" }).catch(() => {});
+      } catch {}
+      window.location.replace("/login?reason=terminated");
+    };
+
+    // 1. Real-time Server-Sent Events (SSE) Stream
+    let eventSource: EventSource | null = null;
+    try {
+      eventSource = new EventSource("/api/auth/session-stream");
+      eventSource.addEventListener("session_revoked", () => {
+        forceLogout();
+      });
+      eventSource.onerror = () => {
+        // SSE connection dropped; heartbeat interval below acts as backup
+      };
+    } catch {}
+
+    // 2. Fast 2-second Heartbeat Check
+    const checkHeartbeat = async () => {
+      if (isTerminated) return;
+      try {
+        const res = await fetch("/api/auth/heartbeat");
+        if (res.status === 401) {
+          forceLogout();
         }
       } catch {}
     };
 
-    void checkSession();
+    void checkHeartbeat();
+    const interval = setInterval(checkHeartbeat, 2000);
+    window.addEventListener("focus", checkHeartbeat);
 
-    // Check periodically every 15 seconds and when the tab regains focus
-    const interval = setInterval(checkSession, 15000);
-    window.addEventListener("focus", checkSession);
+    // 3. Global Fetch 401 Interceptor
+    const originalFetch = window.fetch;
+    window.fetch = async (...args) => {
+      const response = await originalFetch(...args);
+      if (response.status === 401 && !isAuthPage) {
+        const urlStr = typeof args[0] === "string" ? args[0] : (args[0] as Request)?.url || "";
+        if (!urlStr.includes("/api/auth/login") && !urlStr.includes("/api/auth/verify")) {
+          forceLogout();
+        }
+      }
+      return response;
+    };
 
     return () => {
-      cancelled = true;
+      if (eventSource) {
+        eventSource.close();
+      }
       clearInterval(interval);
-      window.removeEventListener("focus", checkSession);
+      window.removeEventListener("focus", checkHeartbeat);
+      window.fetch = originalFetch;
     };
   }, [isAuthPage, pathname]);
 

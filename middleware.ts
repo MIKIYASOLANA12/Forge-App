@@ -12,6 +12,8 @@ const PUBLIC_PATHS = [
   '/api/auth/login',
   '/api/auth/verify',
   '/api/auth/validate',
+  '/api/auth/session-stream',
+  '/api/auth/heartbeat',
   '/api/auth/resend-verification',
   '/api/auth/forgot-password',
   '/api/auth/reset-password',

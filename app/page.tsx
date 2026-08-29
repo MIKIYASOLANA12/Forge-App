@@ -36,12 +36,38 @@ import {
 } from "recharts";
 import { DailyMotivation } from "@/components/dashboard/DailyMotivation";
 
+import { clsx } from "clsx";
+
 type PlanTask = {
   id: string;
   description: string;
   domain?: { name: string; color?: string } | null;
   minutesTarget?: number | null;
   completed?: boolean;
+};
+
+type AccountabilityData = {
+  status: 'PENDING' | 'RESOLVED';
+  addisDateKey: string;
+  missedItems: string[];
+  roast: string | null;
+  acknowledged: boolean;
+  acknowledgementText: string | null;
+  acknowledgementAt: string | null;
+  resolvedAt: string | null;
+  reminderCount: number;
+};
+
+type YesterdayData = {
+  dateFormatted: string;
+  workout: { status: 'COMPLETED' | 'MISSED'; type: string };
+  tasks: Array<{ id: string; description: string; completed: boolean; status: 'COMPLETED' | 'MISSED'; minutesTarget: number }>;
+  completedCount: number;
+  totalCount: number;
+  habits?: { completed: number; total: number; missedNames: string[] };
+  missedItems?: string[];
+  completedItems?: string[];
+  workoutMissed?: boolean;
 };
 
 type WorkoutToday = {
@@ -92,6 +118,8 @@ export default function Home() {
   const [nextWorkout, setNextWorkout] = useState<WorkoutToday | null>(null);
   const [profile, setProfile] = useState<ProfileStats>({ totalXp: 0, level: 1 });
   const [weeklyBalance, setWeeklyBalance] = useState<any>(null);
+  const [accountability, setAccountability] = useState<AccountabilityData | null>(null);
+  const [yesterday, setYesterday] = useState<YesterdayData | null>(null);
 
   // AI Nutrition Coach State
   const [mealInput, setMealInput] = useState("");
@@ -116,6 +144,8 @@ export default function Home() {
           setCompleted(
             taskList.filter((task: PlanTask) => task.completed).map((task: PlanTask) => task.id)
           );
+          if (plan?.accountability) setAccountability(plan.accountability);
+          if (plan?.yesterday) setYesterday(plan.yesterday);
         }
 
         if (workoutRes.ok) {
@@ -293,6 +323,81 @@ export default function Home() {
           </Link>
         </div>
       </section>
+
+      {/* ── ACCOUNTABILITY STATUS (spec section 10) ─────────────────────────── */}
+      {accountability && (
+        <section
+          className={clsx(
+            "rounded-2xl border p-4 flex flex-col gap-2 shadow-xl",
+            accountability.status === "PENDING"
+              ? "border-rose-500/40 bg-rose-950/30"
+              : "border-emerald-500/40 bg-emerald-950/20"
+          )}
+        >
+          <div className="flex flex-wrap items-center gap-2">
+            <span
+              className={clsx(
+                "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider border",
+                accountability.status === "PENDING"
+                  ? "bg-rose-500/15 text-rose-300 border-rose-500/40"
+                  : "bg-emerald-500/15 text-emerald-300 border-emerald-500/40"
+              )}
+            >
+              {accountability.status === "PENDING" ? "🟡 Accountability pending" : "🟢 Accountability resolved"}
+            </span>
+            {accountability.status === "PENDING" && (
+              <span className="text-xs text-rose-300/80">Reminders sent: {accountability.reminderCount}</span>
+            )}
+          </div>
+          {accountability.status === "PENDING" ? (
+            <div className="text-sm space-y-1">
+              <p className="font-bold text-rose-200">
+                Missed date: <span className="font-mono text-rose-300">{accountability.addisDateKey}</span>
+              </p>
+              <p className="text-rose-200/90">
+                Missed:{" "}
+                {accountability.missedItems.length > 0
+                  ? accountability.missedItems.map((m) => `❌ ${m}`).join(" · ")
+                  : "—"}
+              </p>
+              {accountability.roast && (
+                <p className="italic text-rose-300/70">"{accountability.roast}"</p>
+              )}
+              <p className="text-rose-200/70 text-xs">
+                Acknowledge by replying to Forge on Telegram: "I'm so sorry, I will not do it again".
+              </p>
+            </div>
+          ) : (
+            <p className="text-sm text-emerald-200/90">
+              {accountability.acknowledged
+                ? `Acknowledged ✓ — ${accountability.acknowledgementText ?? "Apology accepted"}.`
+                : "No outstanding accountability holds. All closed-day misses have been acknowledged."}
+            </p>
+          )}
+        </section>
+      )}
+
+      {/* ── YESTERDAY'S MISSED ITEMS (spec section 11) ─────────────────────────── */}
+      {yesterday && yesterday.missedItems && yesterday.missedItems.length > 0 && (
+        <section className="rounded-2xl border border-rose-500/30 bg-rose-950/20 p-4 shadow-lg">
+          <div className="flex items-center justify-between border-b border-rose-500/20 pb-2 mb-3">
+            <h3 className="text-xs font-black uppercase tracking-widest text-rose-400">
+              🔴 Yesterday's Missed Items — LOCKED
+            </h3>
+            <span className="text-xs text-slate-400 font-mono">{yesterday.dateFormatted}</span>
+          </div>
+          <ul className="space-y-1.5">
+            {yesterday.missedItems.map((m) => (
+              <li key={m} className="flex items-center justify-between text-sm text-rose-300">
+                <span className="font-semibold">🔴 {m}</span>
+                <span className="text-[10px] font-bold text-rose-400 uppercase bg-rose-500/10 px-2 py-0.5 rounded border border-rose-500/20">
+                  MISSED / LOCKED
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       {/* ── DAILY MOTIVATION & TEACHER MENTORSHIP WIDGET ─────────────────────── */}
       <DailyMotivation />

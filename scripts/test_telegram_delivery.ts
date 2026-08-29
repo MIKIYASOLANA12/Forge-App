@@ -5,8 +5,9 @@
  * -> acknowledge -> RESOLVED, reminders stop, no back-filled completions ->
  * cleanup synthetic rows only.
  */
-import { config as loadEnv } from 'dotenv';
-loadEnv({ path: '.env.local' });
+if (typeof process.loadEnvFile === 'function') {
+  try { process.loadEnvFile('.env.local'); } catch {}
+}
 import { prisma } from '../lib/prisma';
 import { workoutWindowForAddisDate } from '../lib/workoutTime';
 import {
@@ -25,16 +26,8 @@ function assert(cond: boolean, msg: string) {
   console.log(`  OK ${msg}`);
 }
 
-// Grade the LAST CLOSED Addis day relative to a synthetic "now" = 2 days ago.
-const syntheticNow = new Date();
-syntheticNow.setDate(syntheticNow.getDate() - 2);
-const target: WorkoutWindow = workoutWindowForAddisDate(syntheticNow);
-const graded: WorkoutWindow = (() => {
-  if (target.isClosed) return target;
-  const prev = new Date(target.startAddis);
-  prev.setDate(prev.getDate() - 1);
-  return workoutWindowForAddisDate(prev);
-})();
+// Grade the LAST CLOSED Addis day window.
+const graded: WorkoutWindow = windowToGrade();
 console.log(`target graded window start=${graded.startAddis.toISOString()} closed=${graded.isClosed}`);
 
 async function cleanup() {

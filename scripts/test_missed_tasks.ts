@@ -14,8 +14,9 @@
  * Does NOT send real Telegram messages.
  * Run: npx ts-node --project tsconfig.seed.json -r tsconfig-paths/register scripts/test_missed_tasks.ts
  */
-import { config as loadEnv } from 'dotenv';
-loadEnv({ path: '.env.local' });
+if (typeof process.loadEnvFile === 'function') {
+  try { process.loadEnvFile('.env.local'); } catch {}
+}
 import { prisma } from '../lib/prisma';
 import { workoutWindowForAddisDate } from '../lib/workoutTime';
 import { detectMissedActivities, buildMissedMessage, type WorkoutWindow } from '../lib/accountabilityRecheck';

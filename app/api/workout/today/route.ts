@@ -13,6 +13,7 @@ import {
   getExerciseMuscleInfo,
   getProtocolExercises,
 } from '@/lib/workoutMuscleTargets';
+import { detectMissedActivities } from '@/lib/accountabilityRecheck';
 
 const ORDER = ['Push', 'Pull', 'LegsCore'];
 
@@ -20,6 +21,11 @@ export async function GET() {
   const addisNow = getAddisNow();
   const windowInfo = workoutWindowForAddisDate(addisNow);
   const day300 = getDayOfJourney300(addisNow);
+
+  const yesterdayAddis = new Date(windowInfo.startAddis);
+  yesterdayAddis.setDate(yesterdayAddis.getDate() - 1);
+  const yesterdayWindow = workoutWindowForAddisDate(yesterdayAddis);
+  const yesterdayReport = await detectMissedActivities(yesterdayWindow);
 
   const [program, lastLog, days, todayLog] = await Promise.all([
     prisma.workoutProgram.findUnique({ where: { id: 'singleton' } }),
@@ -204,5 +210,15 @@ export async function GET() {
     weekNumber: week,
     phase,
     isNewPhase: week > 1 && phase.weeks[0] === week,
+    yesterday: {
+      dateFormatted: yesterdayWindow.startAddis.toLocaleDateString('en-US', {
+        weekday: 'long',
+        month: 'short',
+        day: 'numeric',
+      }),
+      missedItems: yesterdayReport.missedAll,
+      completedItems: yesterdayReport.completedAll,
+      workoutMissed: yesterdayReport.workoutMissed,
+    },
   });
 }

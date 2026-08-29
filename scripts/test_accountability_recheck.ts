@@ -8,6 +8,9 @@
  *
  * Run: npx ts-node --project tsconfig.seed.json -r tsconfig-paths/register scripts/test_accountability_recheck.ts
  */
+if (typeof process.loadEnvFile === 'function') {
+  try { process.loadEnvFile('.env.local'); } catch {}
+}
 import { prisma } from '../lib/prisma';
 import {
   detectMissedActivities,

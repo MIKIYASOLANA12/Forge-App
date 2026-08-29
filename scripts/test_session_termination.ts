@@ -12,8 +12,9 @@
  *
  * Run: npx ts-node --project tsconfig.seed.json -r tsconfig-paths/register scripts/test_session_termination.ts
  */
-import { config as loadEnv } from 'dotenv';
-loadEnv({ path: '.env.local' });
+if (typeof process.loadEnvFile === 'function') {
+  try { process.loadEnvFile('.env.local'); } catch {}
+}
 import { prisma } from '../lib/prisma';
 import { createSessionToken, verifySessionToken } from '../lib/session';
 import {

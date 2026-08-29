@@ -39,6 +39,12 @@ type AuditInput = {
 
 async function writeAuditLog(input: AuditInput): Promise<void> {
   try {
+    const userExists = await prisma.user.findUnique({
+      where: { id: input.userId },
+      select: { id: true },
+    });
+    if (!userExists) return;
+
     await prisma.securityAuditLog.create({
       data: {
         userId: input.userId,

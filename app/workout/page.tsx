@@ -125,6 +125,12 @@ type TodayData = {
   missedToday?: boolean;
   sessionInProgress?: boolean;
   closeTimestamp?: number;
+  yesterday?: {
+    dateFormatted: string;
+    missedItems: string[];
+    completedItems: string[];
+    workoutMissed: boolean;
+  };
 };
 
 type HistoryLog = {
@@ -552,6 +558,26 @@ export default function WorkoutPage() {
     const nextWk = today.nextWorkout;
     return (
       <div className="space-y-6 animate-fade-in">
+        {today.yesterday && today.yesterday.missedItems && today.yesterday.missedItems.length > 0 && (
+          <section className="rounded-2xl border border-rose-500/30 bg-rose-950/20 p-4 shadow-lg">
+            <div className="flex items-center justify-between border-b border-rose-500/20 pb-2 mb-3">
+              <h3 className="text-xs font-black uppercase tracking-widest text-rose-400">
+                🔴 Yesterday's Missed Items — LOCKED
+              </h3>
+              <span className="text-xs text-slate-400 font-mono">{today.yesterday.dateFormatted}</span>
+            </div>
+            <ul className="space-y-1.5">
+              {today.yesterday.missedItems.map((m) => (
+                <li key={m} className="flex items-center justify-between text-sm text-rose-300">
+                  <span className="font-semibold">🔴 {m}</span>
+                  <span className="text-[10px] font-bold text-rose-400 uppercase bg-rose-500/10 px-2 py-0.5 rounded border border-rose-500/20">
+                    MISSED / LOCKED
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
         <section className="relative overflow-hidden rounded-2xl border border-rose-500/40 bg-gradient-to-br from-rose-950/30 via-slate-900/90 to-slate-950 p-6 md:p-8 shadow-2xl">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div className="space-y-2">
@@ -630,6 +656,26 @@ export default function WorkoutPage() {
     const nextWk = today.nextWorkout;
     return (
       <div className="space-y-6 animate-fade-in">
+        {today.yesterday && today.yesterday.missedItems && today.yesterday.missedItems.length > 0 && (
+          <section className="rounded-2xl border border-rose-500/30 bg-rose-950/20 p-4 shadow-lg">
+            <div className="flex items-center justify-between border-b border-rose-500/20 pb-2 mb-3">
+              <h3 className="text-xs font-black uppercase tracking-widest text-rose-400">
+                🔴 Yesterday's Missed Items — LOCKED
+              </h3>
+              <span className="text-xs text-slate-400 font-mono">{today.yesterday.dateFormatted}</span>
+            </div>
+            <ul className="space-y-1.5">
+              {today.yesterday.missedItems.map((m) => (
+                <li key={m} className="flex items-center justify-between text-sm text-rose-300">
+                  <span className="font-semibold">🔴 {m}</span>
+                  <span className="text-[10px] font-bold text-rose-400 uppercase bg-rose-500/10 px-2 py-0.5 rounded border border-rose-500/20">
+                    MISSED / LOCKED
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
         <section className="relative overflow-hidden rounded-2xl border border-emerald-500/40 bg-gradient-to-br from-emerald-950/30 via-slate-900/90 to-slate-950 p-6 md:p-8 shadow-2xl">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div className="space-y-2">
@@ -724,6 +770,27 @@ export default function WorkoutPage() {
 
   return (
     <div className="space-y-6">
+      {today.yesterday && today.yesterday.missedItems && today.yesterday.missedItems.length > 0 && (
+        <section className="rounded-2xl border border-rose-500/30 bg-rose-950/20 p-4 shadow-lg">
+          <div className="flex items-center justify-between border-b border-rose-500/20 pb-2 mb-3">
+            <h3 className="text-xs font-black uppercase tracking-widest text-rose-400">
+              🔴 Yesterday's Missed Items — LOCKED
+            </h3>
+            <span className="text-xs text-slate-400 font-mono">{today.yesterday.dateFormatted}</span>
+          </div>
+          <ul className="space-y-1.5">
+            {today.yesterday.missedItems.map((m) => (
+              <li key={m} className="flex items-center justify-between text-sm text-rose-300">
+                <span className="font-semibold">🔴 {m}</span>
+                <span className="text-[10px] font-bold text-rose-400 uppercase bg-rose-500/10 px-2 py-0.5 rounded border border-rose-500/20">
+                  MISSED / LOCKED
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
       {/* ── OFFLINE STATUS & SYNC CONTROL BAR ─────────────────────────────────── */}
       <section className="flex flex-wrap items-center justify-between gap-3 p-3.5 rounded-2xl bg-slate-950 border border-slate-800 shadow-md">
         <div className="flex items-center gap-3">

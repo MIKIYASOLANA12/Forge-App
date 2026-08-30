@@ -1,3 +1,5 @@
+import { convertToEthiopianTraditionalTime, type EthiopianTimeResult } from './ethiopianTime';
+
 export const TIMEZONE = 'Africa/Addis_Ababa';
 
 // Daily Active Window (Addis Ababa Time)
@@ -36,13 +38,7 @@ export function getAddisTimeComponents(customDate?: Date): {
   second: number;
   totalMinutes: number;
   formatted12h: string;
-  ethiopianTime: {
-    hour: number;
-    minute: number;
-    period: 'Day' | 'Night';
-    periodAmharic: 'ቀን' | 'ምሽት' | 'ሌሊት';
-    formatted: string;
-  };
+  ethiopianTime: EthiopianTimeResult;
 } {
   const d = customDate || new Date();
   const formatter = new Intl.DateTimeFormat('en-US', {
@@ -77,19 +73,7 @@ export function getAddisTimeComponents(customDate?: Date): {
   const ampm = hour >= 12 ? 'PM' : 'AM';
   const formatted12h = `${String(h12).padStart(2, '0')}:${String(minute).padStart(2, '0')} ${ampm}`;
 
-  // Ethiopian Traditional Clock:
-  // Starts at standard 6:00 AM as 12:00 Ethiopian
-  let ethHour = (hour + 6) % 12;
-  if (ethHour === 0) ethHour = 12;
-  const isDay = hour >= 6 && hour < 18;
-  const period: 'Day' | 'Night' = isDay ? 'Day' : 'Night';
-  const periodAmharic: 'ቀን' | 'ምሽት' | 'ሌሊት' = isDay
-    ? 'ቀን'
-    : hour >= 18 && hour < 24
-    ? 'ምሽት'
-    : 'ሌሊት';
-
-  const ethFormatted = `${ethHour}:${String(minute).padStart(2, '0')} Ethiopian (${period})`;
+  const ethTime = convertToEthiopianTraditionalTime(hour, minute, second);
 
   return {
     year,
@@ -100,13 +84,7 @@ export function getAddisTimeComponents(customDate?: Date): {
     second,
     totalMinutes,
     formatted12h,
-    ethiopianTime: {
-      hour: ethHour,
-      minute,
-      period,
-      periodAmharic,
-      formatted: ethFormatted,
-    },
+    ethiopianTime: ethTime,
   };
 }
 

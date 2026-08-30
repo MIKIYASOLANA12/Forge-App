@@ -28,8 +28,10 @@ export interface SmartScheduleStatus {
   subGreeting: string;
   addisTimeFormatted: string; // e.g. "11:00 AM"
   currentHourMinute: string; // "11:00"
-  ethiopianTimeFormatted?: string; // e.g. "5:00 Ethiopian (Day)"
-  ethiopianPeriod?: 'Day' | 'Night';
+  ethiopianTimeFormatted?: string; // e.g. "ከረፋዱ 5:00"
+  ethiopianTimeFull?: string; // e.g. "ከረፋዱ 5:00 · 5:00 Ethiopian (Late Morning)"
+  ethiopianPeriodAmharic?: string; // e.g. "ረፋድ", "ጠዋት", "ምሽት", "ሌሊት"
+  ethiopianPrefix?: string; // e.g. "ከረፋዱ", "ከጠዋቱ", "ከምሽቱ", "ከሌሊቱ"
   targetWakeTime: string; // "11:00 AM"
   targetSleepTime: string; // "11:00 PM"
   currentActivityTitle: string;
@@ -145,27 +147,27 @@ export async function getSmartScheduleStatus(customNow?: Date): Promise<SmartSch
   });
   const workoutCompleted = Boolean(todayWorkoutLog);
 
-  // Target Boundaries (in minutes of day):
-  // Wake-up: 11:00 AM (660 min)
-  // Daily Close: 09:28 PM (1288 min)
-  // Wind-Down: 09:30 PM (1290 min)
-  // Target Sleep: 11:00 PM (1380 min)
+  const commonTimeFields = {
+    addisTimeFormatted: formatted12h,
+    currentHourMinute: hourMinStr,
+    ethiopianTimeFormatted: ethiopianTime.formattedAmharic,
+    ethiopianTimeFull: ethiopianTime.formattedFull,
+    ethiopianPeriodAmharic: ethiopianTime.periodAmharic,
+    ethiopianPrefix: ethiopianTime.prefixAmharic,
+    targetWakeTime: '11:00 AM',
+    targetSleepTime: '11:00 PM',
+  };
 
   // ── [1] DEEP SLEEP WINDOW (11:00 PM – 05:59 AM) ──────────────────────────────
   // 1380..1439 mins (11:00 PM – 11:59 PM) OR 0..359 mins (12:00 AM – 05:59 AM)
   if (totalMinutes >= 1380 || totalMinutes < 360) {
     return {
+      ...commonTimeFields,
       greeting: greetings.greeting,
       subGreeting: greetings.subGreeting,
-      addisTimeFormatted: formatted12h,
-      currentHourMinute: hourMinStr,
-      ethiopianTimeFormatted: ethiopianTime.formatted,
-      ethiopianPeriod: ethiopianTime.period,
-      targetWakeTime: '11:00 AM',
-      targetSleepTime: '11:00 PM',
       currentActivityTitle: 'It’s time to sleep.',
       currentActivityCategory: 'SLEEP',
-      statusMessage: 'Target sleep time is 11:00 PM. Rest deeply for an energized 11:00 AM wake-up tomorrow.',
+      statusMessage: 'Target sleep time is 11:00 PM (ከሌሊቱ 5:00). Rest deeply for an energized 11:00 AM wake-up tomorrow.',
       actionCallout: 'Sleep on time to preserve circadian consistency and recovery.',
       suggestedAction: { type: 'SLEEP', label: 'View Sleep Target', href: '/today#sleep' },
       upcomingNext: { title: 'Wake up (11:00 AM)', timeFormatted: '11:00 AM', category: 'WAKE' },
@@ -176,19 +178,14 @@ export async function getSmartScheduleStatus(customNow?: Date): Promise<SmartSch
   // 360..659 mins: MUST NEVER SAY SLEEP!
   if (totalMinutes >= 360 && totalMinutes < 660) {
     if (totalMinutes >= 600) {
-      // 10:00 AM – 10:59 AM: Pre-Wake Target
+      // 10:00 AM – 10:59 AM: Pre-Wake Target (ከረፋዱ 4:00 – 4:59)
       return {
+        ...commonTimeFields,
         greeting: greetings.greeting,
         subGreeting: greetings.subGreeting,
-        addisTimeFormatted: formatted12h,
-        currentHourMinute: hourMinStr,
-        ethiopianTimeFormatted: ethiopianTime.formatted,
-        ethiopianPeriod: ethiopianTime.period,
-        targetWakeTime: '11:00 AM',
-        targetSleepTime: '11:00 PM',
         currentActivityTitle: 'Target Wake-Up Approaching (11:00 AM)',
         currentActivityCategory: 'WAKE',
-        statusMessage: 'Fixed daily wake-up target is 11:00 AM. Prepare for a disciplined day.',
+        statusMessage: 'Fixed daily wake-up target is 11:00 AM (ከረፋዱ 5:00). Prepare for a disciplined day.',
         actionCallout: 'Wake up, hydrate, and prepare for your scheduled tasks.',
         suggestedAction: { type: 'CHECKIN', label: 'Open Today Roadmap', href: '/today' },
         upcomingNext: {
@@ -199,19 +196,14 @@ export async function getSmartScheduleStatus(customNow?: Date): Promise<SmartSch
       };
     }
 
-    // 06:00 AM – 09:59 AM: Early Morning Focus / Routine
+    // 06:00 AM – 09:59 AM: Early Morning Focus / Routine (ከጠዋቱ 12:00 – ከረፋዱ 3:59)
     return {
+      ...commonTimeFields,
       greeting: greetings.greeting,
       subGreeting: greetings.subGreeting,
-      addisTimeFormatted: formatted12h,
-      currentHourMinute: hourMinStr,
-      ethiopianTimeFormatted: ethiopianTime.formatted,
-      ethiopianPeriod: ethiopianTime.period,
-      targetWakeTime: '11:00 AM',
-      targetSleepTime: '11:00 PM',
       currentActivityTitle: 'Morning Focus — Wake Target at 11:00 AM',
       currentActivityCategory: 'WAKE',
-      statusMessage: 'Morning preparation window. Fixed daily wake-up target is 11:00 AM.',
+      statusMessage: 'Morning preparation window. Fixed daily wake-up target is 11:00 AM (ከረፋዱ 5:00).',
       actionCallout: 'Hydrate, prepare your focus environment, and review today’s schedule.',
       suggestedAction: { type: 'CHECKIN', label: 'Open Today Roadmap', href: '/today' },
       upcomingNext: { title: 'Fixed Wake-Up Target (11:00 AM)', timeFormatted: '11:00 AM', category: 'WAKE' },
@@ -219,20 +211,15 @@ export async function getSmartScheduleStatus(customNow?: Date): Promise<SmartSch
   }
 
   // ── [3] FIXED WAKE-UP TARGET (11:00 AM – 11:59 AM) ───────────────────────────
-  // 660..719 mins
+  // 660..719 mins (ከረፋዱ 5:00 – 5:59)
   if (totalMinutes >= 660 && totalMinutes < 720) {
     return {
+      ...commonTimeFields,
       greeting: greetings.greeting,
       subGreeting: greetings.subGreeting,
-      addisTimeFormatted: formatted12h,
-      currentHourMinute: hourMinStr,
-      ethiopianTimeFormatted: ethiopianTime.formatted,
-      ethiopianPeriod: ethiopianTime.period,
-      targetWakeTime: '11:00 AM',
-      targetSleepTime: '11:00 PM',
       currentActivityTitle: 'Wake up — 11:00 AM Target',
       currentActivityCategory: 'WAKE',
-      statusMessage: 'Fixed daily wake-up target is 11:00 AM. Hydrate, review your roadmap, and begin execution.',
+      statusMessage: 'Fixed daily wake-up target is 11:00 AM (ከረፋዱ 5:00). Hydrate, review your roadmap, and begin execution.',
       actionCallout: 'Open your tasks in Forge and start with high energy.',
       suggestedAction: { type: 'CHECKIN', label: 'Open Daily Roadmap', href: '/today' },
       upcomingNext: {
@@ -244,20 +231,15 @@ export async function getSmartScheduleStatus(customNow?: Date): Promise<SmartSch
   }
 
   // ── [4] WIND-DOWN WINDOW (09:30 PM – 10:59 PM) ──────────────────────────────
-  // 1290..1379 mins: ONLY WIND-DOWN (NOT SLEEP YET!)
+  // 1290..1379 mins (ከሌሊቱ 3:30 – 4:59): ONLY WIND-DOWN (NOT SLEEP YET!)
   if (totalMinutes >= 1290 && totalMinutes < 1380) {
     return {
+      ...commonTimeFields,
       greeting: greetings.greeting,
       subGreeting: greetings.subGreeting,
-      addisTimeFormatted: formatted12h,
-      currentHourMinute: hourMinStr,
-      ethiopianTimeFormatted: ethiopianTime.formatted,
-      ethiopianPeriod: ethiopianTime.period,
-      targetWakeTime: '11:00 AM',
-      targetSleepTime: '11:00 PM',
       currentActivityTitle: 'Start winding down.',
       currentActivityCategory: 'WIND_DOWN',
-      statusMessage: 'Daily close passed at 09:28 PM. Disconnect from screens and prepare for restful 11:00 PM sleep.',
+      statusMessage: 'Daily close passed at 09:28 PM. Disconnect from screens and prepare for restful 11:00 PM (ከሌሊቱ 5:00) sleep.',
       actionCallout: 'Wind down your mind and body before 11:00 PM sleep target.',
       suggestedAction: { type: 'SLEEP', label: 'View Sleep Target', href: '/today#sleep' },
       upcomingNext: { title: 'Sleep Target (11:00 PM)', timeFormatted: '11:00 PM', category: 'SLEEP' },
@@ -313,14 +295,9 @@ export async function getSmartScheduleStatus(customNow?: Date): Promise<SmartSch
     }
 
     return {
+      ...commonTimeFields,
       greeting: greetings.greeting,
       subGreeting: greetings.subGreeting,
-      addisTimeFormatted: formatted12h,
-      currentHourMinute: hourMinStr,
-      ethiopianTimeFormatted: ethiopianTime.formatted,
-      ethiopianPeriod: ethiopianTime.period,
-      targetWakeTime: '11:00 AM',
-      targetSleepTime: '11:00 PM',
       currentActivityTitle: activityTitle,
       currentActivityCategory: cat,
       statusMessage: isDone
@@ -355,14 +332,9 @@ export async function getSmartScheduleStatus(customNow?: Date): Promise<SmartSch
   if (recentlyCompleted && !recentlyCompleted.task.completed) {
     const t = recentlyCompleted.task;
     return {
+      ...commonTimeFields,
       greeting: greetings.greeting,
       subGreeting: greetings.subGreeting,
-      addisTimeFormatted: formatted12h,
-      currentHourMinute: hourMinStr,
-      ethiopianTimeFormatted: ethiopianTime.formatted,
-      ethiopianPeriod: ethiopianTime.period,
-      targetWakeTime: '11:00 AM',
-      targetSleepTime: '11:00 PM',
       currentActivityTitle: `Finish check-in: ${recentlyCompleted.title}`,
       currentActivityCategory: recentlyCompleted.category,
       statusMessage: `Scheduled block ended at ${formatMinutesTo12Hour(recentlyCompleted.endMins!)}. Did you complete your session?`,
@@ -395,14 +367,9 @@ export async function getSmartScheduleStatus(customNow?: Date): Promise<SmartSch
   // If approaching 09:28 PM close (09:00 PM – 09:29 PM)
   if (totalMinutes >= 1260 && totalMinutes < 1290) {
     return {
+      ...commonTimeFields,
       greeting: greetings.greeting,
       subGreeting: greetings.subGreeting,
-      addisTimeFormatted: formatted12h,
-      currentHourMinute: hourMinStr,
-      ethiopianTimeFormatted: ethiopianTime.formatted,
-      ethiopianPeriod: ethiopianTime.period,
-      targetWakeTime: '11:00 AM',
-      targetSleepTime: '11:00 PM',
       currentActivityTitle: 'Daily Close Approaching (09:28 PM Cutoff)',
       currentActivityCategory: 'CLOSE',
       statusMessage: 'Final execution window. Review your checklist and submit all logs before the 09:28 PM cutoff passes.',
@@ -413,14 +380,9 @@ export async function getSmartScheduleStatus(customNow?: Date): Promise<SmartSch
   }
 
   return {
+    ...commonTimeFields,
     greeting: greetings.greeting,
     subGreeting: greetings.subGreeting,
-    addisTimeFormatted: formatted12h,
-    currentHourMinute: hourMinStr,
-    ethiopianTimeFormatted: ethiopianTime.formatted,
-    ethiopianPeriod: ethiopianTime.period,
-    targetWakeTime: '11:00 AM',
-    targetSleepTime: '11:00 PM',
     currentActivityTitle: upcomingTaskItem
       ? `Upcoming: ${upcomingTaskItem.title} (${formatMinutesTo12Hour(upcomingTaskItem.startMins!)})`
       : 'Daytime Focus & Scheduled Execution',

@@ -15,6 +15,8 @@ import {
   getProtocolExercises,
 } from '@/lib/workoutMuscleTargets';
 import { detectMissedActivities } from '@/lib/accountabilityRecheck';
+import { getHolidayWorkoutStatus } from '@/lib/holidayWorkout';
+import { getDashboardCountdowns } from '@/lib/countdowns';
 
 const ORDER = ['Push', 'Pull', 'LegsCore'];
 
@@ -25,6 +27,8 @@ export async function GET(req: NextRequest) {
   }
 
   const addisNow = getAddisNow();
+  const holidayStatus = getHolidayWorkoutStatus(addisNow);
+  const countdowns = await getDashboardCountdowns(addisNow);
   const windowInfo = workoutWindowForAddisDate(addisNow);
   const day300 = getDayOfJourney300(addisNow);
 
@@ -216,6 +220,9 @@ export async function GET(req: NextRequest) {
     weekNumber: week,
     phase,
     isNewPhase: week > 1 && phase.weeks[0] === week,
+    isHolidayWorkout: holidayStatus.isHolidayPeriod,
+    holiday: holidayStatus,
+    countdowns,
     yesterday: {
       dateFormatted: yesterdayWindow.startAddis.toLocaleDateString('en-US', {
         weekday: 'long',

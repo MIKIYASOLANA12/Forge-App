@@ -243,5 +243,125 @@ export async function sendDailyCompletionReport(force: boolean = false) {
  */
 export async function processAccountabilityCron() {
   const { runAccountabilityRecheck } = await import('./accountabilityRecheck');
-  return runAccountabilityRecheck({ force: false });
+  const [recheckRes, coachRes] = await Promise.all([
+    runAccountabilityRecheck({ force: false }),
+    sendSmartCoachScheduleReminder(),
+  ]);
+  return { recheck: recheckRes, coach: coachRes };
+}
+
+/**
+ * Sends smart contextual reminders (11:00 AM Wake-Up, Study, Code, Workout, Sleep)
+ * depending on current Addis Ababa time.
+ * Deduplicated per time-block per date.
+ */
+export async function sendSmartCoachScheduleReminder(customNow?: Date) {
+  const addisNow = customNow || getAddisNow();
+  const hour = addisNow.getHours();
+  const minute = addisNow.getMinutes();
+  const totalMinutes = hour * 60 + minute;
+
+  const normalizedDateKey = new Date(
+    Date.UTC(addisNow.getFullYear(), addisNow.getMonth(), addisNow.getDate())
+  );
+
+  let slotType: string | null = null;
+  let coachMessage: string | null = null;
+
+  // 11:00 AM Wake-Up Reminder
+  if (totalMinutes >= 660 && totalMinutes < 720) {
+    slotType = 'COACH_WAKE_1100';
+    coachMessage = `☀️ Good morning, Mikiyas! It is 11:00 AM — your target wake-up time.
+Hydrate, review your daily roadmap, and get ready for a focused, disciplined day.`;
+  }
+  // 12:00 PM Study Reminder
+  else if (totalMinutes >= 720 && totalMinutes < 840) {
+    slotType = 'COACH_STUDY_1200';
+    coachMessage = `📚 Study time — Grade 12 Chemistry & Entrance Exam preparation.
+Deep focus session. Open your notes and complete your target study minutes.`;
+  }
+  // 02:00 PM Coding Reminder
+  else if (totalMinutes >= 840 && totalMinutes < 960) {
+    slotType = 'COACH_CODE_1400';
+    coachMessage = `💻 Time to code — JavaScript & 5 Million Coders.
+Open your editor and build your daily algorithmic coding target.`;
+  }
+  // 04:00 PM Workout Reminder
+  else if (totalMinutes >= 960 && totalMinutes < 1080) {
+    const { getHolidayWorkoutStatus } = await import('./holidayWorkout');
+    const holiday = getHolidayWorkoutStatus(addisNow);
+    const workoutName = holiday.isHolidayPeriod
+      ? `Holiday Home Workout (${holiday.todayRoutine?.title || 'Home Session'})`
+      : 'Gym Training Session';
+
+    slotType = 'COACH_WORKOUT_1600';
+    coachMessage = `🏋️ Workout time! Get ready for your ${workoutName}.
+Focus on clean form, controlled cadence, and disciplined sets.`;
+  }
+  // 09:00 PM Wind-down Reminder
+  else if (totalMinutes >= 1260 && totalMinutes < 1320) {
+    slotType = 'COACH_WIND_DOWN_2100';
+    coachMessage = `🌙 It's getting late. Daily close passes at 09:28 PM.
+Finalize any remaining tasks and start winding down for restful sleep.`;
+  }
+  // 11:00 PM Sleep Reminder
+  else if (totalMinutes >= 1380 || totalMinutes < 120) {
+    slotType = 'COACH_SLEEP_2300';
+    coachMessage = `😴 It's 11:00 PM — time to sleep, Mikiyas.
+Consistent sleep drives tomorrow's cognitive focus and muscle recovery. Target wake-up is 11:00 AM.`;
+  }
+
+  if (!slotType || !coachMessage) {
+    return { sent: false, reason: 'No scheduled reminder slot for current time.' };
+  }
+
+  // Deduplication check
+  const existing = await prisma.telegramNotificationLog.findUnique({
+    where: {
+      date_type: {
+        date: normalizedDateKey,
+        type: slotType,
+      },
+    },
+  });
+
+  if (existing) {
+    return { sent: false, reason: `Reminder [${slotType}] already sent today.` };
+  }
+
+  const accounts = await prisma.telegramAccount.findMany({
+    where: { active: true },
+  });
+
+  if (accounts.length === 0) {
+    return { sent: false, reason: 'No active Telegram accounts linked.' };
+  }
+
+  let confirmed = false;
+  let lastMsgId: number | null = null;
+  let firstChat: string | null = null;
+
+  for (const acc of accounts) {
+    const targetChat = acc.chatId || acc.telegramId;
+    if (!targetChat) continue;
+    if (!firstChat) firstChat = String(targetChat);
+    const delivered = await sendTelegramMessage(targetChat, coachMessage);
+    if (delivered.ok) {
+      confirmed = true;
+      if (typeof delivered.result?.message_id === 'number') lastMsgId = delivered.result.message_id;
+    }
+  }
+
+  await prisma.telegramNotificationLog.create({
+    data: {
+      date: normalizedDateKey,
+      type: slotType,
+      chatId: firstChat || 'system',
+      message: coachMessage,
+      status: confirmed ? 'SENT' : 'DELIVERY_FAILED',
+      telegramMessageId: lastMsgId,
+    },
+  });
+
+  return { sent: confirmed, slotType, message: coachMessage };
 }

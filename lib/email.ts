@@ -1,3 +1,5 @@
+import { getAppPublicUrl } from './urls';
+
 export interface SendEmailOptions {
   to: string;
   subject: string;
@@ -6,11 +8,7 @@ export interface SendEmailOptions {
 }
 
 function getAppBaseUrl(): string {
-  return (
-    process.env.FORGE_PUBLIC_URL ||
-    process.env.NEXT_PUBLIC_APP_URL ||
-    'http://localhost:3000'
-  ).replace(/\/$/, '');
+  return getAppPublicUrl();
 }
 
 export async function sendEmail({ to, subject, html, text }: SendEmailOptions): Promise<boolean> {

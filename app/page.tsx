@@ -37,6 +37,14 @@ import {
 import { DailyMotivation } from "@/components/dashboard/DailyMotivation";
 
 import { clsx } from "clsx";
+import { CommandCenterGreeting } from "@/components/dashboard/CommandCenterGreeting";
+import { SmartScheduleCard } from "@/components/dashboard/SmartScheduleCard";
+import { CountdownsGrid } from "@/components/dashboard/CountdownsGrid";
+import { HolidayWorkoutCard } from "@/components/dashboard/HolidayWorkoutCard";
+import { SleepScheduleCard } from "@/components/dashboard/SleepScheduleCard";
+import type { SmartScheduleStatus } from "@/lib/smartSchedule";
+import type { CountdownCard } from "@/lib/countdowns";
+import type { HolidayStatus } from "@/lib/holidayWorkout";
 
 type PlanTask = {
   id: string;
@@ -120,6 +128,9 @@ export default function Home() {
   const [weeklyBalance, setWeeklyBalance] = useState<any>(null);
   const [accountability, setAccountability] = useState<AccountabilityData | null>(null);
   const [yesterday, setYesterday] = useState<YesterdayData | null>(null);
+  const [smartSchedule, setSmartSchedule] = useState<SmartScheduleStatus | null>(null);
+  const [countdowns, setCountdowns] = useState<CountdownCard[]>([]);
+  const [holidayStatus, setHolidayStatus] = useState<HolidayStatus | null>(null);
 
   // AI Nutrition Coach State
   const [mealInput, setMealInput] = useState("");
@@ -130,11 +141,12 @@ export default function Home() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [planRes, workoutRes, settingsRes, analyticsRes] = await Promise.all([
+        const [planRes, workoutRes, settingsRes, analyticsRes, scheduleRes] = await Promise.all([
           fetch("/api/plan/today"),
           fetch("/api/workout/today"),
           fetch("/api/settings"),
           fetch("/api/analytics/weekly"),
+          fetch("/api/schedule/now"),
         ]);
 
         if (planRes.ok) {
@@ -169,6 +181,13 @@ export default function Home() {
           if (analytics) {
             setWeeklyBalance(analytics);
           }
+        }
+
+        if (scheduleRes.ok) {
+          const schedData = await scheduleRes.json();
+          if (schedData.schedule) setSmartSchedule(schedData.schedule);
+          if (schedData.countdowns) setCountdowns(schedData.countdowns);
+          if (schedData.holiday) setHolidayStatus(schedData.holiday);
         }
       } catch (err) {
         console.error("Failed to load dashboard data:", err);
@@ -272,57 +291,34 @@ export default function Home() {
 
   return (
     <div className="mx-auto w-full max-w-[1500px] animate-fade-in pb-16 space-y-6">
-      {/* Hero / Greeting Section */}
-      <section className="flex flex-col justify-between gap-5 border-b border-[var(--border)] pb-6 lg:flex-row lg:items-end">
-        <div>
-          <p className="mb-2 text-xs font-bold uppercase tracking-[0.2em] text-[var(--study)]">
-            {dateLabel}
-          </p>
-          <div className="text-xs font-bold uppercase tracking-[0.25em] text-[var(--text-muted)]">
-            WELCOME BACK,
-          </div>
-          <h1 className="text-3xl font-extrabold tracking-tight md:text-4xl text-[var(--text-primary)] mt-0.5">
-            MIKIYAS OLANA
-          </h1>
+      {/* ── 1. COMMAND CENTER PERSONALIZED GREETING & LIVE STATS ─────────── */}
+      <CommandCenterGreeting
+        greeting={smartSchedule?.greeting || "Welcome back, Mikiyas."}
+        subGreeting={smartSchedule?.subGreeting || "Here is your personal command center and daily execution roadmap."}
+        totalXp={profile.totalXp}
+        level={profile.level}
+        progressPercent={progressPercentage}
+      />
 
-          {/* Real Live Stats Display */}
-          <div className="flex flex-wrap items-center gap-3 mt-3">
-            <div className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-[rgba(245,158,11,0.12)] border border-[rgba(245,158,11,0.25)] text-xs font-bold text-[var(--xp-gold)]">
-              <Zap size={14} />
-              <span>XP: {profile.totalXp.toLocaleString()}</span>
-            </div>
-            <div className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-[rgba(59,130,246,0.12)] border border-[rgba(59,130,246,0.25)] text-xs font-bold text-[var(--study)]">
-              <Award size={14} />
-              <span>LEVEL: {profile.level}</span>
-            </div>
-            <div className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-[rgba(34,197,94,0.12)] border border-[rgba(34,197,94,0.25)] text-xs font-bold text-[var(--success)]">
-              <TrendingUp size={14} />
-              <span>PROGRESS: {progressPercentage}%</span>
-            </div>
-            <div className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-xs font-bold text-emerald-400">
-              <ShieldCheck size={14} />
-              <span>SECURITY: ACTIVE</span>
-            </div>
-          </div>
-        </div>
+      {/* ── 2. SMART 'WHAT SHOULD I DO RIGHT NOW?' COMMAND CARD ───────────── */}
+      <SmartScheduleCard
+        schedule={smartSchedule}
+        onQuickCompleteTask={toggleTask}
+      />
 
-        {/* Workout Quick Jump */}
-        <div className="flex items-center gap-3 rounded-xl border border-[rgba(245,158,11,0.25)] bg-[rgba(245,158,11,0.07)] px-4 py-3 shadow-sm">
-          <Flame size={20} className="text-[var(--xp-gold)]" />
-          <div>
-            <div className="text-sm font-bold">{nextWorkoutText}</div>
-            <div className="text-xs text-[var(--text-muted)]">
-              Week {nextWorkout?.weekNumber ?? 1} of 24
-            </div>
-          </div>
-          <Link href="/workout" aria-label="Open workout tracker">
-            <ArrowUpRight
-              size={16}
-              className="text-[var(--xp-gold)] hover:scale-110 transition-transform ml-2"
-            />
-          </Link>
-        </div>
-      </section>
+      {/* ── 3. CRITICAL COUNTDOWNS GRID (Exam, 7-Month Transformation, Holiday) */}
+      <CountdownsGrid countdowns={countdowns} />
+
+      {/* ── 4. 16-DAY GRANDMOTHER-HOUSE HOLIDAY WORKOUT (Aug 31 - Sep 15) ───── */}
+      {holidayStatus?.isHolidayPeriod && (
+        <HolidayWorkoutCard
+          holiday={holidayStatus}
+          workoutCompleted={Boolean(nextWorkout?.completedToday)}
+        />
+      )}
+
+      {/* ── 5. FIXED 11:00 AM WAKE-UP & SLEEP CONSISTENCY CARD ─────────────── */}
+      <SleepScheduleCard />
 
       {/* ── ACCOUNTABILITY STATUS (spec section 10) ─────────────────────────── */}
       {accountability && (

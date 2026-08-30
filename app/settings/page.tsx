@@ -208,7 +208,7 @@ export default function SettingsPage() {
         <section className="card">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <h2 className="text-lg font-bold">Exam Date</h2>
+              <h2 className="text-lg font-bold">Grade 12 Entrance Exam Date</h2>
               <p className="mt-1 text-sm text-[var(--text-primary)]">
                 {new Date(settings.examDate).toLocaleDateString(undefined, {
                   year: "numeric",
@@ -217,7 +217,7 @@ export default function SettingsPage() {
                 })}
               </p>
               <p className="mt-2 text-xs text-[var(--text-muted)]">
-                Changing this date updates your study priority curve and countdown.
+                Changing this date updates your study priority curve and live countdown across the Command Center.
               </p>
             </div>
             <CalendarDays size={20} className="text-[var(--study)]" />
@@ -242,6 +242,38 @@ export default function SettingsPage() {
               Edit exam date
             </button>
           )}
+        </section>
+
+        {/* Challenges & Fixed Schedule Target Overview */}
+        <section className="card border-slate-800 bg-slate-950/60">
+          <h2 className="text-lg font-bold text-white mb-1">Active Protocols & Target Schedules</h2>
+          <p className="text-xs text-slate-400 mb-4">Timezone: Africa/Addis_Ababa · Programmed targets and challenges</p>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="rounded-xl border border-amber-500/20 bg-amber-950/15 p-4">
+              <div className="text-xs font-black uppercase text-amber-400">🔥 7-Month Body Transformation</div>
+              <div className="text-sm font-bold text-white mt-1">August 31, 2026 → March 10, 2027</div>
+              <div className="text-xs text-slate-400 mt-1">Exact Challenge End Date: Wednesday, March 10, 2027</div>
+            </div>
+
+            <div className="rounded-xl border border-rose-500/20 bg-rose-950/15 p-4">
+              <div className="text-xs font-black uppercase text-rose-400">🏡 16-Day Holiday Home Workout</div>
+              <div className="text-sm font-bold text-white mt-1">August 31, 2026 → September 15, 2026</div>
+              <div className="text-xs text-slate-400 mt-1">Auto-switches to bodyweight routines & reverts on completion</div>
+            </div>
+
+            <div className="rounded-xl border border-blue-500/20 bg-blue-950/15 p-4">
+              <div className="text-xs font-black uppercase text-blue-400">☀️ Daily Fixed Wake-Up Target</div>
+              <div className="text-sm font-bold text-white mt-1">11:00 AM (Daily)</div>
+              <div className="text-xs text-slate-400 mt-1">Daily Telegram wake-up alert dispatched at 11:00 AM</div>
+            </div>
+
+            <div className="rounded-xl border border-indigo-500/20 bg-indigo-950/15 p-4">
+              <div className="text-xs font-black uppercase text-indigo-400">🌙 Daily Target Sleep & Close</div>
+              <div className="text-sm font-bold text-white mt-1">Close: 09:28 PM · Sleep: 11:00 PM</div>
+              <div className="text-xs text-slate-400 mt-1">Daily cutoff passes at 09:28 PM · 8-hour sleep window</div>
+            </div>
+          </div>
         </section>
 
         {/* Plan Overview */}

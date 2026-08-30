@@ -25,6 +25,9 @@ import {
 import { getDailyBreakdown, getProgressHistory } from './progressEngine';
 import { ACHIEVEMENTS_CATALOG } from './achievements';
 import { ensureTodayDailyPlan } from './dailyPlanGenerator';
+import { getHolidayWorkoutStatus } from './holidayWorkout';
+import { getDashboardCountdowns } from './countdowns';
+import { getAppPublicUrl } from './urls';
 
 function getTodayDateRange() {
   const now = getAddisNow();
@@ -65,20 +68,35 @@ export async function getTodaySummary(): Promise<string> {
   const targetDay = days.find((d) => d.type === targetType) ?? days[0];
   const windowInfo = workoutWindowForAddisDate(now);
   const isClosed = windowInfo.isClosed;
+  const holiday = getHolidayWorkoutStatus(now);
+  const countdowns = await getDashboardCountdowns(now);
+
   const isGym = getWorkoutLocationForAddisDate(now) === 'GYM';
-  const locationType = isGym ? '🏋️‍♂️ GYM' : '🏠 HOME';
+  const locationType = holiday.isHolidayPeriod
+    ? `🏠 GRANDMOTHER'S HOUSE (Day ${holiday.currentDayNumber} of 16)`
+    : isGym
+    ? '🏋️‍♂️ GYM'
+    : '🏠 HOME';
+
+  const workoutName = holiday.isHolidayPeriod && holiday.todayRoutine
+    ? holiday.todayRoutine.title
+    : targetType;
 
   const workoutStatus = breakdown.workout.completed
-    ? `✅ Completed (${breakdown.workout.type || targetType})`
+    ? `✅ Completed (${workoutName})`
     : isClosed
     ? `🔴 MISSED (Closed at 09:28 PM)`
-    : `⏳ Scheduled: ${targetType} (${locationType})`;
+    : `⏳ Scheduled: ${workoutName} (${locationType})`;
 
   const windowStatus = isClosed
     ? '🔴 CLOSED at 09:28 PM (Unlocks 05:00 AM)'
     : '🟢 OPEN (05:00 AM – 09:28 PM)';
 
-  return `🛡️ FORGE DAILY SUMMARY: ${weekday}, ${formattedDate}
+  const countdownsStr = countdowns
+    .map((c) => `• ${c.title}: ${c.statusText}`)
+    .join('\n');
+
+  return `🛡️ FORGE COMMAND CENTER: ${weekday}, ${formattedDate}
 🔥 ${day300.formatted} (${day300.percentage}%) • ${windowStatus}
 
 ⚡ Character Status:
@@ -88,6 +106,14 @@ export async function getTodaySummary(): Promise<string> {
 🎯 Daily Consistency Score: ${breakdown.consistencyScore}% [${breakdown.color}]
 • Strongest Area: ${breakdown.strongestArea}
 • Focus Tomorrow: ${breakdown.whatNeedsAttentionTomorrow}
+
+⏳ Target Schedule:
+• Fixed Wake-Up: 11:00 AM
+• Daily Close: 09:28 PM
+• Target Sleep: 11:00 PM
+
+⏳ Countdowns & Challenges:
+${countdownsStr || '• All targets on track'}
 
 🏋️ Workout:
 • Status: ${workoutStatus}
@@ -110,6 +136,25 @@ export async function getTodaySummary(): Promise<string> {
  */
 export async function getWorkoutSummary(): Promise<string> {
   const { now, todayStart, todayEnd } = getTodayDateRange();
+  const holiday = getHolidayWorkoutStatus(now);
+
+  // If in 16-day Grandmother-House Holiday Period:
+  if (holiday.isHolidayPeriod && holiday.todayRoutine) {
+    const routine = holiday.todayRoutine;
+    const exerciseListStr = routine.exercises
+      .map((ex, idx) => `  ${idx + 1}. ${ex.name} — ${ex.sets} sets × ${ex.reps} (${ex.target})`)
+      .join('\n');
+
+    return `🏠 FORGE 16-DAY GRANDMOTHER-HOUSE WORKOUT
+📅 Day ${holiday.currentDayNumber} of 16 (${holiday.remainingDays} days remaining)
+🎯 Focus: ${routine.title} — ${routine.focus}
+📍 Location: Grandmother's House (Floor / Chair)
+
+📋 Planned Exercises:
+${exerciseListStr}
+
+💡 Focus on clean chest depth, controlled ab curls, and unhurried rest periods. Submit on Forge web when complete!`;
+  }
 
   const [program, lastLog, days, todayLog] = await Promise.all([
     prisma.workoutProgram.findUnique({ where: { id: 'singleton' } }),

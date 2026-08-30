@@ -1,6 +1,7 @@
 import { google } from 'googleapis';
 import { prisma } from './prisma';
 import { getAddisNow, workoutWindowForAddisDate, TIMEZONE } from './workoutTime';
+import { getAppPublicUrl } from './urls';
 
 const calendar = google.calendar('v3');
 
@@ -9,7 +10,7 @@ export function getOAuth2Client() {
   const clientSecret = process.env.GOOGLE_OAUTH_CLIENT_SECRET || 'FORGE_GOOGLE_CLIENT_SECRET_PLACEHOLDER';
   const redirectUri =
     process.env.GOOGLE_OAUTH_REDIRECT_URI ||
-    `${(process.env.NEXT_PUBLIC_APP_URL || process.env.FORGE_PUBLIC_URL || 'http://localhost:3000').replace(/\/$/, '')}/api/calendar/auth/callback`;
+    `${getAppPublicUrl()}/api/calendar/auth/callback`;
 
   return new google.auth.OAuth2(clientId, clientSecret, redirectUri);
 }

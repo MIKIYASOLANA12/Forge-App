@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Home, BarChart3, Target, BookOpen, UtensilsCrossed,
   Library, Heart, MessageSquare, BookMarked, Settings,
@@ -46,13 +46,52 @@ interface SidebarProps {
 }
 
 export function Sidebar({
-  totalXp = 0,
-  level = 1,
-  levelProgress = 0,
-  examDaysLeft,
+  totalXp: propXp = 0,
+  level: propLevel = 1,
+  levelProgress: propLevelProgress = 0,
+  examDaysLeft: propExamDays,
 }: SidebarProps) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [totalXp, setTotalXp] = useState(propXp);
+  const [level, setLevel] = useState(propLevel);
+  const [levelProgressVal, setLevelProgressVal] = useState(propLevelProgress);
+  const [examDays, setExamDays] = useState(propExamDays);
+
+  const fetchLiveStats = async () => {
+    try {
+      const res = await fetch("/api/settings");
+      if (res.ok) {
+        const data = await res.json();
+        if (data) {
+          const xp = data.totalXp ?? 0;
+          const lvl = data.level ?? 1;
+          setTotalXp(xp);
+          setLevel(lvl);
+
+          // Calculate exam days remaining if examDate exists
+          if (data.examDate) {
+            const target = new Date(data.examDate);
+            const now = new Date();
+            const diff = Math.max(0, Math.ceil((target.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
+            setExamDays(diff);
+          }
+        }
+      }
+    } catch {}
+  };
+
+  useEffect(() => {
+    void fetchLiveStats();
+    const handleUpdate = () => void fetchLiveStats();
+    window.addEventListener("forge:stats_updated", handleUpdate);
+    window.addEventListener("focus", handleUpdate);
+
+    return () => {
+      window.removeEventListener("forge:stats_updated", handleUpdate);
+      window.removeEventListener("focus", handleUpdate);
+    };
+  }, [pathname]);
 
   const sidebarContent = (
     <div className="flex flex-col h-full">
@@ -79,16 +118,16 @@ export function Sidebar({
         <div className="progress-bar">
           <div
             className="xp-bar-fill progress-fill"
-            style={{ width: `${Math.round(levelProgress * 100)}%` }}
+            style={{ width: `${Math.min(100, Math.round((totalXp % 1000) / 10))}%` }}
           />
         </div>
       </div>
 
       {/* Exam countdown */}
-      {examDaysLeft !== undefined && examDaysLeft > 0 && (
+      {examDays !== undefined && examDays > 0 && (
         <div className="mx-3 mt-3 p-3 rounded-10 bg-[rgba(59,130,246,0.08)] border border-[rgba(59,130,246,0.2)] rounded-xl">
           <div className="text-xs font-semibold text-[var(--study)] uppercase tracking-wider mb-0.5">Exam Countdown</div>
-          <div className="text-2xl font-bold text-[var(--text-primary)] leading-none">{examDaysLeft}</div>
+          <div className="text-2xl font-bold text-[var(--text-primary)] leading-none">{examDays}</div>
           <div className="text-xs text-[var(--text-muted)]">days remaining</div>
         </div>
       )}

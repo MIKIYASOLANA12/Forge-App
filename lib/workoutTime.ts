@@ -33,6 +33,13 @@ export function addisFromUtc(utcDate: Date): Date {
   return new Date(utcDate.getTime() + ADDIS_OFFSET_MS);
 }
 
+export function toAddisDateString(date: Date): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
 /**
  * Workout Protocol Schedule:
  * GYM Days: Monday (1), Wednesday (3), Saturday (6)

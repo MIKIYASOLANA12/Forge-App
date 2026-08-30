@@ -308,8 +308,10 @@ export default function SettingsPage() {
           </Link>
         </section>
 
-        {/* Security */}
-        <SecurityPanel />
+        {/* Security & Active Sessions */}
+        <div id="security">
+          <SecurityPanel />
+        </div>
 
         {/* Danger Zone */}
         <section className="card border-[rgba(239,68,68,0.25)]">

@@ -39,5 +39,5 @@ export async function GET(req: NextRequest) {
     isCurrent: s.sessionToken === currentSessionId,
   }));
 
-  return NextResponse.json({ currentSessionId, sessions });
+  return NextResponse.json({ sessions });
 }

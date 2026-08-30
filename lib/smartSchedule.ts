@@ -1,24 +1,41 @@
 /**
- * FORGE — DYNAMIC SCHEDULE & COMMAND CENTER STATUS ENGINE
- * SINGLE SOURCE OF TRUTH: Derives active focus from Forge's actual database tasks & calendar.
- * Fixed targets: 11:00 AM Daily Wake-Up & 11:00 PM Sleep.
+ * Master Smart Schedule & Personal Focus Engine
+ * 
+ * Provides dynamic current-activity, next-activity, and personalized greetings
+ * with full timezone-accuracy for Africa/Addis_Ababa and Ethiopian traditional clock support.
+ * 
+ * Fixed Rules:
+ * - Target Wake-Up: 11:00 AM standard time every day (5:00 Ethiopian Day)
+ * - Daily Close Cutoff: 09:28 PM standard time (3:28 Ethiopian Night)
+ * - Wind-Down Period: 09:30 PM – 10:59 PM standard time (3:30 – 4:59 Ethiopian Night) -> "Start winding down."
+ * - Sleep Window: 11:00 PM – 05:59 AM standard time (5:00 – 11:59 Ethiopian Night) -> "It's time to sleep."
+ * - Morning Preparation: 06:00 AM – 10:59 AM standard time (12:00 – 4:59 Ethiopian Day) -> Morning focus / Wake-up approaching
+ * - Daytime / Evening Focus: 11:00 AM – 09:29 PM standard time -> Dynamically resolved from Forge database tasks
  */
-import { getAddisNow, workoutWindowForAddisDate, getWorkoutLocationForAddisDate } from './workoutTime';
+
 import { prisma } from './prisma';
-import { getHolidayWorkoutStatus } from './holidayWorkout';
+import {
+  getAddisNow,
+  getAddisTimeComponents,
+  workoutWindowForAddisDate,
+  toAddisDateString,
+} from './workoutTime';
 import { ensureTodayDailyPlan } from './dailyPlanGenerator';
+import { getHolidayWorkoutStatus } from './holidayWorkout';
 
 export interface SmartScheduleStatus {
   greeting: string;
   subGreeting: string;
-  addisTimeFormatted: string;
-  currentHourMinute: string; // "14:30"
+  addisTimeFormatted: string; // e.g. "11:00 AM"
+  currentHourMinute: string; // "11:00"
+  ethiopianTimeFormatted?: string; // e.g. "5:00 Ethiopian (Day)"
+  ethiopianPeriod?: 'Day' | 'Night';
   targetWakeTime: string; // "11:00 AM"
   targetSleepTime: string; // "11:00 PM"
   currentActivityTitle: string;
   currentActivityCategory: 'WAKE' | 'STUDY' | 'CODING' | 'WORKOUT' | 'READING' | 'CLOSE' | 'WIND_DOWN' | 'SLEEP' | 'FREE';
   statusMessage: string;
-  actionCallout: string;
+  actionCallout?: string;
   suggestedAction?: {
     type: 'TASK' | 'WORKOUT' | 'CHECKIN' | 'SLEEP';
     label: string;
@@ -27,10 +44,10 @@ export interface SmartScheduleStatus {
   };
   afterwardPrompt?: {
     question: string;
-    itemTitle: string;
     taskId?: string;
+    taskTitle?: string;
   };
-  upcomingNext: {
+  upcomingNext?: {
     title: string;
     timeFormatted: string;
     category: string;
@@ -72,11 +89,10 @@ function getTaskCategory(task: any): 'STUDY' | 'CODING' | 'WORKOUT' | 'READING' 
 }
 
 /**
- * Returns dynamic personalized greeting based on Addis Ababa hour.
+ * Returns dynamic personalized greeting based on Addis Ababa standard hour.
  */
 export function getPersonalizedGreeting(customNow?: Date): { greeting: string; subGreeting: string } {
-  const now = customNow || getAddisNow();
-  const hour = now.getHours();
+  const { hour } = getAddisTimeComponents(customNow);
 
   if (hour >= 5 && hour < 12) {
     return {
@@ -104,22 +120,15 @@ export function getPersonalizedGreeting(customNow?: Date): { greeting: string; s
 
 /**
  * Resolves what Mikiyas should be doing RIGHT NOW dynamically from Forge's real scheduled tasks.
+ * Uses exact timezone-aware Addis Ababa time and obeys strict wake/wind-down/sleep boundaries.
  */
 export async function getSmartScheduleStatus(customNow?: Date): Promise<SmartScheduleStatus> {
-  const now = customNow || getAddisNow();
-  const hour = now.getHours();
-  const minute = now.getMinutes();
-  const totalMinutes = hour * 60 + minute; // 0..1439
-
-  const timeFormatted = now.toLocaleTimeString('en-US', {
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: true,
-  });
-
+  const addisComponents = getAddisTimeComponents(customNow);
+  const { hour, minute, totalMinutes, formatted12h, ethiopianTime } = addisComponents;
   const hourMinStr = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
-  const greetings = getPersonalizedGreeting(now);
 
+  const greetings = getPersonalizedGreeting(customNow);
+  const now = customNow || getAddisNow();
   const windowInfo = workoutWindowForAddisDate(now);
   const holidayStatus = getHolidayWorkoutStatus(now);
 
@@ -136,21 +145,45 @@ export async function getSmartScheduleStatus(customNow?: Date): Promise<SmartSch
   });
   const workoutCompleted = Boolean(todayWorkoutLog);
 
-  // Target Boundaries:
+  // Target Boundaries (in minutes of day):
   // Wake-up: 11:00 AM (660 min)
   // Daily Close: 09:28 PM (1288 min)
   // Wind-Down: 09:30 PM (1290 min)
   // Target Sleep: 11:00 PM (1380 min)
 
-  // ── A. PRE-WAKE & SLEEP TIME (< 11:00 AM) ──────────────────────────────────
-  if (totalMinutes < 660) {
+  // ── [1] DEEP SLEEP WINDOW (11:00 PM – 05:59 AM) ──────────────────────────────
+  // 1380..1439 mins (11:00 PM – 11:59 PM) OR 0..359 mins (12:00 AM – 05:59 AM)
+  if (totalMinutes >= 1380 || totalMinutes < 360) {
+    return {
+      greeting: greetings.greeting,
+      subGreeting: greetings.subGreeting,
+      addisTimeFormatted: formatted12h,
+      currentHourMinute: hourMinStr,
+      ethiopianTimeFormatted: ethiopianTime.formatted,
+      ethiopianPeriod: ethiopianTime.period,
+      targetWakeTime: '11:00 AM',
+      targetSleepTime: '11:00 PM',
+      currentActivityTitle: 'It’s time to sleep.',
+      currentActivityCategory: 'SLEEP',
+      statusMessage: 'Target sleep time is 11:00 PM. Rest deeply for an energized 11:00 AM wake-up tomorrow.',
+      actionCallout: 'Sleep on time to preserve circadian consistency and recovery.',
+      suggestedAction: { type: 'SLEEP', label: 'View Sleep Target', href: '/today#sleep' },
+      upcomingNext: { title: 'Wake up (11:00 AM)', timeFormatted: '11:00 AM', category: 'WAKE' },
+    };
+  }
+
+  // ── [2] MORNING PREPARATION & PRE-WAKE (06:00 AM – 10:59 AM) ────────────────
+  // 360..659 mins: MUST NEVER SAY SLEEP!
+  if (totalMinutes >= 360 && totalMinutes < 660) {
     if (totalMinutes >= 600) {
-      // 10:00 AM – 11:00 AM: Pre-Wake Target
+      // 10:00 AM – 10:59 AM: Pre-Wake Target
       return {
         greeting: greetings.greeting,
         subGreeting: greetings.subGreeting,
-        addisTimeFormatted: timeFormatted,
+        addisTimeFormatted: formatted12h,
         currentHourMinute: hourMinStr,
+        ethiopianTimeFormatted: ethiopianTime.formatted,
+        ethiopianPeriod: ethiopianTime.period,
         targetWakeTime: '11:00 AM',
         targetSleepTime: '11:00 PM',
         currentActivityTitle: 'Target Wake-Up Approaching (11:00 AM)',
@@ -166,61 +199,73 @@ export async function getSmartScheduleStatus(customNow?: Date): Promise<SmartSch
       };
     }
 
+    // 06:00 AM – 09:59 AM: Early Morning Focus / Routine
     return {
       greeting: greetings.greeting,
       subGreeting: greetings.subGreeting,
-      addisTimeFormatted: timeFormatted,
+      addisTimeFormatted: formatted12h,
       currentHourMinute: hourMinStr,
+      ethiopianTimeFormatted: ethiopianTime.formatted,
+      ethiopianPeriod: ethiopianTime.period,
       targetWakeTime: '11:00 AM',
       targetSleepTime: '11:00 PM',
-      currentActivityTitle: 'Now it’s time to sleep.',
-      currentActivityCategory: 'SLEEP',
-      statusMessage: 'Physical and cognitive recovery window. Quality sleep drives willpower and muscle repair.',
-      actionCallout: 'Rest up until 11:00 AM target wake-up.',
-      suggestedAction: { type: 'SLEEP', label: 'View Sleep Target', href: '/today#sleep' },
+      currentActivityTitle: 'Morning Focus — Wake Target at 11:00 AM',
+      currentActivityCategory: 'WAKE',
+      statusMessage: 'Morning preparation window. Fixed daily wake-up target is 11:00 AM.',
+      actionCallout: 'Hydrate, prepare your focus environment, and review today’s schedule.',
+      suggestedAction: { type: 'CHECKIN', label: 'Open Today Roadmap', href: '/today' },
       upcomingNext: { title: 'Fixed Wake-Up Target (11:00 AM)', timeFormatted: '11:00 AM', category: 'WAKE' },
     };
   }
 
-  // ── B. POST DAILY CUTOFF / WIND-DOWN / SLEEP (>= 09:28 PM / 1288 min) ───────
-  if (totalMinutes >= 1288) {
-    if (totalMinutes < 1380) {
-      // 09:28 PM – 11:00 PM: Wind-Down
-      return {
-        greeting: greetings.greeting,
-        subGreeting: greetings.subGreeting,
-        addisTimeFormatted: timeFormatted,
-        currentHourMinute: hourMinStr,
-        targetWakeTime: '11:00 AM',
-        targetSleepTime: '11:00 PM',
-        currentActivityTitle: 'Start winding down.',
-        currentActivityCategory: 'WIND_DOWN',
-        statusMessage: 'Daily close passed at 09:28 PM. Disconnect from screens and prepare for restful sleep.',
-        actionCallout: 'Wind down your mind and body before 11:00 PM sleep target.',
-        suggestedAction: { type: 'SLEEP', label: 'View Sleep Target', href: '/today#sleep' },
-        upcomingNext: { title: 'Sleep Target (11:00 PM)', timeFormatted: '11:00 PM', category: 'SLEEP' },
-      };
-    }
-
-    // 11:00 PM+
+  // ── [3] FIXED WAKE-UP TARGET (11:00 AM – 11:59 AM) ───────────────────────────
+  // 660..719 mins
+  if (totalMinutes >= 660 && totalMinutes < 720) {
     return {
       greeting: greetings.greeting,
       subGreeting: greetings.subGreeting,
-      addisTimeFormatted: timeFormatted,
+      addisTimeFormatted: formatted12h,
       currentHourMinute: hourMinStr,
+      ethiopianTimeFormatted: ethiopianTime.formatted,
+      ethiopianPeriod: ethiopianTime.period,
       targetWakeTime: '11:00 AM',
       targetSleepTime: '11:00 PM',
-      currentActivityTitle: 'Now it’s time to sleep.',
-      currentActivityCategory: 'SLEEP',
-      statusMessage: 'Target sleep time is 11:00 PM. Rest deeply for an energized 11:00 AM wake-up tomorrow.',
-      actionCallout: 'Sleep on time to preserve circadian consistency.',
-      suggestedAction: { type: 'SLEEP', label: 'Sleep Target', href: '/today#sleep' },
-      upcomingNext: { title: 'Wake up (11:00 AM)', timeFormatted: '11:00 AM', category: 'WAKE' },
+      currentActivityTitle: 'Wake up — 11:00 AM Target',
+      currentActivityCategory: 'WAKE',
+      statusMessage: 'Fixed daily wake-up target is 11:00 AM. Hydrate, review your roadmap, and begin execution.',
+      actionCallout: 'Open your tasks in Forge and start with high energy.',
+      suggestedAction: { type: 'CHECKIN', label: 'Open Daily Roadmap', href: '/today' },
+      upcomingNext: {
+        title: tasks[0] ? getTaskCleanTitle(tasks[0]) : 'Afternoon Focus Block',
+        timeFormatted: tasks[0]?.plannedStartTime ? formatMinutesTo12Hour(parseTimeToMinutes(tasks[0].plannedStartTime)!) : '12:00 PM',
+        category: 'STUDY',
+      },
     };
   }
 
-  // ── C. ACTIVE DAY (11:00 AM – 09:28 PM): DYNAMIC TASK SCHEDULE RESOLUTION ──
-  // Check tasks with plannedStartTime to find active, upcoming, or past tasks
+  // ── [4] WIND-DOWN WINDOW (09:30 PM – 10:59 PM) ──────────────────────────────
+  // 1290..1379 mins: ONLY WIND-DOWN (NOT SLEEP YET!)
+  if (totalMinutes >= 1290 && totalMinutes < 1380) {
+    return {
+      greeting: greetings.greeting,
+      subGreeting: greetings.subGreeting,
+      addisTimeFormatted: formatted12h,
+      currentHourMinute: hourMinStr,
+      ethiopianTimeFormatted: ethiopianTime.formatted,
+      ethiopianPeriod: ethiopianTime.period,
+      targetWakeTime: '11:00 AM',
+      targetSleepTime: '11:00 PM',
+      currentActivityTitle: 'Start winding down.',
+      currentActivityCategory: 'WIND_DOWN',
+      statusMessage: 'Daily close passed at 09:28 PM. Disconnect from screens and prepare for restful 11:00 PM sleep.',
+      actionCallout: 'Wind down your mind and body before 11:00 PM sleep target.',
+      suggestedAction: { type: 'SLEEP', label: 'View Sleep Target', href: '/today#sleep' },
+      upcomingNext: { title: 'Sleep Target (11:00 PM)', timeFormatted: '11:00 PM', category: 'SLEEP' },
+    };
+  }
+
+  // ── [5] ACTIVE DAYTIME & EVENING FOCUS (12:00 PM – 09:29 PM) ─────────────────
+  // 720..1289 mins: MUST NEVER SAY SLEEP! Dynamically resolve tasks from database.
   const tasksWithTimes = tasks
     .map((t) => {
       const startMins = parseTimeToMinutes(t.plannedStartTime);
@@ -258,62 +303,143 @@ export async function getSmartScheduleStatus(customNow?: Date): Promise<SmartSch
         : 'Gym Training Session';
       activityTitle = workoutCompleted ? 'Workout Session Completed ✓' : `Now it’s time for your workout (${workoutName}).`;
     } else if (cat === 'CODING') {
-      activityTitle = isDone ? `${title} — Completed ✓` : `Now it’s time to code (${title}).`;
+      actionHref = '/todo';
+      actionType = 'TASK';
+      activityTitle = isDone ? `${title} Completed ✓` : `Now it’s time for ${title}.`;
     } else if (cat === 'STUDY') {
-      activityTitle = isDone ? `${title} — Completed ✓` : `Now it’s time to study (${title}).`;
-    } else if (cat === 'READING') {
-      actionHref = '/reading';
-      activityTitle = isDone ? `${title} — Completed ✓` : `Now it’s time to read & reflect (${title}).`;
+      actionHref = '/todo';
+      actionType = 'TASK';
+      activityTitle = isDone ? `${title} Completed ✓` : `Now it’s time for ${title}.`;
     }
 
     return {
       greeting: greetings.greeting,
       subGreeting: greetings.subGreeting,
-      addisTimeFormatted: timeFormatted,
+      addisTimeFormatted: formatted12h,
       currentHourMinute: hourMinStr,
+      ethiopianTimeFormatted: ethiopianTime.formatted,
+      ethiopianPeriod: ethiopianTime.period,
       targetWakeTime: '11:00 AM',
       targetSleepTime: '11:00 PM',
       currentActivityTitle: activityTitle,
       currentActivityCategory: cat,
       statusMessage: isDone
-        ? `Great execution! ${title} is completed. Ready for the next scheduled block.`
-        : `Scheduled block: ${formatMinutesTo12Hour(activeTaskItem.startMins!)} – ${formatMinutesTo12Hour(activeTaskItem.endMins!)}.`,
-      actionCallout: isDone ? 'Logged in Forge.' : `Complete your target minutes for ${title}.`,
-      suggestedAction: isDone
-        ? { type: 'CHECKIN', label: upcomingTaskItem ? `Next: ${upcomingTaskItem.title}` : 'Review Checklist', href: actionHref }
-        : { type: actionType, label: `Mark ${title.split('—')[0].trim()} Complete`, href: actionHref, taskId: t.id },
-      afterwardPrompt: !isDone ? { question: `Did you complete ${title}?`, itemTitle: title, taskId: t.id } : undefined,
+        ? `Target completed on schedule! Great discipline. Upcoming: ${upcomingTaskItem ? upcomingTaskItem.title : 'Daily Close at 09:28 PM'}.`
+        : `Scheduled focus window (${activeTaskItem.task.plannedStartTime || ''} - ${activeTaskItem.task.plannedEndTime || ''}). Execute with pure focus.`,
+      actionCallout: isDone ? 'Target logged.' : `Focus on ${title}.`,
+      suggestedAction: {
+        type: actionType,
+        label: isDone ? 'View Roadmap' : `Open ${title}`,
+        href: actionHref,
+        taskId: isDone ? undefined : t.id,
+      },
       upcomingNext: upcomingTaskItem
-        ? { title: upcomingTaskItem.title, timeFormatted: formatMinutesTo12Hour(upcomingTaskItem.startMins!), category: upcomingTaskItem.category }
-        : { title: 'Daily Cutoff & Final Lock (09:28 PM)', timeFormatted: '09:28 PM', category: 'CLOSE' },
+        ? {
+            title: upcomingTaskItem.title,
+            timeFormatted: formatMinutesTo12Hour(upcomingTaskItem.startMins!),
+            category: upcomingTaskItem.category,
+          }
+        : {
+            title: 'Daily Close (09:28 PM)',
+            timeFormatted: '09:28 PM',
+            category: 'CLOSE',
+          },
     };
   }
 
-  // 2. If between scheduled tasks: suggest highest priority uncompleted task or next upcoming
-  const uncompletedPending = tasks.find((t) => !t.completed);
-  const pendingTitle = uncompletedPending ? getTaskCleanTitle(uncompletedPending) : null;
+  // 2. Check if a task just finished within the last 45 minutes (Afterward Prompt)
+  const recentlyCompleted = tasksWithTimes
+    .filter((item) => item.endMins !== null && totalMinutes >= item.endMins && totalMinutes < item.endMins + 45)
+    .sort((a, b) => (b.endMins || 0) - (a.endMins || 0))[0];
+
+  if (recentlyCompleted && !recentlyCompleted.task.completed) {
+    const t = recentlyCompleted.task;
+    return {
+      greeting: greetings.greeting,
+      subGreeting: greetings.subGreeting,
+      addisTimeFormatted: formatted12h,
+      currentHourMinute: hourMinStr,
+      ethiopianTimeFormatted: ethiopianTime.formatted,
+      ethiopianPeriod: ethiopianTime.period,
+      targetWakeTime: '11:00 AM',
+      targetSleepTime: '11:00 PM',
+      currentActivityTitle: `Finish check-in: ${recentlyCompleted.title}`,
+      currentActivityCategory: recentlyCompleted.category,
+      statusMessage: `Scheduled block ended at ${formatMinutesTo12Hour(recentlyCompleted.endMins!)}. Did you complete your session?`,
+      afterwardPrompt: {
+        question: `Did you complete ${recentlyCompleted.title}?`,
+        taskId: t.id,
+        taskTitle: recentlyCompleted.title,
+      },
+      suggestedAction: {
+        type: 'CHECKIN',
+        label: 'Mark Completed ✓',
+        href: '/todo',
+        taskId: t.id,
+      },
+      upcomingNext: upcomingTaskItem
+        ? {
+            title: upcomingTaskItem.title,
+            timeFormatted: formatMinutesTo12Hour(upcomingTaskItem.startMins!),
+            category: upcomingTaskItem.category,
+          }
+        : {
+            title: 'Daily Close (09:28 PM)',
+            timeFormatted: '09:28 PM',
+            category: 'CLOSE',
+          },
+    };
+  }
+
+  // 3. General Active Daytime State (Between tasks or open roadmap)
+  // If approaching 09:28 PM close (09:00 PM – 09:29 PM)
+  if (totalMinutes >= 1260 && totalMinutes < 1290) {
+    return {
+      greeting: greetings.greeting,
+      subGreeting: greetings.subGreeting,
+      addisTimeFormatted: formatted12h,
+      currentHourMinute: hourMinStr,
+      ethiopianTimeFormatted: ethiopianTime.formatted,
+      ethiopianPeriod: ethiopianTime.period,
+      targetWakeTime: '11:00 AM',
+      targetSleepTime: '11:00 PM',
+      currentActivityTitle: 'Daily Close Approaching (09:28 PM Cutoff)',
+      currentActivityCategory: 'CLOSE',
+      statusMessage: 'Final execution window. Review your checklist and submit all logs before the 09:28 PM cutoff passes.',
+      actionCallout: 'Lock in your score and finish daily check-ins.',
+      suggestedAction: { type: 'CHECKIN', label: 'Review Today Checklist', href: '/todo' },
+      upcomingNext: { title: 'Start winding down (09:30 PM)', timeFormatted: '09:30 PM', category: 'WIND_DOWN' },
+    };
+  }
 
   return {
     greeting: greetings.greeting,
     subGreeting: greetings.subGreeting,
-    addisTimeFormatted: timeFormatted,
+    addisTimeFormatted: formatted12h,
     currentHourMinute: hourMinStr,
+    ethiopianTimeFormatted: ethiopianTime.formatted,
+    ethiopianPeriod: ethiopianTime.period,
     targetWakeTime: '11:00 AM',
     targetSleepTime: '11:00 PM',
-    currentActivityTitle: uncompletedPending
-      ? `Focus Target: ${pendingTitle}`
-      : 'All Scheduled Focus Tasks Completed ✓',
-    currentActivityCategory: uncompletedPending ? getTaskCategory(uncompletedPending) : 'FREE',
-    statusMessage: uncompletedPending
-      ? `You have pending tasks scheduled today. Work on ${pendingTitle} or prepare for upcoming sessions.`
-      : 'All current scheduled tasks are checked off. Maintain momentum or review upcoming material.',
-    actionCallout: uncompletedPending ? `Open Forge to complete ${pendingTitle}.` : 'Great discipline today.',
-    suggestedAction: uncompletedPending
-      ? { type: 'TASK', label: `Complete ${pendingTitle?.split('—')[0].trim()}`, href: '/todo', taskId: uncompletedPending.id }
-      : { type: 'CHECKIN', label: 'View Today Command Center', href: '/today' },
-    afterwardPrompt: uncompletedPending ? { question: `Did you complete ${pendingTitle}?`, itemTitle: pendingTitle!, taskId: uncompletedPending.id } : undefined,
+    currentActivityTitle: upcomingTaskItem
+      ? `Upcoming: ${upcomingTaskItem.title} (${formatMinutesTo12Hour(upcomingTaskItem.startMins!)})`
+      : 'Daytime Focus & Scheduled Execution',
+    currentActivityCategory: upcomingTaskItem ? (upcomingTaskItem.category as any) : 'FREE',
+    statusMessage: upcomingTaskItem
+      ? `Next scheduled session: ${upcomingTaskItem.title} at ${formatMinutesTo12Hour(upcomingTaskItem.startMins!)}. Stay focused.`
+      : 'Maintain momentum across your daily roadmap. Ensure all planned targets are executed.',
+    actionCallout: 'Review your roadmap and stay focused.',
+    suggestedAction: { type: 'CHECKIN', label: 'Open Daily Roadmap', href: '/today' },
     upcomingNext: upcomingTaskItem
-      ? { title: upcomingTaskItem.title, timeFormatted: formatMinutesTo12Hour(upcomingTaskItem.startMins!), category: upcomingTaskItem.category }
-      : { title: 'Daily Cutoff & Final Lock (09:28 PM)', timeFormatted: '09:28 PM', category: 'CLOSE' },
+      ? {
+          title: upcomingTaskItem.title,
+          timeFormatted: formatMinutesTo12Hour(upcomingTaskItem.startMins!),
+          category: upcomingTaskItem.category,
+        }
+      : {
+          title: 'Daily Close (09:28 PM)',
+          timeFormatted: '09:28 PM',
+          category: 'CLOSE',
+        },
   };
 }

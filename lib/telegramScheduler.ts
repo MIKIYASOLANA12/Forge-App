@@ -1,6 +1,7 @@
 import { prisma } from './prisma';
 import {
   getAddisNow,
+  getAddisTimeComponents,
   workoutWindowForAddisDate,
   getWorkoutLocationForAddisDate,
   getDayOfJourney300,
@@ -256,38 +257,40 @@ export async function processAccountabilityCron() {
  * Deduplicated per task per date.
  */
 export async function sendSmartCoachScheduleReminder(customNow?: Date) {
+  const { totalMinutes, year, month, day } = getAddisTimeComponents(customNow);
   const addisNow = customNow || getAddisNow();
-  const hour = addisNow.getHours();
-  const minute = addisNow.getMinutes();
-  const totalMinutes = hour * 60 + minute;
 
-  const normalizedDateKey = new Date(
-    Date.UTC(addisNow.getFullYear(), addisNow.getMonth(), addisNow.getDate())
-  );
+  const normalizedDateKey = new Date(Date.UTC(year, month - 1, day));
 
   let slotType: string | null = null;
   let coachMessage: string | null = null;
 
-  // 1. FIXED 11:00 AM WAKE-UP REMINDER (Explicitly fixed target)
+  // 1. FIXED 11:00 AM WAKE-UP REMINDER (660..719 mins)
   if (totalMinutes >= 660 && totalMinutes < 720) {
     slotType = 'COACH_WAKE_1100';
     coachMessage = `☀️ Good morning, Mikiyas! It is 11:00 AM — your target wake-up time.
 Hydrate, review your daily roadmap in Forge, and prepare for a disciplined, high-impact day.`;
   }
-  // 2. FIXED 09:28 PM DAILY CLOSE CUTOFF REMINDER
-  else if (totalMinutes >= 1260 && totalMinutes < 1288) {
+  // 2. FIXED 09:28 PM DAILY CLOSE CUTOFF REMINDER (1288..1290 mins)
+  else if (totalMinutes >= 1288 && totalMinutes < 1290) {
     slotType = 'COACH_CLOSE_2128';
-    coachMessage = `⏳ Daily Close Approaching: 09:28 PM cutoff passes soon.
-Submit all your completed tasks, workout logs, and check-ins before 09:28 PM to lock in your score!`;
+    coachMessage = `⏳ Daily Close: 09:28 PM cutoff has arrived.
+Submit all your completed tasks, workout logs, and check-ins to lock in your score!`;
   }
-  // 3. FIXED 11:00 PM SLEEP TARGET REMINDER
-  else if (totalMinutes >= 1380 || totalMinutes < 120) {
+  // 3. WIND-DOWN REMINDER (09:30 PM – 10:59 PM / 1290..1379 mins)
+  else if (totalMinutes >= 1290 && totalMinutes < 1380) {
+    slotType = 'COACH_WIND_DOWN_2130';
+    coachMessage = `🌙 09:30 PM — Start winding down, Mikiyas.
+Disconnect from screens and prepare for restful 11:00 PM sleep.`;
+  }
+  // 4. FIXED 11:00 PM SLEEP TARGET REMINDER (1380..1439 mins) - ONLY AT NIGHT!
+  else if (totalMinutes >= 1380) {
     slotType = 'COACH_SLEEP_2300';
     coachMessage = `😴 It's 11:00 PM — time to sleep, Mikiyas.
 Consistent sleep drives tomorrow's cognitive focus and muscle recovery. Target wake-up is 11:00 AM.`;
   }
-  // 4. DYNAMIC SCHEDULED TASKS FROM DATABASE (Single Source of Truth)
-  else {
+  // 5. DYNAMIC SCHEDULED TASKS FROM DATABASE (Active day only: 11:00 AM to 09:28 PM)
+  else if (totalMinutes >= 660 && totalMinutes < 1288) {
     const todayPlan = await ensureTodayDailyPlan();
     const tasks = todayPlan?.tasks || [];
 

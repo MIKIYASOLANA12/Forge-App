@@ -23,6 +23,93 @@ export function getAddisNow(): Date {
   return new Date(Date.now() + ADDIS_OFFSET_MS);
 }
 
+/**
+ * Timezone-aware extractor for Africa/Addis_Ababa with Ethiopian traditional clock conversion.
+ * Works uniformly regardless of server or client runtime timezone.
+ */
+export function getAddisTimeComponents(customDate?: Date): {
+  year: number;
+  month: number;
+  day: number;
+  hour: number;
+  minute: number;
+  second: number;
+  totalMinutes: number;
+  formatted12h: string;
+  ethiopianTime: {
+    hour: number;
+    minute: number;
+    period: 'Day' | 'Night';
+    periodAmharic: 'ቀን' | 'ምሽት' | 'ሌሊት';
+    formatted: string;
+  };
+} {
+  const d = customDate || new Date();
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: TIMEZONE,
+    year: 'numeric',
+    month: 'numeric',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: 'numeric',
+    second: 'numeric',
+    hour12: false,
+  });
+
+  const parts = formatter.formatToParts(d);
+  const map: Record<string, number> = {};
+  for (const p of parts) {
+    if (p.type !== 'literal') {
+      map[p.type] = parseInt(p.value, 10);
+    }
+  }
+
+  const year = map.year ?? 2026;
+  const month = map.month ?? 8;
+  const day = map.day ?? 30;
+  let hour = map.hour ?? 0;
+  if (hour === 24) hour = 0;
+  const minute = map.minute ?? 0;
+  const second = map.second ?? 0;
+  const totalMinutes = hour * 60 + minute;
+
+  const h12 = hour % 12 === 0 ? 12 : hour % 12;
+  const ampm = hour >= 12 ? 'PM' : 'AM';
+  const formatted12h = `${String(h12).padStart(2, '0')}:${String(minute).padStart(2, '0')} ${ampm}`;
+
+  // Ethiopian Traditional Clock:
+  // Starts at standard 6:00 AM as 12:00 Ethiopian
+  let ethHour = (hour + 6) % 12;
+  if (ethHour === 0) ethHour = 12;
+  const isDay = hour >= 6 && hour < 18;
+  const period: 'Day' | 'Night' = isDay ? 'Day' : 'Night';
+  const periodAmharic: 'ቀን' | 'ምሽት' | 'ሌሊት' = isDay
+    ? 'ቀን'
+    : hour >= 18 && hour < 24
+    ? 'ምሽት'
+    : 'ሌሊት';
+
+  const ethFormatted = `${ethHour}:${String(minute).padStart(2, '0')} Ethiopian (${period})`;
+
+  return {
+    year,
+    month,
+    day,
+    hour,
+    minute,
+    second,
+    totalMinutes,
+    formatted12h,
+    ethiopianTime: {
+      hour: ethHour,
+      minute,
+      period,
+      periodAmharic,
+      formatted: ethFormatted,
+    },
+  };
+}
+
 // Convert an "Addis-local" Date (constructed in local Addis time) to the equivalent UTC Date
 export function toUtcFromAddis(addisDate: Date): Date {
   return new Date(addisDate.getTime() - ADDIS_OFFSET_MS);
@@ -34,9 +121,10 @@ export function addisFromUtc(utcDate: Date): Date {
 }
 
 export function toAddisDateString(date: Date): string {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const d = String(date.getDate()).padStart(2, '0');
+  const parts = getAddisTimeComponents(date);
+  const y = parts.year;
+  const m = String(parts.month).padStart(2, '0');
+  const d = String(parts.day).padStart(2, '0');
   return `${y}-${m}-${d}`;
 }
 

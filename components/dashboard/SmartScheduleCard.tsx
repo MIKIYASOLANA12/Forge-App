@@ -81,13 +81,20 @@ export function SmartScheduleCard({ schedule, onQuickCompleteTask }: Props) {
             </span>
           </div>
 
-          <span
-            className={`inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-[11px] font-black uppercase tracking-wider border ${getBadgeStyle(
-              schedule.currentActivityCategory
-            )}`}
-          >
-            {schedule.currentActivityCategory}
-          </span>
+          <div className="flex items-center gap-2">
+            {schedule.ethiopianTimeFormatted && (
+              <span className="hidden sm:inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 border border-amber-500/25 text-amber-300">
+                🇪🇹 {schedule.ethiopianTimeFormatted}
+              </span>
+            )}
+            <span
+              className={`inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-[11px] font-black uppercase tracking-wider border ${getBadgeStyle(
+                schedule.currentActivityCategory
+              )}`}
+            >
+              {schedule.currentActivityCategory}
+            </span>
+          </div>
         </div>
 
         {/* Main Current Action Callout */}

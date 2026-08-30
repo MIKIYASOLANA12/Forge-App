@@ -251,9 +251,9 @@ export async function processAccountabilityCron() {
 }
 
 /**
- * Sends smart contextual reminders (11:00 AM Wake-Up, Study, Code, Workout, Sleep)
- * depending on current Addis Ababa time.
- * Deduplicated per time-block per date.
+ * Sends smart contextual reminders (11:00 AM Wake-Up, dynamically scheduled Study/Coding/Workout tasks, Sleep)
+ * derived directly from Forge's single source of truth (DailyPlan & PlanTask in database).
+ * Deduplicated per task per date.
  */
 export async function sendSmartCoachScheduleReminder(customNow?: Date) {
   const addisNow = customNow || getAddisNow();
@@ -268,47 +268,76 @@ export async function sendSmartCoachScheduleReminder(customNow?: Date) {
   let slotType: string | null = null;
   let coachMessage: string | null = null;
 
-  // 11:00 AM Wake-Up Reminder
+  // 1. FIXED 11:00 AM WAKE-UP REMINDER (Explicitly fixed target)
   if (totalMinutes >= 660 && totalMinutes < 720) {
     slotType = 'COACH_WAKE_1100';
     coachMessage = `☀️ Good morning, Mikiyas! It is 11:00 AM — your target wake-up time.
-Hydrate, review your daily roadmap, and get ready for a focused, disciplined day.`;
+Hydrate, review your daily roadmap in Forge, and prepare for a disciplined, high-impact day.`;
   }
-  // 12:00 PM Study Reminder
-  else if (totalMinutes >= 720 && totalMinutes < 840) {
-    slotType = 'COACH_STUDY_1200';
-    coachMessage = `📚 Study time — Grade 12 Chemistry & Entrance Exam preparation.
-Deep focus session. Open your notes and complete your target study minutes.`;
+  // 2. FIXED 09:28 PM DAILY CLOSE CUTOFF REMINDER
+  else if (totalMinutes >= 1260 && totalMinutes < 1288) {
+    slotType = 'COACH_CLOSE_2128';
+    coachMessage = `⏳ Daily Close Approaching: 09:28 PM cutoff passes soon.
+Submit all your completed tasks, workout logs, and check-ins before 09:28 PM to lock in your score!`;
   }
-  // 02:00 PM Coding Reminder
-  else if (totalMinutes >= 840 && totalMinutes < 960) {
-    slotType = 'COACH_CODE_1400';
-    coachMessage = `💻 Time to code — JavaScript & 5 Million Coders.
-Open your editor and build your daily algorithmic coding target.`;
-  }
-  // 04:00 PM Workout Reminder
-  else if (totalMinutes >= 960 && totalMinutes < 1080) {
-    const { getHolidayWorkoutStatus } = await import('./holidayWorkout');
-    const holiday = getHolidayWorkoutStatus(addisNow);
-    const workoutName = holiday.isHolidayPeriod
-      ? `Holiday Home Workout (${holiday.todayRoutine?.title || 'Home Session'})`
-      : 'Gym Training Session';
-
-    slotType = 'COACH_WORKOUT_1600';
-    coachMessage = `🏋️ Workout time! Get ready for your ${workoutName}.
-Focus on clean form, controlled cadence, and disciplined sets.`;
-  }
-  // 09:00 PM Wind-down Reminder
-  else if (totalMinutes >= 1260 && totalMinutes < 1320) {
-    slotType = 'COACH_WIND_DOWN_2100';
-    coachMessage = `🌙 It's getting late. Daily close passes at 09:28 PM.
-Finalize any remaining tasks and start winding down for restful sleep.`;
-  }
-  // 11:00 PM Sleep Reminder
+  // 3. FIXED 11:00 PM SLEEP TARGET REMINDER
   else if (totalMinutes >= 1380 || totalMinutes < 120) {
     slotType = 'COACH_SLEEP_2300';
     coachMessage = `😴 It's 11:00 PM — time to sleep, Mikiyas.
 Consistent sleep drives tomorrow's cognitive focus and muscle recovery. Target wake-up is 11:00 AM.`;
+  }
+  // 4. DYNAMIC SCHEDULED TASKS FROM DATABASE (Single Source of Truth)
+  else {
+    const todayPlan = await ensureTodayDailyPlan();
+    const tasks = todayPlan?.tasks || [];
+
+    for (const t of tasks) {
+      if (!t.plannedStartTime || t.completed) continue;
+      const match = t.plannedStartTime.trim().match(/^(\d{1,2}):(\d{2})$/);
+      if (!match) continue;
+      const taskStartMins = parseInt(match[1], 10) * 60 + parseInt(match[2], 10);
+
+      // Notification window: within 45 minutes of scheduled start time
+      if (totalMinutes >= taskStartMins && totalMinutes < taskStartMins + 45) {
+        let taskTitle = t.description;
+        try {
+          const parsed = JSON.parse(t.description);
+          if (parsed.title) taskTitle = parsed.title;
+        } catch {}
+
+        const isWorkout = /workout|gym|exercise|push|pull|legs/i.test(`${t.subject || ''} ${t.description}`);
+        const isStudy = t.isStudy || /chemistry|biology|math|physics|english|study/i.test(`${t.subject || ''} ${t.description}`);
+        const isCoding = /javascript|code|coding|5 million/i.test(`${t.subject || ''} ${t.description}`);
+
+        if (isWorkout) {
+          const { getHolidayWorkoutStatus } = await import('./holidayWorkout');
+          const holiday = getHolidayWorkoutStatus(addisNow);
+          const workoutDesc = holiday.isHolidayPeriod
+            ? `16-Day Holiday Home Workout (${holiday.todayRoutine?.title || 'Home Session'})`
+            : `Scheduled Gym Training Session`;
+
+          slotType = `COACH_TASK_${t.id}_${t.plannedStartTime}`;
+          coachMessage = `🏋️ Workout time! Get ready for your ${workoutDesc}.
+Focus on clean form, controlled cadence, and disciplined sets.`;
+          break;
+        } else if (isCoding) {
+          slotType = `COACH_TASK_${t.id}_${t.plannedStartTime}`;
+          coachMessage = `💻 Time to code — ${taskTitle}.
+Open your editor and build your daily algorithmic coding target.`;
+          break;
+        } else if (isStudy) {
+          slotType = `COACH_TASK_${t.id}_${t.plannedStartTime}`;
+          coachMessage = `📚 Study time — ${taskTitle}.
+Deep focus session. Open your notes and complete your target study minutes.`;
+          break;
+        } else {
+          slotType = `COACH_TASK_${t.id}_${t.plannedStartTime}`;
+          coachMessage = `⚡ Scheduled focus time — ${taskTitle}.
+Stay disciplined and check off your target in Forge.`;
+          break;
+        }
+      }
+    }
   }
 
   if (!slotType || !coachMessage) {

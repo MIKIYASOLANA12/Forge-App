@@ -1,10 +1,12 @@
 /**
- * FORGE — SMART "WHAT SHOULD I DO NOW?" & COMMAND CENTER SCHEDULE ENGINE
- * Timezone-aware (Africa/Addis_Ababa) schedule, dynamic greetings, and action check-ins.
+ * FORGE — DYNAMIC SCHEDULE & COMMAND CENTER STATUS ENGINE
+ * SINGLE SOURCE OF TRUTH: Derives active focus from Forge's actual database tasks & calendar.
+ * Fixed targets: 11:00 AM Daily Wake-Up & 11:00 PM Sleep.
  */
-import { getAddisNow, workoutWindowForAddisDate } from './workoutTime';
+import { getAddisNow, workoutWindowForAddisDate, getWorkoutLocationForAddisDate } from './workoutTime';
 import { prisma } from './prisma';
 import { getHolidayWorkoutStatus } from './holidayWorkout';
+import { ensureTodayDailyPlan } from './dailyPlanGenerator';
 
 export interface SmartScheduleStatus {
   greeting: string;
@@ -35,6 +37,40 @@ export interface SmartScheduleStatus {
   };
 }
 
+function parseTimeToMinutes(timeStr?: string | null): number | null {
+  if (!timeStr) return null;
+  const match = timeStr.trim().match(/^(\d{1,2}):(\d{2})$/);
+  if (!match) return null;
+  return parseInt(match[1], 10) * 60 + parseInt(match[2], 10);
+}
+
+function formatMinutesTo12Hour(mins: number): string {
+  const h = Math.floor(mins / 60) % 24;
+  const m = mins % 60;
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  const displayH = h % 12 === 0 ? 12 : h % 12;
+  return `${displayH}:${String(m).padStart(2, '0')} ${ampm}`;
+}
+
+function getTaskCleanTitle(task: any): string {
+  try {
+    const parsed = JSON.parse(task.description);
+    if (parsed.title) return parsed.title;
+  } catch {}
+  if (task.subject && task.topic) return `${task.subject}: ${task.topic}`;
+  if (task.subject) return `${task.subject} Session`;
+  return task.description || 'Focus Session';
+}
+
+function getTaskCategory(task: any): 'STUDY' | 'CODING' | 'WORKOUT' | 'READING' | 'FREE' {
+  const text = `${task.subject || ''} ${task.topic || ''} ${task.description || ''}`.toLowerCase();
+  if (/workout|gym|exercise|push|pull|legs/i.test(text)) return 'WORKOUT';
+  if (/javascript|code|coding|5 million|python|ts/i.test(text)) return 'CODING';
+  if (/chemistry|biology|math|physics|english|study/i.test(text) || task.isStudy) return 'STUDY';
+  if (/reading|book|faith|reflection/i.test(text)) return 'READING';
+  return 'FREE';
+}
+
 /**
  * Returns dynamic personalized greeting based on Addis Ababa hour.
  */
@@ -45,13 +81,13 @@ export function getPersonalizedGreeting(customNow?: Date): { greeting: string; s
   if (hour >= 5 && hour < 12) {
     return {
       greeting: 'Good morning, Mikiyas.',
-      subGreeting: 'Start strong. High energy and sharp focus for today’s goals.',
+      subGreeting: 'Start strong. High energy and sharp focus for today’s roadmap.',
     };
   }
   if (hour >= 12 && hour < 17) {
     return {
       greeting: 'Good afternoon, Mikiyas.',
-      subGreeting: 'Keep the momentum going across your study, coding, and workout blocks.',
+      subGreeting: 'Maintain momentum across your scheduled study, coding, and workout blocks.',
     };
   }
   if (hour >= 17 && hour < 22) {
@@ -67,8 +103,7 @@ export function getPersonalizedGreeting(customNow?: Date): { greeting: string; s
 }
 
 /**
- * Resolves what Mikiyas should be doing RIGHT NOW based on current Addis Ababa time,
- * daily plan tasks, and workout completion state.
+ * Resolves what Mikiyas should be doing RIGHT NOW dynamically from Forge's real scheduled tasks.
  */
 export async function getSmartScheduleStatus(customNow?: Date): Promise<SmartScheduleStatus> {
   const now = customNow || getAddisNow();
@@ -88,41 +123,29 @@ export async function getSmartScheduleStatus(customNow?: Date): Promise<SmartSch
   const windowInfo = workoutWindowForAddisDate(now);
   const holidayStatus = getHolidayWorkoutStatus(now);
 
-  // Check today's plan tasks and workout status
-  const [todayPlan, todayWorkoutLog] = await Promise.all([
-    prisma.dailyPlan.findFirst({
-      where: { date: { gte: windowInfo.startUtc, lte: windowInfo.endUtc } },
-      include: { tasks: true },
-    }),
-    prisma.workoutLog.findFirst({
-      where: {
-        completedAt: { gte: windowInfo.startUtc, lte: windowInfo.endUtc },
-        submittedAt: { not: null },
-      },
-    }),
-  ]);
-
+  // 1. Fetch today's actual plan and tasks from database (Single Source of Truth)
+  const todayPlan = await ensureTodayDailyPlan();
   const tasks = todayPlan?.tasks || [];
-  const chemistryTask = tasks.find((t) => /chemistry/i.test(t.subject || t.description));
-  const codingTask = tasks.find((t) => /javascript|code|coding/i.test(t.subject || t.description));
-  const readingTask = tasks.find((t) => /reading|book|faith/i.test(t.subject || t.description));
 
+  // Check today's workout completion
+  const todayWorkoutLog = await prisma.workoutLog.findFirst({
+    where: {
+      completedAt: { gte: windowInfo.startUtc, lte: windowInfo.endUtc },
+      submittedAt: { not: null },
+    },
+  });
   const workoutCompleted = Boolean(todayWorkoutLog);
 
-  // Fixed Daily Targets:
+  // Target Boundaries:
   // Wake-up: 11:00 AM (660 min)
-  // Study block: 12:00 PM – 02:00 PM (720..840 min)
-  // Coding block: 02:00 PM – 04:00 PM (840..960 min)
-  // Workout block: 04:00 PM – 06:00 PM (960..1080 min)
-  // Reading & Review: 06:00 PM – 08:30 PM (1080..1230 min)
-  // Daily Close Countdown: 08:30 PM – 09:28 PM (1230..1288 min)
-  // Wind-down: 09:30 PM – 11:00 PM (1290..1380 min)
-  // Sleep Target: 11:00 PM – 11:00 AM (1380+ / <660 min)
+  // Daily Close: 09:28 PM (1288 min)
+  // Wind-Down: 09:30 PM (1290 min)
+  // Target Sleep: 11:00 PM (1380 min)
 
-  // 1. SLEEP & EARLY MORNING (< 11:00 AM)
+  // ── A. PRE-WAKE & SLEEP TIME (< 11:00 AM) ──────────────────────────────────
   if (totalMinutes < 660) {
     if (totalMinutes >= 600) {
-      // 10:00 AM – 11:00 AM: Pre-Wake
+      // 10:00 AM – 11:00 AM: Pre-Wake Target
       return {
         greeting: greetings.greeting,
         subGreeting: greetings.subGreeting,
@@ -130,12 +153,16 @@ export async function getSmartScheduleStatus(customNow?: Date): Promise<SmartSch
         currentHourMinute: hourMinStr,
         targetWakeTime: '11:00 AM',
         targetSleepTime: '11:00 PM',
-        currentActivityTitle: 'Target Wake-Up Approaching',
+        currentActivityTitle: 'Target Wake-Up Approaching (11:00 AM)',
         currentActivityCategory: 'WAKE',
-        statusMessage: 'Target wake-up time is 11:00 AM. Prepare for a disciplined, high-impact day.',
-        actionCallout: 'Wake up, hydrate, and prepare for your morning study block.',
-        suggestedAction: { type: 'CHECKIN', label: 'Open Today Checklist', href: '/today' },
-        upcomingNext: { title: 'Study Chemistry & Entrance Preparation', timeFormatted: '12:00 PM', category: 'STUDY' },
+        statusMessage: 'Fixed daily wake-up target is 11:00 AM. Prepare for a disciplined day.',
+        actionCallout: 'Wake up, hydrate, and prepare for your scheduled tasks.',
+        suggestedAction: { type: 'CHECKIN', label: 'Open Today Roadmap', href: '/today' },
+        upcomingNext: {
+          title: tasks[0] ? getTaskCleanTitle(tasks[0]) : 'First Scheduled Task',
+          timeFormatted: tasks[0]?.plannedStartTime ? formatMinutesTo12Hour(parseTimeToMinutes(tasks[0].plannedStartTime)!) : '12:00 PM',
+          category: 'STUDY',
+        },
       };
     }
 
@@ -146,17 +173,36 @@ export async function getSmartScheduleStatus(customNow?: Date): Promise<SmartSch
       currentHourMinute: hourMinStr,
       targetWakeTime: '11:00 AM',
       targetSleepTime: '11:00 PM',
-      currentActivityTitle: 'Sleep & Physical Recovery',
+      currentActivityTitle: 'Now it’s time to sleep.',
       currentActivityCategory: 'SLEEP',
-      statusMessage: 'Now it’s time to sleep. Deep sleep restores cognitive sharpness, muscle repair, and willpower.',
-      actionCallout: 'Keep devices down and rest up until 11:00 AM wake-up.',
-      suggestedAction: { type: 'SLEEP', label: 'View Sleep Schedule', href: '/today#sleep' },
-      upcomingNext: { title: 'Wake up & Morning Check-in', timeFormatted: '11:00 AM', category: 'WAKE' },
+      statusMessage: 'Physical and cognitive recovery window. Quality sleep drives willpower and muscle repair.',
+      actionCallout: 'Rest up until 11:00 AM target wake-up.',
+      suggestedAction: { type: 'SLEEP', label: 'View Sleep Target', href: '/today#sleep' },
+      upcomingNext: { title: 'Fixed Wake-Up Target (11:00 AM)', timeFormatted: '11:00 AM', category: 'WAKE' },
     };
   }
 
-  // 2. MORNING WAKE-UP & CHECKIN (11:00 AM – 12:00 PM / 660..720 min)
-  if (totalMinutes >= 660 && totalMinutes < 720) {
+  // ── B. POST DAILY CUTOFF / WIND-DOWN / SLEEP (>= 09:28 PM / 1288 min) ───────
+  if (totalMinutes >= 1288) {
+    if (totalMinutes < 1380) {
+      // 09:28 PM – 11:00 PM: Wind-Down
+      return {
+        greeting: greetings.greeting,
+        subGreeting: greetings.subGreeting,
+        addisTimeFormatted: timeFormatted,
+        currentHourMinute: hourMinStr,
+        targetWakeTime: '11:00 AM',
+        targetSleepTime: '11:00 PM',
+        currentActivityTitle: 'Start winding down.',
+        currentActivityCategory: 'WIND_DOWN',
+        statusMessage: 'Daily close passed at 09:28 PM. Disconnect from screens and prepare for restful sleep.',
+        actionCallout: 'Wind down your mind and body before 11:00 PM sleep target.',
+        suggestedAction: { type: 'SLEEP', label: 'View Sleep Target', href: '/today#sleep' },
+        upcomingNext: { title: 'Sleep Target (11:00 PM)', timeFormatted: '11:00 PM', category: 'SLEEP' },
+      };
+    }
+
+    // 11:00 PM+
     return {
       greeting: greetings.greeting,
       subGreeting: greetings.subGreeting,
@@ -164,18 +210,62 @@ export async function getSmartScheduleStatus(customNow?: Date): Promise<SmartSch
       currentHourMinute: hourMinStr,
       targetWakeTime: '11:00 AM',
       targetSleepTime: '11:00 PM',
-      currentActivityTitle: 'Wake Up & Morning Activation',
-      currentActivityCategory: 'WAKE',
-      statusMessage: 'Good morning! It is 11:00 AM wake-up time. Hydrate, review today’s roadmap, and get ready for deep work.',
-      actionCallout: 'Review today’s plan tasks and start your first study block.',
-      suggestedAction: { type: 'CHECKIN', label: 'Review Today’s Roadmap', href: '/today' },
-      upcomingNext: { title: 'Chemistry & Entrance Exam Study', timeFormatted: '12:00 PM', category: 'STUDY' },
+      currentActivityTitle: 'Now it’s time to sleep.',
+      currentActivityCategory: 'SLEEP',
+      statusMessage: 'Target sleep time is 11:00 PM. Rest deeply for an energized 11:00 AM wake-up tomorrow.',
+      actionCallout: 'Sleep on time to preserve circadian consistency.',
+      suggestedAction: { type: 'SLEEP', label: 'Sleep Target', href: '/today#sleep' },
+      upcomingNext: { title: 'Wake up (11:00 AM)', timeFormatted: '11:00 AM', category: 'WAKE' },
     };
   }
 
-  // 3. STUDY TIME — CHEMISTRY & ENTRANCE PREP (12:00 PM – 02:00 PM / 720..840 min)
-  if (totalMinutes >= 720 && totalMinutes < 840) {
-    const isDone = chemistryTask?.completed;
+  // ── C. ACTIVE DAY (11:00 AM – 09:28 PM): DYNAMIC TASK SCHEDULE RESOLUTION ──
+  // Check tasks with plannedStartTime to find active, upcoming, or past tasks
+  const tasksWithTimes = tasks
+    .map((t) => {
+      const startMins = parseTimeToMinutes(t.plannedStartTime);
+      const endMins = parseTimeToMinutes(t.plannedEndTime) || (startMins !== null ? startMins + (t.minutesTarget || 60) : null);
+      return { task: t, startMins, endMins, title: getTaskCleanTitle(t), category: getTaskCategory(t) };
+    })
+    .filter((item) => item.startMins !== null);
+
+  // 1. Find currently active task where startMins <= totalMinutes <= endMins
+  const activeTaskItem = tasksWithTimes.find(
+    (item) => item.startMins! <= totalMinutes && totalMinutes <= (item.endMins || item.startMins! + 60)
+  );
+
+  // Find next upcoming task
+  const upcomingTaskItem = tasksWithTimes
+    .filter((item) => item.startMins! > totalMinutes)
+    .sort((a, b) => a.startMins! - b.startMins!)[0];
+
+  // If a task is scheduled RIGHT NOW:
+  if (activeTaskItem) {
+    const t = activeTaskItem.task;
+    const isDone = t.completed;
+    const cat = activeTaskItem.category;
+    const title = activeTaskItem.title;
+
+    let actionHref = '/todo';
+    let actionType: 'TASK' | 'WORKOUT' | 'CHECKIN' = 'TASK';
+    let activityTitle = `Now it’s time for ${title}.`;
+
+    if (cat === 'WORKOUT') {
+      actionHref = '/workout';
+      actionType = 'WORKOUT';
+      const workoutName = holidayStatus.isHolidayPeriod
+        ? `Holiday Home Workout (${holidayStatus.todayRoutine?.title || 'Home Session'})`
+        : 'Gym Training Session';
+      activityTitle = workoutCompleted ? 'Workout Session Completed ✓' : `Now it’s time for your workout (${workoutName}).`;
+    } else if (cat === 'CODING') {
+      activityTitle = isDone ? `${title} — Completed ✓` : `Now it’s time to code (${title}).`;
+    } else if (cat === 'STUDY') {
+      activityTitle = isDone ? `${title} — Completed ✓` : `Now it’s time to study (${title}).`;
+    } else if (cat === 'READING') {
+      actionHref = '/reading';
+      activityTitle = isDone ? `${title} — Completed ✓` : `Now it’s time to read & reflect (${title}).`;
+    }
+
     return {
       greeting: greetings.greeting,
       subGreeting: greetings.subGreeting,
@@ -183,133 +273,26 @@ export async function getSmartScheduleStatus(customNow?: Date): Promise<SmartSch
       currentHourMinute: hourMinStr,
       targetWakeTime: '11:00 AM',
       targetSleepTime: '11:00 PM',
-      currentActivityTitle: isDone ? 'Chemistry Study Block — Completed ✓' : 'Now it’s time to study Chemistry.',
-      currentActivityCategory: 'STUDY',
+      currentActivityTitle: activityTitle,
+      currentActivityCategory: cat,
       statusMessage: isDone
-        ? 'Great work! Chemistry study block is completed. Prepare for coding session.'
-        : 'Deep focus time: Grade 12 Chemistry & entrance exam mastery.',
-      actionCallout: isDone ? 'Chemistry logged.' : 'Open Chemistry notes and complete your target study minutes.',
+        ? `Great execution! ${title} is completed. Ready for the next scheduled block.`
+        : `Scheduled block: ${formatMinutesTo12Hour(activeTaskItem.startMins!)} – ${formatMinutesTo12Hour(activeTaskItem.endMins!)}.`,
+      actionCallout: isDone ? 'Logged in Forge.' : `Complete your target minutes for ${title}.`,
       suggestedAction: isDone
-        ? { type: 'CHECKIN', label: 'Next: Coding Session', href: '/todo' }
-        : { type: 'TASK', label: 'Mark Chemistry Complete', href: '/todo', taskId: chemistryTask?.id },
-      afterwardPrompt: !isDone && chemistryTask ? { question: 'Did you complete your Chemistry study session?', itemTitle: 'Chemistry Study', taskId: chemistryTask.id } : undefined,
-      upcomingNext: { title: 'JavaScript & Coding Session', timeFormatted: '02:00 PM', category: 'CODING' },
+        ? { type: 'CHECKIN', label: upcomingTaskItem ? `Next: ${upcomingTaskItem.title}` : 'Review Checklist', href: actionHref }
+        : { type: actionType, label: `Mark ${title.split('—')[0].trim()} Complete`, href: actionHref, taskId: t.id },
+      afterwardPrompt: !isDone ? { question: `Did you complete ${title}?`, itemTitle: title, taskId: t.id } : undefined,
+      upcomingNext: upcomingTaskItem
+        ? { title: upcomingTaskItem.title, timeFormatted: formatMinutesTo12Hour(upcomingTaskItem.startMins!), category: upcomingTaskItem.category }
+        : { title: 'Daily Cutoff & Final Lock (09:28 PM)', timeFormatted: '09:28 PM', category: 'CLOSE' },
     };
   }
 
-  // 4. CODING TIME — JAVASCRIPT / 5 MILLION CODERS (02:00 PM – 04:00 PM / 840..960 min)
-  if (totalMinutes >= 840 && totalMinutes < 960) {
-    const isDone = codingTask?.completed;
-    const workoutType = holidayStatus.isHolidayPeriod ? '16-Day Home Session' : 'Gym Workout';
-    return {
-      greeting: greetings.greeting,
-      subGreeting: greetings.subGreeting,
-      addisTimeFormatted: timeFormatted,
-      currentHourMinute: hourMinStr,
-      targetWakeTime: '11:00 AM',
-      targetSleepTime: '11:00 PM',
-      currentActivityTitle: isDone ? 'Coding Session — Completed ✓' : 'Now it’s time to code.',
-      currentActivityCategory: 'CODING',
-      statusMessage: isDone
-        ? 'Coding session completed! Rest your eyes before workout time.'
-        : 'Active coding session: JavaScript, algorithmic problem solving & 5 Million Coders.',
-      actionCallout: isDone ? 'Coding logged.' : 'Open your editor and build your daily code target.',
-      suggestedAction: isDone
-        ? { type: 'CHECKIN', label: `Next: ${workoutType}`, href: '/workout' }
-        : { type: 'TASK', label: 'Mark Coding Complete', href: '/todo', taskId: codingTask?.id },
-      afterwardPrompt: !isDone && codingTask ? { question: 'Did you complete your coding target today?', itemTitle: 'JavaScript Coding', taskId: codingTask.id } : undefined,
-      upcomingNext: { title: `Workout Time (${workoutType})`, timeFormatted: '04:00 PM', category: 'WORKOUT' },
-    };
-  }
+  // 2. If between scheduled tasks: suggest highest priority uncompleted task or next upcoming
+  const uncompletedPending = tasks.find((t) => !t.completed);
+  const pendingTitle = uncompletedPending ? getTaskCleanTitle(uncompletedPending) : null;
 
-  // 5. WORKOUT TIME (04:00 PM – 06:00 PM / 960..1080 min)
-  if (totalMinutes >= 960 && totalMinutes < 1080) {
-    const workoutName = holidayStatus.isHolidayPeriod
-      ? `Holiday Home Workout — ${holidayStatus.todayRoutine?.title || 'Home Session'}`
-      : 'Scheduled Gym Training Session';
-
-    return {
-      greeting: greetings.greeting,
-      subGreeting: greetings.subGreeting,
-      addisTimeFormatted: timeFormatted,
-      currentHourMinute: hourMinStr,
-      targetWakeTime: '11:00 AM',
-      targetSleepTime: '11:00 PM',
-      currentActivityTitle: workoutCompleted ? 'Today’s Workout Completed ✓' : 'Now it’s time for your workout.',
-      currentActivityCategory: 'WORKOUT',
-      statusMessage: workoutCompleted
-        ? 'Workout logged successfully! Muscles stimulated and progressive overload achieved.'
-        : `Training time: ${workoutName}. Focus on clean form and disciplined sets.`,
-      actionCallout: workoutCompleted ? 'Workout session finished.' : 'Get ready — push hard with strict reps and controlled rests.',
-      suggestedAction: workoutCompleted
-        ? { type: 'CHECKIN', label: 'View Workout Log', href: '/workout' }
-        : { type: 'WORKOUT', label: 'Start & Log Workout', href: '/workout' },
-      afterwardPrompt: !workoutCompleted ? { question: 'Did you finish your workout session?', itemTitle: workoutName } : undefined,
-      upcomingNext: { title: 'Evening Reading & Reflection', timeFormatted: '06:00 PM', category: 'READING' },
-    };
-  }
-
-  // 6. READING, FAITH & REVIEW (06:00 PM – 08:30 PM / 1080..1230 min)
-  if (totalMinutes >= 1080 && totalMinutes < 1230) {
-    const isDone = readingTask?.completed;
-    return {
-      greeting: greetings.greeting,
-      subGreeting: greetings.subGreeting,
-      addisTimeFormatted: timeFormatted,
-      currentHourMinute: hourMinStr,
-      targetWakeTime: '11:00 AM',
-      targetSleepTime: '11:00 PM',
-      currentActivityTitle: isDone ? 'Reading & Reflection — Completed ✓' : 'Now it’s time to read and reflect.',
-      currentActivityCategory: 'READING',
-      statusMessage: isDone
-        ? 'Reading and reflections completed. Prepare for the 09:28 PM daily close.'
-        : 'Quiet focus: Discipline reading, notes reflection, and faith check-in.',
-      actionCallout: isDone ? 'Reading logged.' : 'Read your target chapter and write your daily reflection.',
-      suggestedAction: isDone
-        ? { type: 'CHECKIN', label: 'Review Daily Close', href: '/today' }
-        : { type: 'TASK', label: 'Complete Reading Check-in', href: '/reading', taskId: readingTask?.id },
-      upcomingNext: { title: 'Daily Cutoff & Final Lock (09:28 PM)', timeFormatted: '08:30 PM', category: 'CLOSE' },
-    };
-  }
-
-  // 7. DAILY CLOSE WINDOW (08:30 PM – 09:28 PM / 1230..1288 min)
-  if (totalMinutes >= 1230 && totalMinutes < 1288) {
-    const remainingToClose = 1288 - totalMinutes;
-    return {
-      greeting: greetings.greeting,
-      subGreeting: greetings.subGreeting,
-      addisTimeFormatted: timeFormatted,
-      currentHourMinute: hourMinStr,
-      targetWakeTime: '11:00 AM',
-      targetSleepTime: '11:00 PM',
-      currentActivityTitle: `Daily Close at 09:28 PM — ${remainingToClose}m remaining`,
-      currentActivityCategory: 'CLOSE',
-      statusMessage: 'Crucial window! Check off all completed activities before 09:28 PM to protect your streak and score.',
-      actionCallout: 'Lock in your tasks and workout before the daily grading deadline.',
-      suggestedAction: { type: 'CHECKIN', label: 'Finalize Checklist Now', href: '/today' },
-      upcomingNext: { title: 'Wind-Down & Sleep Preparation', timeFormatted: '09:30 PM', category: 'WIND_DOWN' },
-    };
-  }
-
-  // 8. WIND-DOWN TIME (09:30 PM – 11:00 PM / 1290..1380 min)
-  if (totalMinutes >= 1288 && totalMinutes < 1380) {
-    return {
-      greeting: greetings.greeting,
-      subGreeting: greetings.subGreeting,
-      addisTimeFormatted: timeFormatted,
-      currentHourMinute: hourMinStr,
-      targetWakeTime: '11:00 AM',
-      targetSleepTime: '11:00 PM',
-      currentActivityTitle: 'Start winding down.',
-      currentActivityCategory: 'WIND_DOWN',
-      statusMessage: 'The daily cutoff has passed. Disconnect from screens, prepare your environment, and wind down.',
-      actionCallout: 'Wind down your mind and body for deep sleep at 11:00 PM.',
-      suggestedAction: { type: 'SLEEP', label: 'View Sleep & Recovery Guide', href: '/today#sleep' },
-      upcomingNext: { title: 'Sleep Target (11:00 PM)', timeFormatted: '11:00 PM', category: 'SLEEP' },
-    };
-  }
-
-  // 9. SLEEP TIME (11:00 PM+ / >= 1380 min)
   return {
     greeting: greetings.greeting,
     subGreeting: greetings.subGreeting,
@@ -317,11 +300,20 @@ export async function getSmartScheduleStatus(customNow?: Date): Promise<SmartSch
     currentHourMinute: hourMinStr,
     targetWakeTime: '11:00 AM',
     targetSleepTime: '11:00 PM',
-    currentActivityTitle: 'Now it’s time to sleep.',
-    currentActivityCategory: 'SLEEP',
-    statusMessage: 'It is 11:00 PM. Consistent sleep timing directly unlocks mental sharpness and muscle recovery.',
-    actionCallout: 'Go to sleep on time. Target wake-up is 11:00 AM tomorrow.',
-    suggestedAction: { type: 'SLEEP', label: 'Sleep & Recovery Mode', href: '/today#sleep' },
-    upcomingNext: { title: 'Wake up (11:00 AM)', timeFormatted: '11:00 AM', category: 'WAKE' },
+    currentActivityTitle: uncompletedPending
+      ? `Focus Target: ${pendingTitle}`
+      : 'All Scheduled Focus Tasks Completed ✓',
+    currentActivityCategory: uncompletedPending ? getTaskCategory(uncompletedPending) : 'FREE',
+    statusMessage: uncompletedPending
+      ? `You have pending tasks scheduled today. Work on ${pendingTitle} or prepare for upcoming sessions.`
+      : 'All current scheduled tasks are checked off. Maintain momentum or review upcoming material.',
+    actionCallout: uncompletedPending ? `Open Forge to complete ${pendingTitle}.` : 'Great discipline today.',
+    suggestedAction: uncompletedPending
+      ? { type: 'TASK', label: `Complete ${pendingTitle?.split('—')[0].trim()}`, href: '/todo', taskId: uncompletedPending.id }
+      : { type: 'CHECKIN', label: 'View Today Command Center', href: '/today' },
+    afterwardPrompt: uncompletedPending ? { question: `Did you complete ${pendingTitle}?`, itemTitle: pendingTitle!, taskId: uncompletedPending.id } : undefined,
+    upcomingNext: upcomingTaskItem
+      ? { title: upcomingTaskItem.title, timeFormatted: formatMinutesTo12Hour(upcomingTaskItem.startMins!), category: upcomingTaskItem.category }
+      : { title: 'Daily Cutoff & Final Lock (09:28 PM)', timeFormatted: '09:28 PM', category: 'CLOSE' },
   };
 }

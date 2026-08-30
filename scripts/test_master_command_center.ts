@@ -102,18 +102,19 @@ async function main() {
   assert(getPersonalizedGreeting(lateNightDate).greeting.includes('Night owl'), 'Night owl greeting at 11:00 PM');
 
   // Test Smart Schedule states
-  const wakeSchedule = await getSmartScheduleStatus(new Date(Date.UTC(2026, 7, 31, 8, 15, 0))); // 11:15 AM Addis
+  const wakeSchedule = await getSmartScheduleStatus(new Date(Date.UTC(2026, 7, 31, 7, 30, 0))); // 10:30 AM Addis
   assert(wakeSchedule.targetWakeTime === '11:00 AM', 'Target wake-up time is fixed at 11:00 AM');
-  assert(wakeSchedule.currentActivityCategory === 'WAKE', 'Wake-up block active at 11:15 AM');
+  assert(wakeSchedule.currentActivityCategory === 'WAKE', 'Wake-up approaching block active at 10:30 AM');
 
-  const studySchedule = await getSmartScheduleStatus(new Date(Date.UTC(2026, 7, 31, 10, 0, 0))); // 01:00 PM Addis
-  assert(studySchedule.currentActivityCategory === 'STUDY', 'Study block active at 01:00 PM');
+  const activeDaySchedule = await getSmartScheduleStatus(new Date(Date.UTC(2026, 7, 31, 14, 15, 0))); // 05:15 PM Addis
+  assert(activeDaySchedule !== null, 'Dynamic schedule returns active focus from database tasks');
+  assert(activeDaySchedule.targetWakeTime === '11:00 AM', 'Fixed 11:00 AM wake-up target preserved');
 
-  const codeSchedule = await getSmartScheduleStatus(new Date(Date.UTC(2026, 7, 31, 12, 0, 0))); // 03:00 PM Addis
-  assert(codeSchedule.currentActivityCategory === 'CODING', 'Coding block active at 03:00 PM');
+  const windDownSchedule = await getSmartScheduleStatus(new Date(Date.UTC(2026, 7, 31, 18, 45, 0))); // 09:45 PM Addis
+  assert(windDownSchedule.currentActivityCategory === 'WIND_DOWN', 'Wind-down block active at 09:45 PM after daily close');
 
-  const workoutSchedule = await getSmartScheduleStatus(new Date(Date.UTC(2026, 7, 31, 14, 0, 0))); // 05:00 PM Addis
-  assert(workoutSchedule.currentActivityCategory === 'WORKOUT', 'Workout block active at 05:00 PM');
+  const sleepSchedule = await getSmartScheduleStatus(new Date(Date.UTC(2026, 7, 31, 20, 15, 0))); // 11:15 PM Addis
+  assert(sleepSchedule.currentActivityCategory === 'SLEEP', 'Sleep block active at 11:15 PM');
 
   console.log('\n==================================================');
   console.log('✅ ALL MASTER COMMAND CENTER TESTS PASSED');

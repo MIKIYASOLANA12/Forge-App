@@ -375,8 +375,7 @@ Disconnect from screens and prepare for restful 11:00 PM sleep, Mikiyas.`;
     // Stop conditions:
     // 1. Acknowledged: Stop further reminders for tonight
     // 2. Snoozed: Skip until snooze expires
-    // 3. Inactive: Stop if user has been inactive in Forge (>25m since heartbeat)
-    if (!sleepStatus.isAcknowledged && !sleepStatus.isSnoozed && sleepStatus.isSessionActive) {
+    if (!sleepStatus.isAcknowledged && !sleepStatus.isSnoozed) {
       const slot15 = Math.floor(minute / 15) * 15;
       const slotTimeStr = `${String(hour).padStart(2, '0')}${String(slot15).padStart(2, '0')}`;
       const isInitial11PM = hour === 23 && slot15 === 0;
@@ -384,13 +383,13 @@ Disconnect from screens and prepare for restful 11:00 PM sleep, Mikiyas.`;
 
       let sleepMsg = "😴 It's time to sleep, Mikiyas.";
       if (sleepStatus.overdueMinutes >= 45 && sleepStatus.overdueMinutes < 60) {
-        sleepMsg = "⚠️ You're past your sleep target. Stop working and go to sleep.";
+        sleepMsg = "⚠️ You're past your sleep target. Stop working, shut down your PC, and go to sleep.";
       } else if (sleepStatus.overdueMinutes >= 30) {
         sleepMsg = "😴 Still awake? Close Forge, shut down your PC, and get some rest.";
       } else if (sleepStatus.overdueMinutes >= 15) {
-        sleepMsg = "🌙 Mikiyas, you're still up. Time to shut down and sleep.";
+        sleepMsg = "🌙 Mikiyas, you're still up. Time to shut down your PC and sleep.";
       } else if (sleepStatus.overdueMinutes >= 60) {
-        sleepMsg = `🚨 Sleep is overdue by ${sleepStatus.overdueMinutes} minutes. Deep recovery is critical for tomorrow's discipline. Go to sleep now.`;
+        sleepMsg = `🚨 Sleep is overdue by ${sleepStatus.overdueMinutes} minutes. Shut down your PC now. Deep recovery is critical for tomorrow's discipline.`;
       }
 
       const buttons: Array<Array<{ text: string; callback_data: string }>> = [

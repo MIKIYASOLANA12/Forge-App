@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSessionUserFromRequest } from '@/lib/auth';
 import { SESSION_COOKIE_NAME } from '@/lib/session';
 import { prisma } from '@/lib/prisma';
+import { sendSmartCoachScheduleReminder } from '@/lib/telegramScheduler';
 
 export const dynamic = 'force-dynamic';
 
@@ -20,6 +21,9 @@ export async function GET(req: NextRequest) {
       data: { lastActiveAt: new Date() },
     }).catch(() => {});
   }
+
+  // Trigger coach and persistent sleep reminder checks asynchronously
+  void sendSmartCoachScheduleReminder().catch(() => {});
 
   return NextResponse.json({
     authenticated: true,

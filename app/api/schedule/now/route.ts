@@ -4,6 +4,7 @@ import { getSmartScheduleStatus } from '@/lib/smartSchedule';
 import { getDashboardCountdowns } from '@/lib/countdowns';
 import { getHolidayWorkoutStatus } from '@/lib/holidayWorkout';
 import { getAddisNow } from '@/lib/workoutTime';
+import { sendSmartCoachScheduleReminder } from '@/lib/telegramScheduler';
 
 export const dynamic = 'force-dynamic';
 
@@ -26,6 +27,9 @@ export async function GET(req: NextRequest) {
       getDashboardCountdowns(addisNow),
       Promise.resolve(getHolidayWorkoutStatus(addisNow)),
     ]);
+
+    // Asynchronously evaluate persistent schedule/sleep coach checks
+    void sendSmartCoachScheduleReminder(addisNow).catch(() => {});
 
     return NextResponse.json({
       success: true,

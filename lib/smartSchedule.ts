@@ -255,15 +255,35 @@ export async function getSmartScheduleStatus(customNow?: Date): Promise<SmartSch
   // ── [1] DEEP SLEEP WINDOW (11:00 PM – 05:59 AM) ──────────────────────────────
   // 1380..1439 mins (11:00 PM – 11:59 PM) OR 0..359 mins (12:00 AM – 05:59 AM)
   if (totalMinutes >= 1380 || totalMinutes < 360) {
+    const { getSleepAccountabilityStatus } = await import('./sleepAccountability');
+    const sleepStatus = await getSleepAccountabilityStatus(customNow);
+
+    let sleepTitle = "It's time to sleep.";
+    let sleepMessage = 'Target sleep time is 11:00 PM (ከሌሊቱ 5:00). Rest deeply for an energized 11:00 AM wake-up tomorrow.';
+    let actionCallout = 'Sleep on time to preserve circadian consistency and recovery.';
+    let suggestedAction: any = { type: 'SLEEP', label: "I'm going to sleep ✓", href: '#sleep' };
+
+    if (sleepStatus.isAcknowledged) {
+      sleepTitle = 'Sleep Acknowledged ✓';
+      sleepMessage = 'Sleep acknowledged for tonight. Deep restoration active before 11:00 AM wake-up.';
+      actionCallout = 'Rest deeply, Mikiyas.';
+      suggestedAction = { type: 'SLEEP', label: 'Sleep Target (11:00 PM)', href: '#sleep' };
+    } else if (sleepStatus.isOverdue) {
+      sleepTitle = `Sleep Overdue (${sleepStatus.overdueMinutes}m)`;
+      sleepMessage = `You're ${sleepStatus.overdueMinutes} minutes past your 11:00 PM sleep target. Close Forge and go to sleep.`;
+      actionCallout = 'Close Forge and disconnect from screens.';
+      suggestedAction = { type: 'SLEEP', label: "I'm going to sleep ✓", href: '#sleep' };
+    }
+
     return {
       ...commonTimeFields,
       greeting: greetings.greeting,
       subGreeting: greetings.subGreeting,
-      currentActivityTitle: "It's time to sleep.",
+      currentActivityTitle: sleepTitle,
       currentActivityCategory: 'SLEEP',
-      statusMessage: 'Target sleep time is 11:00 PM (ከሌሊቱ 5:00). Rest deeply for an energized 11:00 AM wake-up tomorrow.',
-      actionCallout: 'Sleep on time to preserve circadian consistency and recovery.',
-      suggestedAction: { type: 'SLEEP', label: 'View Sleep Target', href: '/today#sleep' },
+      statusMessage: sleepMessage,
+      actionCallout,
+      suggestedAction,
       upcomingNext: { title: 'Wake up (11:00 AM)', timeFormatted: '11:00 AM', category: 'WAKE' },
       nextActivity: {
         title: 'Wake up',

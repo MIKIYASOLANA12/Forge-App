@@ -18,6 +18,7 @@ import {
   getTaskCleanTitle,
   getTaskCategory,
 } from './smartSchedule';
+import { getSleepAccountabilityStatus } from './sleepAccountability';
 
 function formatTaskText(desc: string): string {
   try {
@@ -271,7 +272,7 @@ export async function processAccountabilityCron() {
  * Deduplicated per task per slot per date.
  */
 export async function sendSmartCoachScheduleReminder(customNow?: Date) {
-  const { totalMinutes, year, month, day, formatted12h } = getAddisTimeComponents(customNow);
+  const { hour, minute, totalMinutes, year, month, day, formatted12h } = getAddisTimeComponents(customNow);
   const addisNow = customNow || getAddisNow();
   const normalizedDateKey = new Date(Date.UTC(year, month - 1, day));
 
@@ -367,11 +368,46 @@ Disconnect from screens and prepare for restful 11:00 PM sleep, Mikiyas.`;
     await helperSend('COACH_WIND_DOWN_2130', windDownMsg);
   }
 
-  // ── [4] FIXED 11:00 PM SLEEP TARGET REMINDER (>= 1380 mins) ────────────────
-  if (totalMinutes >= 1380) {
-    const sleepMsg = `😴 It's time to sleep, Mikiyas.
-Consistent sleep drives tomorrow's cognitive focus and muscle recovery. Target wake-up is 11:00 AM.`;
-    await helperSend('COACH_SLEEP_2300', sleepMsg);
+  // ── [4] PERSISTENT 15-MINUTE SLEEP ACCOUNTABILITY REMINDER (11:00 PM – 05:59 AM) ────
+  if (totalMinutes >= 1380 || totalMinutes < 360) {
+    const sleepStatus = await getSleepAccountabilityStatus(customNow);
+
+    // Stop conditions:
+    // 1. Acknowledged: Stop further reminders for tonight
+    // 2. Snoozed: Skip until snooze expires
+    // 3. Inactive: Stop if user has been inactive in Forge (>25m since heartbeat)
+    if (!sleepStatus.isAcknowledged && !sleepStatus.isSnoozed && sleepStatus.isSessionActive) {
+      const slot15 = Math.floor(minute / 15) * 15;
+      const slotTimeStr = `${String(hour).padStart(2, '0')}${String(slot15).padStart(2, '0')}`;
+      const isInitial11PM = hour === 23 && slot15 === 0;
+      const slotType = isInitial11PM ? 'COACH_SLEEP_2300' : `COACH_SLEEP_${sleepStatus.dateKey}_${slotTimeStr}`;
+
+      let sleepMsg = "😴 It's time to sleep, Mikiyas.";
+      if (sleepStatus.overdueMinutes >= 45 && sleepStatus.overdueMinutes < 60) {
+        sleepMsg = "⚠️ You're past your sleep target. Stop working and go to sleep.";
+      } else if (sleepStatus.overdueMinutes >= 30) {
+        sleepMsg = "😴 Still awake? Close Forge, shut down your PC, and get some rest.";
+      } else if (sleepStatus.overdueMinutes >= 15) {
+        sleepMsg = "🌙 Mikiyas, you're still up. Time to shut down and sleep.";
+      } else if (sleepStatus.overdueMinutes >= 60) {
+        sleepMsg = `🚨 Sleep is overdue by ${sleepStatus.overdueMinutes} minutes. Deep recovery is critical for tomorrow's discipline. Go to sleep now.`;
+      }
+
+      const buttons: Array<Array<{ text: string; callback_data: string }>> = [
+        [
+          { text: "✅ I'm going to sleep", callback_data: `sleep_ack_${sleepStatus.dateKey}` },
+        ],
+      ];
+
+      if (sleepStatus.snoozeCount < 3) {
+        buttons[0].push({
+          text: '⏰ 5 more minutes',
+          callback_data: `sleep_snooze_${sleepStatus.dateKey}`,
+        });
+      }
+
+      await helperSend(slotType, sleepMsg, { inline_keyboard: buttons });
+    }
   }
 
   // ── [5] DYNAMIC SCHEDULED TASKS FROM DATABASE (Active day: 11:00 AM to 09:28 PM) ──

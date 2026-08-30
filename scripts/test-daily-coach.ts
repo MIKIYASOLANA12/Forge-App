@@ -235,13 +235,40 @@ async function runTests() {
 
     // ── TEST 7: 09:30 PM WIND-DOWN & 11:00 PM SLEEP TARGET ──
     console.log('\n--- 7. Wind-Down and Sleep Target Timing ---');
+    await prisma.telegramNotificationLog.deleteMany({
+      where: {
+        type: { in: ['COACH_SLEEP_2300', 'COACH_WIND_DOWN_2130'] },
+      },
+    });
+    await prisma.telegramNotificationLog.deleteMany({
+      where: {
+        type: { startsWith: 'SLEEP_' },
+      },
+    });
+
     // At 09:35 PM: Wind down notification
     const time2135PM = createAddisDate(21, 35);
     const windDownRes = await sendSmartCoachScheduleReminder(time2135PM);
     assert(windDownRes.results.some((r) => r.slotType === 'COACH_WIND_DOWN_2130'), '09:30 PM Wind-down notification sent');
 
-    // At 11:05 PM: Sleep notification
+    // At 11:05 PM: Sleep notification (with active session)
     const time2305PM = createAddisDate(23, 5);
+    const testUser = await prisma.user.findFirst();
+    if (testUser) {
+      await prisma.userSession.upsert({
+        where: { sessionToken: 'mock_test_session_active' },
+        create: {
+          userId: testUser.id,
+          sessionToken: 'mock_test_session_active',
+          lastActiveAt: new Date(time2305PM.getTime() - 2 * 60 * 1000),
+          revoked: false,
+        },
+        update: {
+          lastActiveAt: new Date(time2305PM.getTime() - 2 * 60 * 1000),
+          revoked: false,
+        },
+      });
+    }
     const sleepRes = await sendSmartCoachScheduleReminder(time2305PM);
     assert(sleepRes.results.some((r) => r.slotType === 'COACH_SLEEP_2300'), '11:00 PM Sleep target notification sent');
 

@@ -20,6 +20,11 @@ import {
   getNowSummary,
   completeTaskFromTelegram,
 } from './telegramCommands';
+import {
+  acknowledgeSleep,
+  snoozeSleep,
+  getSleepAccountabilityStatus,
+} from './sleepAccountability';
 
 export const AUTHORIZED_PHONE = '+251977409986';
 
@@ -40,6 +45,34 @@ export async function handleTelegramWebhookUpdate(update: any): Promise<void> {
     const data = cq.data || '';
     const chatId = cq.message?.chat?.id;
     const messageId = cq.message?.message_id;
+
+    if (data.startsWith('sleep_ack_')) {
+      try {
+        const res = await acknowledgeSleep('TELEGRAM');
+        await answerTelegramCallbackQuery(callbackId, '✅ Sleep acknowledged. Good night, Mikiyas!');
+        if (chatId && messageId) {
+          await editTelegramMessageText(chatId, messageId, `✅ Sleep Acknowledged\n\nGood night, Mikiyas! Rest deeply for an energized 11:00 AM wake-up tomorrow.`);
+        }
+      } catch (err: any) {
+        await answerTelegramCallbackQuery(callbackId, 'Error acknowledging sleep.');
+        console.error('Telegram sleep ack error:', err);
+      }
+      return;
+    }
+
+    if (data.startsWith('sleep_snooze_')) {
+      try {
+        const res = await snoozeSleep(5);
+        await answerTelegramCallbackQuery(callbackId, res.message, !res.success);
+        if (res.success && chatId && messageId) {
+          await editTelegramMessageText(chatId, messageId, `⏰ Sleep Reminder Snoozed (5 mins)\n\n${res.message}`);
+        }
+      } catch (err: any) {
+        await answerTelegramCallbackQuery(callbackId, 'Error snoozing sleep.');
+        console.error('Telegram sleep snooze error:', err);
+      }
+      return;
+    }
 
     if (data.startsWith('comp_task_')) {
       const taskId = data.replace(/^comp_task_/, '');
@@ -144,6 +177,7 @@ export async function handleTelegramWebhookUpdate(update: any): Promise<void> {
       const helpMsg = `🛡️ FORGE TELEGRAM COMMANDS:
 
 /now — What should I do right now? (Current activity, remaining time, next session)
+/sleep — Acknowledge sleep or check sleep accountability status
 /today — Full daily overview (workout, tasks, focus, score)
 /plan — Today's AI-generated daily schedule & time targets
 /complete [task] — Mark an activity complete in Forge (e.g. /complete chemistry)
@@ -156,6 +190,24 @@ export async function handleTelegramWebhookUpdate(update: any): Promise<void> {
 /physique — 7-month upper body progression & 5-pose stand instructions
 /resetpassword — Generate an instant secure password reset link`;
       await sendTelegramMessage(chatId, helpMsg);
+      return;
+    }
+
+    if (cmd === '/sleep') {
+      const status = await getSleepAccountabilityStatus();
+      if (!status.isSleepWindow) {
+        await sendTelegramMessage(
+          chatId,
+          `🌙 FORGE SLEEP TARGET SCHEDULE:\n• Wind-down: 09:30 PM (ከሌሊቱ 3:30)\n• Target Sleep: 11:00 PM (ከሌሊቱ 5:00)\n• Target Wake-up: 11:00 AM (ከረፋዱ 5:00)\n\nPersistent sleep reminders activate at 11:00 PM.`
+        );
+        return;
+      }
+      if (status.isAcknowledged) {
+        await sendTelegramMessage(chatId, `✅ Sleep already acknowledged for tonight! Rest deeply, Mikiyas.`);
+        return;
+      }
+      await acknowledgeSleep('TELEGRAM');
+      await sendTelegramMessage(chatId, `✅ Sleep acknowledged. Good night, Mikiyas! Rest well.`);
       return;
     }
 

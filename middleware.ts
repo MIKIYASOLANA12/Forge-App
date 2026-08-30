@@ -77,40 +77,18 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  // 7. Enforce real server-side session revocation check on protected requests.
+  // 7. Forward request with x-pathname header so Server Components can validate session against PostgreSQL
+  const requestHeaders = new Headers(req.headers);
+  requestHeaders.set('x-pathname', pathname);
   if (session.sessionId) {
-    try {
-      const validateUrl = new URL('/api/auth/validate', req.url);
-      const validateRes = await fetch(validateUrl, {
-        headers: {
-          cookie: `${SESSION_COOKIE_NAME}=${sessionCookie}`,
-        },
-        cache: 'no-store',
-      });
-
-      if (!validateRes.ok) {
-        if (pathname.startsWith('/api/')) {
-          const res = NextResponse.json(
-            { error: 'Unauthorized: Session terminated.' },
-            { status: 401 }
-          );
-          res.cookies.delete(SESSION_COOKIE_NAME);
-          return res;
-        }
-
-        const loginUrl = new URL('/login', req.url);
-        loginUrl.searchParams.set('reason', 'terminated');
-        const res = NextResponse.redirect(loginUrl);
-        res.cookies.delete(SESSION_COOKIE_NAME);
-        return res;
-      }
-    } catch {
-      // If validation endpoint subrequest fails unexpectedly, allow proceed
-    }
+    requestHeaders.set('x-session-id', session.sessionId);
   }
 
-  // 8. Authenticated & verified user accessing protected route
-  return NextResponse.next();
+  return NextResponse.next({
+    request: {
+      headers: requestHeaders,
+    },
+  });
 }
 
 export const config = {

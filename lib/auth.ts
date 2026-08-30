@@ -202,3 +202,20 @@ export async function getSessionUserFromRequest(req: NextRequest | Request): Pro
     return null;
   }
 }
+
+import { NextResponse } from 'next/server';
+
+export async function requireAuth(
+  req: NextRequest | Request
+): Promise<{ session: SessionPayload; response?: undefined } | { session?: undefined; response: NextResponse }> {
+  const session = await getSessionUserFromRequest(req);
+  if (!session) {
+    const res = NextResponse.json(
+      { error: 'Unauthorized: Session has been terminated or is invalid.' },
+      { status: 401 }
+    );
+    res.cookies.delete(SESSION_COOKIE_NAME);
+    return { response: res };
+  }
+  return { session };
+}

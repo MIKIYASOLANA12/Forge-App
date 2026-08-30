@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { countActiveHabits, MAX_ACTIVE_HABITS } from '@/lib/streak'
+import { requireAuth } from '@/lib/auth'
 
 export async function GET(req: NextRequest) {
+  const auth = await requireAuth(req);
+  if (auth.response) return auth.response;
+
   const includeInactive = req.nextUrl.searchParams.get('includeInactive') === '1'
   const habits = await prisma.habit.findMany({
     where: includeInactive ? undefined : { active: true },
@@ -13,6 +17,9 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  const auth = await requireAuth(req);
+  if (auth.response) return auth.response;
+
   try {
     const body = await req.json()
     const { domainId, name } = body

@@ -1,9 +1,13 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { requireAuth } from '@/lib/auth'
 
 const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  const auth = await requireAuth(req);
+  if (auth.response) return auth.response;
+
   const { getAddisNow, workoutWindowForAddisDate } = await import('@/lib/workoutTime');
   const addisNow = getAddisNow();
   // Use Addis-local day window. Compute the startAddis for 6 days ago (week window start) and then create UTC range.

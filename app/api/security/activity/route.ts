@@ -28,16 +28,19 @@ export async function GET(req: NextRequest) {
     },
   });
 
+  const mapped = attempts.map((a) => ({
+    id: a.id,
+    email: a.email,
+    device: a.userAgent,
+    location: a.location,
+    ip: a.ipAddress,
+    status: a.status,
+    approvedAt: a.approvedAt,
+    attemptedAt: a.createdAt,
+  }));
+
   return NextResponse.json({
-    attempts: attempts.map((a) => ({
-      id: a.id,
-      email: a.email,
-      device: a.userAgent,
-      location: a.location,
-      ip: a.ipAddress,
-      status: a.status,
-      approvedAt: a.approvedAt,
-      attemptedAt: a.createdAt,
-    })),
+    attempts: mapped,
+    activity: mapped,
   });
 }

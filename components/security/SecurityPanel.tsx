@@ -107,7 +107,8 @@ export function SecurityPanel() {
         fetch("/api/security/activity")
           .then((r) => (r.ok ? r.json() : null))
           .then((actData) => {
-            if (actData?.activity) setAttempts(actData.activity);
+            if (actData?.attempts) setAttempts(actData.attempts);
+            else if (actData?.activity) setAttempts(actData.activity);
           })
           .catch(() => {});
 

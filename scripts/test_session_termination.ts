@@ -124,7 +124,23 @@ async function main() {
   assert(Boolean(await verifySessionToken(tokenB)), 'token signature still verifies, but DB revocation is the enforced gate');
   const logB = await prisma.loginActivity.findFirst({ where: { sessionId: sessionBTB } });
   assert(logB?.status === 'REVOKED', 'device B login activity feed updated to REVOKED');
-console.log('\n[7] Pending login attempt can be terminated and never approved later:');
+
+  // Test actual getSessionUserFromRequest with HTTP headers
+  const { getSessionUserFromRequest } = await import('../lib/auth');
+  const fakeReqA = new Request('http://localhost:3000/api/plan/today', {
+    headers: { cookie: `forge_session=${tokenA}` },
+  });
+  const fakeReqB = new Request('http://localhost:3000/api/plan/today', {
+    headers: { cookie: `forge_session=${tokenB}` },
+  });
+
+  const authUserA = await getSessionUserFromRequest(fakeReqA);
+  const authUserB = await getSessionUserFromRequest(fakeReqB);
+
+  assert(authUserA !== null && authUserA.userId === user.id, 'Device A request authenticates successfully');
+  assert(authUserB === null, 'Device B request is rejected with null (triggers 401 & cookie deletion)');
+
+  console.log('\n[7] Pending login attempt can be terminated and never approved later:');
   const pending = await prisma.loginActivity.create({
     data: { userId: user.id, email: user.email, userAgent: 'Test Device', location: 'Unknown', status: 'PENDING' },
   });

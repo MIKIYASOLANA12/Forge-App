@@ -29,6 +29,10 @@ import { getHolidayWorkoutStatus } from './holidayWorkout';
 import { getDashboardCountdowns } from './countdowns';
 import { getAppPublicUrl } from './urls';
 
+import { getSmartScheduleStatus } from './smartSchedule';
+import { computeXp } from './xp';
+import { recordProgressActivity } from './progressEngine';
+
 function getTodayDateRange() {
   const now = getAddisNow();
   const { startUtc: todayStart, endUtc: todayEnd } = workoutWindowForAddisDate(now);
@@ -534,4 +538,136 @@ Target Muscle Focus: Chest, Back, Triceps, Biceps, Neck, Abs & Wings
 Upload your monthly photos on Forge:
 https://forge-app-eight-kappa.vercel.app/physique`;
 }
+
+/**
+ * /now command: What should I be doing right now?
+ * Returns current scheduled activity, time remaining, next activity and later today agenda.
+ */
+export async function getNowSummary(customNow?: Date): Promise<{ text: string; activeTaskId?: string; activeTaskTitle?: string }> {
+  const status = await getSmartScheduleStatus(customNow);
+  const ethTime = status.ethiopianTimeFormatted ? ` · 🇪🇹 ${status.ethiopianTimeFormatted}` : '';
+
+  let lines: string[] = [];
+  lines.push(`🕒 FORGE LIVE COACH · ${status.addisTimeFormatted}${ethTime}`);
+  lines.push(`🎯 Target Wake-up: 11:00 AM | Target Sleep: 11:00 PM\n`);
+
+  if (status.currentActivity) {
+    const act = status.currentActivity;
+    lines.push(`🔥 RIGHT NOW:`);
+    lines.push(`• Activity: ${act.title}`);
+    lines.push(`• Window: ${act.startTimeFormatted} – ${act.endTimeFormatted}`);
+    lines.push(`• Status: ${act.isCompleted ? '✅ Completed' : `⏱️ ${act.minutesRemaining} minutes remaining`}`);
+  } else {
+    lines.push(`🔥 RIGHT NOW:`);
+    lines.push(`• ${status.currentActivityTitle}`);
+    lines.push(`• ${status.statusMessage}`);
+  }
+
+  if (status.nextActivity) {
+    const next = status.nextActivity;
+    lines.push(`\n➡️ NEXT ACTIVITY:`);
+    lines.push(`• ${next.title} at ${next.startTimeFormatted}`);
+    if (next.minutesUntilStart > 0) {
+      lines.push(`• Starts in: ${next.minutesUntilStart} minutes`);
+    }
+  }
+
+  if (status.laterToday && status.laterToday.length > 0) {
+    lines.push(`\n📋 LATER TODAY:`);
+    for (const item of status.laterToday.slice(0, 4)) {
+      const mark = item.isCompleted ? '✅' : '⏳';
+      lines.push(`• ${mark} ${item.title} (${item.startTimeFormatted} – ${item.endTimeFormatted})`);
+    }
+  }
+
+  return {
+    text: lines.join('\n'),
+    activeTaskId: status.currentActivity && !status.currentActivity.isCompleted ? status.currentActivity.id : undefined,
+    activeTaskTitle: status.currentActivity?.title,
+  };
+}
+
+/**
+ * Marks a task complete from Telegram (via command or button callback)
+ * Updates database and awards XP.
+ */
+export async function completeTaskFromTelegram(query: string, customNow?: Date): Promise<{ success: boolean; message: string; taskId?: string }> {
+  const clean = query.trim().toLowerCase();
+  if (!clean) {
+    return { success: false, message: '⚠️ Please specify a task name or ID to mark complete (e.g. /complete chemistry).' };
+  }
+
+  const now = customNow || getAddisNow();
+  const windowInfo = workoutWindowForAddisDate(now);
+
+  if (windowInfo.isClosed) {
+    return {
+      success: false,
+      message: '🛑 The daily execution window closed at 09:28 PM. Tasks cannot be completed after cutoff.',
+    };
+  }
+
+  const todayPlan = await ensureTodayDailyPlan();
+  const tasks = todayPlan.tasks;
+
+  // 1. Try finding by exact ID
+  let target = tasks.find((t) => t.id === query.trim());
+
+  // 2. Try matching by subject or description substring
+  if (!target) {
+    target = tasks.find((t) => {
+      const d = t.description.toLowerCase();
+      const s = (t.subject || '').toLowerCase();
+      const top = (t.topic || '').toLowerCase();
+      return d.includes(clean) || s.includes(clean) || top.includes(clean);
+    });
+  }
+
+  if (!target) {
+    return {
+      success: false,
+      message: `⚠️ Could not find an active task matching "${query}". Type /plan or /now to see today's activities.`,
+    };
+  }
+
+  if (target.completed) {
+    return {
+      success: true,
+      message: `✅ "${formatTaskText(target.description)}" was already marked complete in Forge!`,
+      taskId: target.id,
+    };
+  }
+
+  // Update in database
+  const updatedTask = await prisma.planTask.update({
+    where: { id: target.id },
+    data: { completed: true },
+  });
+
+  // Award XP
+  const domain = await prisma.domain.findUnique({ where: { id: target.domainId } });
+  const profile = await prisma.userProfile.findUnique({ where: { id: 'singleton' } });
+  const effectiveWeight = domain?.weight ?? 1.0;
+  const xpEarned = computeXp(target.minutesTarget, effectiveWeight);
+
+  const updatedProfile = await prisma.userProfile.update({
+    where: { id: 'singleton' },
+    data: { totalXp: { increment: xpEarned } },
+  });
+
+  const newLevel = computeLevel(updatedProfile.totalXp);
+  if (newLevel !== updatedProfile.level) {
+    await prisma.userProfile.update({ where: { id: 'singleton' }, data: { level: newLevel } });
+  }
+
+  await recordProgressActivity(0).catch(() => {});
+
+  const cleanTitle = formatTaskText(updatedTask.description);
+  return {
+    success: true,
+    message: `🎉 Great job, Mikiyas! Marked "${cleanTitle}" complete in Forge!\n⚡ Earned +${xpEarned} XP (Total: ${updatedProfile.totalXp.toLocaleString()} XP).`,
+    taskId: target.id,
+  };
+}
+
 

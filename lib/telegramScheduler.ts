@@ -12,6 +12,12 @@ import { computeLevel, levelProgress } from './xp';
 import { getAccountabilityRoast, RoastCategory } from './accountabilityRoast';
 import { ensureTodayDailyPlan } from './dailyPlanGenerator';
 import { calculateChemistryOneMonthPlan, calculateJavaScriptPacing } from './studyRoadmaps';
+import {
+  parseTimeToMinutes,
+  formatMinutesTo12Hour,
+  getTaskCleanTitle,
+  getTaskCategory,
+} from './smartSchedule';
 
 function formatTaskText(desc: string): string {
   try {
@@ -196,12 +202,12 @@ ${pendingTasks.length > 0 ? pendingTasks.slice(0, 4).map((t) => `• [ ] ${forma
     const delivered = await sendTelegramMessage(targetChatId, message);
     if (delivered.ok && typeof delivered.result?.message_id === 'number') {
       if (!confirmed) lastMsgId = Number(delivered.result.message_id);
-      confirmed = confirmed || true;
+      confirmed = true;
     }
     if (!delivered.ok && !firstError) firstError = delivered?.description || 'Unknown telegram error';
   }
 
-  // Record in TelegramNotificationLog (status reflects actual confirmed delivery).
+  // Record in TelegramNotificationLog
   await prisma.telegramNotificationLog.upsert({
     where: {
       date_type: {
@@ -252,148 +258,237 @@ export async function processAccountabilityCron() {
 }
 
 /**
- * Sends smart contextual reminders (11:00 AM Wake-Up, dynamically scheduled Study/Coding/Workout tasks, Sleep)
- * derived directly from Forge's single source of truth (DailyPlan & PlanTask in database).
- * Deduplicated per task per date.
+ * Sends smart contextual coach reminders derived directly from Forge's single source of truth
+ * (DailyPlan & PlanTask in database):
+ * 
+ * 1. 11:00 AM Fixed Wake-up
+ * 2. Activity Start Notifications (at scheduled start time, with interactive complete button)
+ * 3. Activity End Notifications (at scheduled end time, calculating next activity and gap)
+ * 4. Missed Activity alerts (if window passed without completion, non-spamming)
+ * 5. 09:30 PM Wind-down
+ * 6. 11:00 PM Sleep target
+ * 
+ * Deduplicated per task per slot per date.
  */
 export async function sendSmartCoachScheduleReminder(customNow?: Date) {
-  const { totalMinutes, year, month, day } = getAddisTimeComponents(customNow);
+  const { totalMinutes, year, month, day, formatted12h } = getAddisTimeComponents(customNow);
   const addisNow = customNow || getAddisNow();
-
   const normalizedDateKey = new Date(Date.UTC(year, month - 1, day));
 
-  let slotType: string | null = null;
-  let coachMessage: string | null = null;
-
-  // 1. FIXED 11:00 AM WAKE-UP REMINDER (660..719 mins)
-  if (totalMinutes >= 660 && totalMinutes < 720) {
-    slotType = 'COACH_WAKE_1100';
-    coachMessage = `☀️ Good morning, Mikiyas! It is 11:00 AM — your target wake-up time.
-Hydrate, review your daily roadmap in Forge, and prepare for a disciplined, high-impact day.`;
-  }
-  // 2. FIXED 09:28 PM DAILY CLOSE CUTOFF REMINDER (1288..1290 mins)
-  else if (totalMinutes >= 1288 && totalMinutes < 1290) {
-    slotType = 'COACH_CLOSE_2128';
-    coachMessage = `⏳ Daily Close: 09:28 PM cutoff has arrived.
-Submit all your completed tasks, workout logs, and check-ins to lock in your score!`;
-  }
-  // 3. WIND-DOWN REMINDER (09:30 PM – 10:59 PM / 1290..1379 mins)
-  else if (totalMinutes >= 1290 && totalMinutes < 1380) {
-    slotType = 'COACH_WIND_DOWN_2130';
-    coachMessage = `🌙 09:30 PM — Start winding down, Mikiyas.
-Disconnect from screens and prepare for restful 11:00 PM sleep.`;
-  }
-  // 4. FIXED 11:00 PM SLEEP TARGET REMINDER (1380..1439 mins) - ONLY AT NIGHT!
-  else if (totalMinutes >= 1380) {
-    slotType = 'COACH_SLEEP_2300';
-    coachMessage = `😴 It's 11:00 PM — time to sleep, Mikiyas.
-Consistent sleep drives tomorrow's cognitive focus and muscle recovery. Target wake-up is 11:00 AM.`;
-  }
-  // 5. DYNAMIC SCHEDULED TASKS FROM DATABASE (Active day only: 11:00 AM to 09:28 PM)
-  else if (totalMinutes >= 660 && totalMinutes < 1288) {
-    const todayPlan = await ensureTodayDailyPlan();
-    const tasks = todayPlan?.tasks || [];
-
-    for (const t of tasks) {
-      if (!t.plannedStartTime || t.completed) continue;
-      const match = t.plannedStartTime.trim().match(/^(\d{1,2}):(\d{2})$/);
-      if (!match) continue;
-      const taskStartMins = parseInt(match[1], 10) * 60 + parseInt(match[2], 10);
-
-      // Notification window: within 45 minutes of scheduled start time
-      if (totalMinutes >= taskStartMins && totalMinutes < taskStartMins + 45) {
-        let taskTitle = t.description;
-        try {
-          const parsed = JSON.parse(t.description);
-          if (parsed.title) taskTitle = parsed.title;
-        } catch {}
-
-        const isWorkout = /workout|gym|exercise|push|pull|legs/i.test(`${t.subject || ''} ${t.description}`);
-        const isStudy = t.isStudy || /chemistry|biology|math|physics|english|study/i.test(`${t.subject || ''} ${t.description}`);
-        const isCoding = /javascript|code|coding|5 million/i.test(`${t.subject || ''} ${t.description}`);
-
-        if (isWorkout) {
-          const { getHolidayWorkoutStatus } = await import('./holidayWorkout');
-          const holiday = getHolidayWorkoutStatus(addisNow);
-          const workoutDesc = holiday.isHolidayPeriod
-            ? `16-Day Holiday Home Workout (${holiday.todayRoutine?.title || 'Home Session'})`
-            : `Scheduled Gym Training Session`;
-
-          slotType = `COACH_TASK_${t.id}_${t.plannedStartTime}`;
-          coachMessage = `🏋️ Workout time! Get ready for your ${workoutDesc}.
-Focus on clean form, controlled cadence, and disciplined sets.`;
-          break;
-        } else if (isCoding) {
-          slotType = `COACH_TASK_${t.id}_${t.plannedStartTime}`;
-          coachMessage = `💻 Time to code — ${taskTitle}.
-Open your editor and build your daily algorithmic coding target.`;
-          break;
-        } else if (isStudy) {
-          slotType = `COACH_TASK_${t.id}_${t.plannedStartTime}`;
-          coachMessage = `📚 Study time — ${taskTitle}.
-Deep focus session. Open your notes and complete your target study minutes.`;
-          break;
-        } else {
-          slotType = `COACH_TASK_${t.id}_${t.plannedStartTime}`;
-          coachMessage = `⚡ Scheduled focus time — ${taskTitle}.
-Stay disciplined and check off your target in Forge.`;
-          break;
-        }
-      }
-    }
-  }
-
-  if (!slotType || !coachMessage) {
-    return { sent: false, reason: 'No scheduled reminder slot for current time.' };
-  }
-
-  // Deduplication check
-  const existing = await prisma.telegramNotificationLog.findUnique({
-    where: {
-      date_type: {
-        date: normalizedDateKey,
-        type: slotType,
-      },
-    },
-  });
-
-  if (existing) {
-    return { sent: false, reason: `Reminder [${slotType}] already sent today.` };
-  }
+  const results: Array<{ slotType: string; sent: boolean; message: string }> = [];
 
   const accounts = await prisma.telegramAccount.findMany({
     where: { active: true },
   });
 
   if (accounts.length === 0) {
-    return { sent: false, reason: 'No active Telegram accounts linked.' };
+    return { sent: false, reason: 'No active Telegram accounts linked.', results: [] };
   }
 
-  let confirmed = false;
-  let lastMsgId: number | null = null;
-  let firstChat: string | null = null;
+  const helperSend = async (slotType: string, msg: string, replyMarkup?: any) => {
+    // Deduplication check in DB
+    const existing = await prisma.telegramNotificationLog.findUnique({
+      where: {
+        date_type: {
+          date: normalizedDateKey,
+          type: slotType,
+        },
+      },
+    });
 
-  for (const acc of accounts) {
-    const targetChat = acc.chatId || acc.telegramId;
-    if (!targetChat) continue;
-    if (!firstChat) firstChat = String(targetChat);
-    const delivered = await sendTelegramMessage(targetChat, coachMessage);
-    if (delivered.ok) {
-      confirmed = true;
-      if (typeof delivered.result?.message_id === 'number') lastMsgId = delivered.result.message_id;
+    if (existing) {
+      return { slotType, sent: false, reason: 'Already sent' };
+    }
+
+    let confirmed = false;
+    let lastMsgId: number | null = null;
+    let firstChat: string | null = null;
+
+    for (const acc of accounts) {
+      const targetChat = acc.chatId || acc.telegramId;
+      if (!targetChat) continue;
+      if (!firstChat) firstChat = String(targetChat);
+      const delivered = await sendTelegramMessage(targetChat, msg, {
+        reply_markup: replyMarkup,
+      });
+      if (delivered.ok) {
+        confirmed = true;
+        if (typeof delivered.result?.message_id === 'number') {
+          lastMsgId = delivered.result.message_id;
+        }
+      }
+    }
+
+    await prisma.telegramNotificationLog.create({
+      data: {
+        date: normalizedDateKey,
+        type: slotType,
+        chatId: firstChat || 'system',
+        message: msg,
+        status: confirmed ? 'SENT' : 'DELIVERY_FAILED',
+        telegramMessageId: lastMsgId,
+      },
+    });
+
+    results.push({ slotType, sent: confirmed, message: msg });
+    return { slotType, sent: confirmed, message: msg };
+  };
+
+  // ── [1] FIXED 11:00 AM WAKE-UP (660..719 mins) ──────────────────────────────
+  if (totalMinutes >= 660 && totalMinutes < 720) {
+    const todayPlan = await ensureTodayDailyPlan();
+    const firstTask = todayPlan?.tasks?.find((t) => parseTimeToMinutes(t.plannedStartTime) !== null);
+    let nextMsg = 'Review your roadmap in Forge to start your day.';
+    if (firstTask) {
+      const title = getTaskCleanTitle(firstTask);
+      const sTime = firstTask.plannedStartTime ? formatMinutesTo12Hour(parseTimeToMinutes(firstTask.plannedStartTime)!) : '12:00 PM';
+      nextMsg = `Next planned activity: ${title} at ${sTime}.`;
+    }
+
+    const wakeMsg = `☀️ Good morning, Mikiyas.
+It's 11:00 AM — time to wake up.
+
+${nextMsg}`;
+
+    await helperSend('COACH_WAKE_1100', wakeMsg);
+  }
+
+  // ── [2] 09:28 PM DAILY CLOSE CUTOFF (1288..1289 mins) ───────────────────────
+  if (totalMinutes >= 1288 && totalMinutes < 1290) {
+    const closeMsg = `⏳ Daily Close: 09:28 PM cutoff has arrived.
+Submit all your completed tasks, workout logs, and check-ins to lock in your daily score!`;
+    await helperSend('COACH_CLOSE_2128', closeMsg);
+  }
+
+  // ── [3] 09:30 PM WIND-DOWN REMINDER (1290..1379 mins) ──────────────────────
+  if (totalMinutes >= 1290 && totalMinutes < 1380) {
+    const windDownMsg = `🌙 Start winding down.
+Disconnect from screens and prepare for restful 11:00 PM sleep, Mikiyas.`;
+    await helperSend('COACH_WIND_DOWN_2130', windDownMsg);
+  }
+
+  // ── [4] FIXED 11:00 PM SLEEP TARGET REMINDER (>= 1380 mins) ────────────────
+  if (totalMinutes >= 1380) {
+    const sleepMsg = `😴 It's time to sleep, Mikiyas.
+Consistent sleep drives tomorrow's cognitive focus and muscle recovery. Target wake-up is 11:00 AM.`;
+    await helperSend('COACH_SLEEP_2300', sleepMsg);
+  }
+
+  // ── [5] DYNAMIC SCHEDULED TASKS FROM DATABASE (Active day: 11:00 AM to 09:28 PM) ──
+  if (totalMinutes >= 660 && totalMinutes < 1288) {
+    const todayPlan = await ensureTodayDailyPlan();
+    const tasks = todayPlan?.tasks || [];
+
+    // Parse tasks with time windows
+    const parsedTasks = tasks
+      .map((t) => {
+        const startM = parseTimeToMinutes(t.plannedStartTime);
+        const duration = t.minutesTarget || 60;
+        const endM = parseTimeToMinutes(t.plannedEndTime) ?? (startM !== null ? startM + duration : null);
+        return {
+          task: t,
+          title: getTaskCleanTitle(t),
+          category: getTaskCategory(t),
+          startM,
+          endM,
+          duration,
+        };
+      })
+      .filter((item): item is typeof item & { startM: number; endM: number } => item.startM !== null && item.endM !== null)
+      .sort((a, b) => a.startM - b.startM);
+
+    for (let i = 0; i < parsedTasks.length; i++) {
+      const current = parsedTasks[i];
+      const t = current.task;
+      const next = parsedTasks.slice(i + 1).find((other) => other.startM > current.startM);
+
+      const nextInfoStr = next
+        ? `➡️ Next:\n${getCategoryEmoji(next.category)} ${next.title}\n🕑 ${formatMinutesTo12Hour(next.startM)}`
+        : `✅ You're done with your planned tasks for now.`;
+
+      const gap = next ? next.startM - current.endM : 0;
+      const gapStr = gap > 0
+        ? `\n\n⏳ You have ${gap >= 60 ? `${Math.floor(gap / 60)} hour${Math.floor(gap / 60) > 1 ? 's' : ''}${gap % 60 ? ` ${gap % 60}m` : ''}` : `${gap} minutes`} before your next session. Use it for a planned task, break, meal, or preparation.`
+        : '';
+
+      // A. ACTIVITY START NOTIFICATION (totalMinutes within 0..30 mins of start time)
+      if (totalMinutes >= current.startM && totalMinutes < current.startM + 30 && !t.completed) {
+        const slotKey = `COACH_START_${t.id}_${t.plannedStartTime}`;
+        const startMsg = getStartNotificationMessage(current.title, current.category);
+
+        const completeMarkup = {
+          inline_keyboard: [
+            [
+              {
+                text: `✅ Mark ${truncateString(current.title, 20)} Complete`,
+                callback_data: `comp_task_${t.id}`,
+              },
+            ],
+          ],
+        };
+
+        await helperSend(slotKey, startMsg, completeMarkup);
+      }
+
+      // B. ACTIVITY END NOTIFICATION (totalMinutes within 0..30 mins of end time)
+      if (totalMinutes >= current.endM && totalMinutes < current.endM + 30) {
+        const slotKey = `COACH_END_${t.id}_${t.plannedEndTime || t.plannedStartTime}`;
+        const endMsg = `✅ ${current.title} finished.\n\n${nextInfoStr}${gapStr}`;
+
+        await helperSend(slotKey, endMsg);
+      }
+
+      // C. MISSED ACTIVITY ALERT (totalMinutes >= endM + 15 && totalMinutes < endM + 75 and !completed)
+      if (totalMinutes >= current.endM + 15 && totalMinutes < current.endM + 75 && !t.completed) {
+        const slotKey = `COACH_MISSED_${t.id}`;
+        const missedMsg = `⚠️ You missed your planned ${current.title} session.\n\n${nextInfoStr}`;
+
+        await helperSend(slotKey, missedMsg);
+      }
     }
   }
 
-  await prisma.telegramNotificationLog.create({
-    data: {
-      date: normalizedDateKey,
-      type: slotType,
-      chatId: firstChat || 'system',
-      message: coachMessage,
-      status: confirmed ? 'SENT' : 'DELIVERY_FAILED',
-      telegramMessageId: lastMsgId,
-    },
-  });
+  return {
+    sent: results.some((r) => r.sent),
+    count: results.filter((r) => r.sent).length,
+    results,
+  };
+}
 
-  return { sent: confirmed, slotType, message: coachMessage };
+function getCategoryEmoji(category: string): string {
+  switch (category) {
+    case 'STUDY': return '📚';
+    case 'CODING': return '💻';
+    case 'WORKOUT': return '💪';
+    case 'READING': return '📖';
+    case 'WAKE': return '☀️';
+    case 'SLEEP': return '😴';
+    case 'WIND_DOWN': return '🌙';
+    default: return '⚡';
+  }
+}
+
+function getStartNotificationMessage(title: string, category: string): string {
+  const lower = title.toLowerCase();
+  if (category === 'WORKOUT' || lower.includes('workout') || lower.includes('gym')) {
+    return `💪 Workout time. Get ready for ${title}.`;
+  }
+  if (category === 'CODING' || lower.includes('coding') || lower.includes('javascript')) {
+    return `💻 Mikiyas, ${title} starts now.`;
+  }
+  if (lower.includes('bible') || lower.includes('scripture')) {
+    return `🙏 It's Bible study time — ${title}.`;
+  }
+  if (category === 'READING' || lower.includes('reading') || lower.includes('book')) {
+    return `📖 It's time for ${title}.`;
+  }
+  if (lower.includes('chemistry')) {
+    return `⏰ Mikiyas, it's time to study Chemistry (${title}).`;
+  }
+  return `⏰ Mikiyas, it's time for ${title}. Let's get started.`;
+}
+
+function truncateString(str: string, maxLen: number): string {
+  if (str.length <= maxLen) return str;
+  return str.slice(0, maxLen - 1) + '…';
 }

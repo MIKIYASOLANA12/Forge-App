@@ -17,6 +17,8 @@ import {
   getNutritionSummary,
   getCalendarSummary,
   getPhysiqueSummary,
+  getNowSummary,
+  completeTaskFromTelegram,
 } from './telegramCommands';
 
 export const AUTHORIZED_PHONE = '+251977409986';
@@ -38,6 +40,21 @@ export async function handleTelegramWebhookUpdate(update: any): Promise<void> {
     const data = cq.data || '';
     const chatId = cq.message?.chat?.id;
     const messageId = cq.message?.message_id;
+
+    if (data.startsWith('comp_task_')) {
+      const taskId = data.replace(/^comp_task_/, '');
+      try {
+        const res = await completeTaskFromTelegram(taskId);
+        await answerTelegramCallbackQuery(callbackId, res.success ? '✅ Task marked complete in Forge!' : res.message, !res.success);
+        if (res.success && chatId && messageId) {
+          await editTelegramMessageText(chatId, messageId, `✅ Marked Complete!\n\n${res.message}`);
+        }
+      } catch (err: any) {
+        await answerTelegramCallbackQuery(callbackId, 'Error completing task.');
+        console.error('Telegram task completion error:', err);
+      }
+      return;
+    }
 
     if (data.startsWith('term_') || data.startsWith('auth_')) {
       const sessionToken = data.replace(/^(term|auth)_/, '');
@@ -126,10 +143,12 @@ export async function handleTelegramWebhookUpdate(update: any): Promise<void> {
     if (cmd === '/start' || cmd === '/help') {
       const helpMsg = `🛡️ FORGE TELEGRAM COMMANDS:
 
+/now — What should I do right now? (Current activity, remaining time, next session)
 /today — Full daily overview (workout, tasks, focus, score)
+/plan — Today's AI-generated daily schedule & time targets
+/complete [task] — Mark an activity complete in Forge (e.g. /complete chemistry)
 /workout — Detailed workout tracker, phase, exercises & next unlock
 /progress — Real-time progress engine metrics, XP, streak & level
-/plan — Today's AI-generated daily schedule & time targets
 /missed — Incomplete tasks, pending habits & learning gaps
 /report — Daily performance analysis & monthly summary
 /nutrition — Daily calories, protein intake & meal logs
@@ -137,6 +156,31 @@ export async function handleTelegramWebhookUpdate(update: any): Promise<void> {
 /physique — 7-month upper body progression & 5-pose stand instructions
 /resetpassword — Generate an instant secure password reset link`;
       await sendTelegramMessage(chatId, helpMsg);
+      return;
+    }
+
+    if (cmd === '/now' || cmd === '/current' || cmd === '/coach' || cmd === '/whatnext') {
+      const { text: nowMsg, activeTaskId, activeTaskTitle } = await getNowSummary();
+      const markup = activeTaskId
+        ? {
+            inline_keyboard: [
+              [
+                {
+                  text: `✅ Mark "${activeTaskTitle || 'Task'}" Complete`,
+                  callback_data: `comp_task_${activeTaskId}`,
+                },
+              ],
+            ],
+          }
+        : undefined;
+      await sendTelegramMessage(chatId, nowMsg, { reply_markup: markup });
+      return;
+    }
+
+    if (cmd === '/complete' || cmd === '/done') {
+      const query = text.substring(cmd.length).trim();
+      const res = await completeTaskFromTelegram(query);
+      await sendTelegramMessage(chatId, res.message);
       return;
     }
 

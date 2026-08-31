@@ -39,6 +39,7 @@ export interface PlanMetadata {
   workoutLocation?: string;
   workoutExercises?: string[];
   targetMinutes: number;
+  xpTarget?: number;
   rawTitle: string;
 }
 

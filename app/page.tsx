@@ -45,6 +45,7 @@ import { SleepScheduleCard } from "@/components/dashboard/SleepScheduleCard";
 import type { SmartScheduleStatus } from "@/lib/smartSchedule";
 import type { CountdownCard } from "@/lib/countdowns";
 import type { HolidayStatus } from "@/lib/holidayWorkout";
+import { PlanTaskCard } from "@/components/tasks/PlanTaskCard";
 
 type PlanTask = {
   id: string;
@@ -251,16 +252,7 @@ export default function Home() {
     }
   };
 
-  const taskBlocks = tasks.map((task, index) => ({
-    id: task.id,
-    domain: task.domain?.name ?? "Personal",
-    title: task.description || "Plan item",
-    minutes: task.minutesTarget ?? 30,
-    accent: task.domain?.color ?? "#f97316",
-    tag: String(index + 1).padStart(2, "0"),
-  }));
-
-  const totalTasksCount = taskBlocks.length;
+  const totalTasksCount = tasks.length;
   const completedCount = completed.length;
   const progressPercentage =
     totalTasksCount > 0 ? Math.round((completedCount / totalTasksCount) * 100) : 0;
@@ -536,60 +528,19 @@ export default function Home() {
             </Link>
           </div>
 
-          <div className="divide-y divide-[var(--border)]">
-            {taskBlocks.length > 0 ? (
-              taskBlocks.map((task, index) => {
+          <div className="p-4 sm:p-5 space-y-4">
+            {tasks.length > 0 ? (
+              tasks.map((task, index) => {
                 const isDone = completed.includes(task.id);
                 return (
-                  <div
+                  <PlanTaskCard
                     key={task.id}
-                    className={`group flex items-center gap-4 px-5 py-4 transition-colors hover:bg-[var(--bg-elevated)] ${
-                      isDone ? "opacity-55" : ""
-                    }`}
-                  >
-                    <button
-                      aria-label={
-                        isDone ? `Mark ${task.title} incomplete` : `Complete ${task.title}`
-                      }
-                      onClick={() => toggleTask(task.id)}
-                      className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-2 transition-all cursor-pointer"
-                      style={{
-                        borderColor: isDone ? task.accent : "var(--border-active)",
-                        backgroundColor: isDone ? task.accent : "transparent",
-                      }}
-                    >
-                      {isDone && <Check size={15} strokeWidth={3} className="text-black" />}
-                    </button>
-                    <div className="min-w-0 flex-1">
-                      <div className="mb-1 flex flex-wrap items-center gap-2">
-                        <span
-                          className="text-[10px] font-bold tracking-[0.16em]"
-                          style={{ color: task.accent }}
-                        >
-                          {String(index + 1).padStart(2, "0")} / {task.domain}
-                        </span>
-                      </div>
-                      <div
-                        className={`text-sm font-semibold ${
-                          isDone
-                            ? "line-through text-[var(--text-muted)]"
-                            : "text-[var(--text-primary)]"
-                        }`}
-                      >
-                        {task.title}
-                      </div>
-                    </div>
-                    <div className="hidden items-center gap-1.5 text-xs text-[var(--text-muted)] sm:flex">
-                      <Clock3 size={14} /> {task.minutes}m
-                    </div>
-                    <button
-                      aria-label={`Start focus on ${task.title}`}
-                      onClick={() => setRunning(!running)}
-                      className="rounded-lg p-2 text-[var(--text-muted)] transition-colors hover:bg-[var(--bg-overlay)] hover:text-[var(--text-primary)]"
-                    >
-                      <Play size={15} fill="currentColor" />
-                    </button>
-                  </div>
+                    task={task}
+                    index={index}
+                    isDone={isDone}
+                    onToggle={() => toggleTask(task.id)}
+                    onStartFocus={() => setRunning(!running)}
+                  />
                 );
               })
             ) : (

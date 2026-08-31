@@ -8,6 +8,7 @@ import { sendTelegramMessage } from './telegram';
 import { getDailyBreakdown, getProgressHistory } from './progressEngine';
 import { computeLevel } from './xp';
 import { getAccountabilityRoast, RoastCategory } from './accountabilityRoast';
+import { parsePlanMetadata } from './planParser';
 
 export type WorkoutWindow = ReturnType<typeof workoutWindowForAddisDate>;
 export type AccountabilityDeliveryState = 'NOT_SENT' | 'SENT' | 'DELIVERY_FAILED' | 'UNKNOWN';
@@ -174,22 +175,8 @@ function classifyTask(subjectRaw?: string | null, titleRaw = '', descriptionRaw 
 
 /** Per-item display line (e.g. "Chemistry — Stoichiometry", "Reading — Book (pages 42–53)"). */
 function taskDisplayLabel(category: string, t: { subject?: string | null; topic?: string | null; description: string }): string {
-  const meta = labelOf(t.description);
-  const title = meta.title || t.description;
-  const topic = t.topic || meta.mainTopic;
-
-  if (category === 'Chemistry') return `Chemistry${topic ? ` — ${topic}` : ''}`;
-  if (category === 'JavaScript') return `JavaScript${topic && topic !== title ? ` — ${topic}` : ''}`;
-  if (category === 'Reading') {
-    const book = meta.bookTitle;
-    const pages = meta.pagesTarget;
-    return `Reading${book ? ` — ${book}` : ''}${pages ? ` (pages ${pages})` : ''}`;
-  }
-  if (category === 'Biology' || category === 'Mathematics' || category === 'Physics' || category === 'English') {
-    const clean = title.replace(new RegExp(`^(?:${category})\\s*[-—:]?\\s*`, 'i'), '').trim();
-    return `${category}${clean ? ` — ${clean}` : ''}`;
-  }
-  return title.replace(/\s+/g, ' ').trim();
+  const meta = parsePlanMetadata(t.description, t);
+  return meta.displayTitle || t.description;
 }
 /**
  * Detect ALL missed + completed required activities for a closed Addis day

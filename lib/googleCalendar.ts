@@ -2,6 +2,7 @@ import { google } from 'googleapis';
 import { prisma } from './prisma';
 import { getAddisNow, workoutWindowForAddisDate, TIMEZONE } from './workoutTime';
 import { getAppPublicUrl } from './urls';
+import { parsePlanMetadata } from './planParser';
 
 const calendar = google.calendar('v3');
 
@@ -143,20 +144,20 @@ export async function syncForgePlanToGoogleCalendar() {
 
     for (const task of plan.tasks) {
       const dName = domainMap.get(task.domainId) || 'Task';
-      let title = 'Forge Planned Task';
-      let startTimeStr = '09:00';
-      let endTimeStr = '10:00';
+      const meta = parsePlanMetadata(task.description, task);
+      let title = meta.displayTitle || 'Forge Planned Task';
+      let startTimeStr = task.plannedStartTime || '09:00';
+      let endTimeStr = task.plannedEndTime || '10:00';
       let description = '';
 
       try {
         const parsed = JSON.parse(task.description);
-        title = parsed.title || parsed.description || title;
-        description = parsed.description || '';
         if (parsed.startTime) startTimeStr = parsed.startTime;
         if (parsed.endTime) endTimeStr = parsed.endTime;
-      } catch {
-        title = task.description || title;
-      }
+        if (typeof parsed.description === 'string' && !parsed.description.startsWith('{')) {
+          description = parsed.description;
+        }
+      } catch {}
 
       // Construct start & end ISO strings in Addis Ababa (+03:00)
       const startDateTime = `${planDateStr}T${startTimeStr}:00+03:00`;

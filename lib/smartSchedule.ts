@@ -22,6 +22,7 @@ import {
 } from './workoutTime';
 import { ensureTodayDailyPlan } from './dailyPlanGenerator';
 import { getHolidayWorkoutStatus } from './holidayWorkout';
+import { parsePlanMetadata } from './planParser';
 
 export interface ScheduledActivityItem {
   id?: string;
@@ -123,21 +124,18 @@ export function formatMinutesTo12Hour(mins: number): string {
 }
 
 export function getTaskCleanTitle(task: any): string {
-  try {
-    const parsed = JSON.parse(task.description);
-    if (parsed.title) return parsed.title;
-  } catch {}
-  if (task.subject && task.topic) return `${task.subject}: ${task.topic}`;
-  if (task.subject) return `${task.subject} Session`;
-  return task.description || 'Focus Session';
+  if (!task) return 'Focus Session';
+  const meta = parsePlanMetadata(task.description, task);
+  return meta.displayTitle || 'Focus Session';
 }
 
 export function getTaskCategory(task: any): 'STUDY' | 'CODING' | 'WORKOUT' | 'READING' | 'FREE' {
-  const text = `${task.subject || ''} ${task.topic || ''} ${task.description || ''}`.toLowerCase();
-  if (/workout|gym|exercise|push|pull|legs/i.test(text)) return 'WORKOUT';
-  if (/javascript|code|coding|5 million|python|ts/i.test(text)) return 'CODING';
-  if (/chemistry|biology|math|physics|english|study/i.test(text) || task.isStudy) return 'STUDY';
-  if (/reading|book|faith|reflection|bible/i.test(text)) return 'READING';
+  if (!task) return 'FREE';
+  const meta = parsePlanMetadata(task.description, task);
+  if (meta.category === 'CODING') return 'CODING';
+  if (meta.category === 'CHEMISTRY' || meta.category === 'STUDY') return 'STUDY';
+  if (meta.category === 'WORKOUT') return 'WORKOUT';
+  if (meta.category === 'READING') return 'READING';
   return 'FREE';
 }
 

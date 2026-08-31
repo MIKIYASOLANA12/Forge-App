@@ -24,6 +24,8 @@ function normaliseDate(dateValue: string | Date) {
   return date;
 }
 
+import { parsePlanMetadata } from "@/lib/planParser";
+
 export async function GET() {
   const plans = await prisma.dailyPlan.findMany({
     orderBy: { date: "asc" },
@@ -32,22 +34,27 @@ export async function GET() {
 
   const payload = plans.flatMap((plan) =>
     plan.tasks.map((task) => {
+      const meta = parsePlanMetadata(task.description, task);
       let parsed: Record<string, unknown> = {};
       try {
         parsed = JSON.parse(task.description || "{}") as Record<string, unknown>;
       } catch {
-        parsed = { title: task.description || "Plan item", description: "" };
+        parsed = {};
       }
+
+      // If description in parsed is an object or identical to JSON, don't show raw JSON in description
+      let cleanDesc = typeof parsed.description === 'string' ? parsed.description : '';
+      if (cleanDesc.trim().startsWith('{')) cleanDesc = '';
 
       return {
         id: task.id,
-        title: String(parsed.title ?? task.description ?? "Plan item"),
-        description: String(parsed.description ?? ""),
-        category: String(parsed.category ?? "Personal"),
+        title: meta.displayTitle,
+        description: cleanDesc,
+        category: meta.category,
         date: plan.date.toISOString(),
-        priority: String(parsed.priority ?? "Medium"),
-        startTime: parsed.startTime ?? null,
-        endTime: parsed.endTime ?? null,
+        priority: String(task.priority ?? parsed.priority ?? "Medium"),
+        startTime: task.plannedStartTime ?? parsed.startTime ?? null,
+        endTime: task.plannedEndTime ?? parsed.endTime ?? null,
         reminder: parsed.reminder ?? null,
         repeat: parsed.repeat ?? null,
       };

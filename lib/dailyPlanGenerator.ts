@@ -2,6 +2,7 @@ import { prisma } from './prisma';
 import { getAddisNow, workoutWindowForAddisDate, getWorkoutLocationForAddisDate } from './workoutTime';
 import { calculateChemistryOneMonthPlan, calculateJavaScriptPacing } from './studyRoadmaps';
 import { getReadingSystemStatus } from './readingEngine';
+import { parsePlanMetadata } from './planParser';
 
 const ORDER = ['Push', 'Pull', 'LegsCore'];
 
@@ -190,14 +191,10 @@ export async function ensureTodayDailyPlan() {
   const domainMap = Object.fromEntries(domains.map((d) => [d.id, d]));
 
   const tasksWithDomain = (plan?.tasks || []).map((t) => {
-    let parsedDetails: any = null;
-    try {
-      parsedDetails = JSON.parse(t.description);
-    } catch {}
-
-    const displayTitle = parsedDetails?.title || t.description;
-    const subtopics = parsedDetails?.subtopics || [];
-    const isEntrancePriority = Boolean(parsedDetails?.isEntrancePriority);
+    const meta = parsePlanMetadata(t.description, t);
+    const displayTitle = meta.displayTitle;
+    const subtopics = meta.subtopics;
+    const isEntrancePriority = meta.isEntrancePriority;
 
     return {
       ...t,

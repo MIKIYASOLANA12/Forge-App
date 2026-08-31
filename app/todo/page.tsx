@@ -33,6 +33,8 @@ import {
   Compass
 } from "lucide-react";
 import { clsx } from "clsx";
+import { PlanTaskCard } from "@/components/tasks/PlanTaskCard";
+import { formatPlanTaskTitle } from "@/lib/planParser";
 
 type TaskItem = {
   id: string;
@@ -748,154 +750,16 @@ export default function TodoPage() {
               </div>
 
               {/* Task Cards List */}
-              <div className="space-y-3">
-                {todayData?.tasks.map((task) => {
-                  const isExpanded = Boolean(expandedTasks[task.id]);
-                  const hasSubtopics = Array.isArray(task.subtopics) && task.subtopics.length > 0;
-                  const isReadingTask = task.domain?.name.toLowerCase() === "reading" || task.description.toLowerCase().includes("reading");
-
-                  return (
-                    <article
-                      key={task.id}
-                      className={clsx(
-                        "rounded-2xl border p-4 transition-all flex flex-col gap-2.5",
-                        task.completed
-                          ? "border-emerald-500/30 bg-emerald-950/10 opacity-80"
-                          : todayData?.isClosed
-                          ? "border-rose-500/30 bg-rose-950/10 opacity-70"
-                          : "border-[var(--border)] bg-[var(--bg-surface)] hover:border-slate-700"
-                      )}
-                    >
-                      <div className="flex items-start gap-3.5">
-                        {/* Checkbox Button */}
-                        <button
-                          disabled={task.completed || todayData?.isClosed || completingId === task.id}
-                          onClick={() => handleToggleTask(task)}
-                          className={clsx(
-                            "mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border-2 transition-all",
-                            task.completed
-                              ? "border-emerald-500 bg-emerald-500 text-black shadow-sm font-bold cursor-default"
-                              : todayData?.isClosed
-                              ? "border-rose-500/40 bg-rose-950 text-rose-500 cursor-not-allowed"
-                              : "border-slate-700 hover:border-orange-500 bg-slate-950 text-slate-500"
-                          )}
-                          aria-label="Toggle task completion"
-                        >
-                          {completingId === task.id ? (
-                            <LoaderCircle size={14} className="animate-spin text-orange-400" />
-                          ) : task.completed ? (
-                            <CheckCircle2 size={16} strokeWidth={3} />
-                          ) : todayData?.isClosed ? (
-                            <Lock size={12} />
-                          ) : (
-                            <Square size={14} />
-                          )}
-                        </button>
-
-                        {/* Task Header & Title */}
-                        <div className="flex-1 space-y-1">
-                          <div className="flex flex-wrap items-center gap-2">
-                            {task.domain && (
-                              <span
-                                className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider border"
-                                style={{
-                                  backgroundColor: `${task.domain.color}15`,
-                                  borderColor: `${task.domain.color}35`,
-                                  color: task.domain.color,
-                                }}
-                              >
-                                {task.domain.name}
-                              </span>
-                            )}
-                            {task.priority && (
-                              <span
-                                className={clsx(
-                                  "px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider",
-                                  task.priority === "HIGH"
-                                    ? "bg-rose-500/10 text-rose-400 border border-rose-500/20"
-                                    : "bg-slate-800 text-slate-400"
-                                )}
-                              >
-                                {task.priority}
-                              </span>
-                            )}
-                            {task.isEntrancePriority && (
-                              <span className="px-2 py-0.5 rounded text-[10px] font-extrabold uppercase bg-cyan-500/15 text-cyan-300 border border-cyan-500/30">
-                                🎯 ENTRANCE PRIORITY
-                              </span>
-                            )}
-                          </div>
-
-                          <h4
-                            className={clsx(
-                              "text-sm font-bold leading-snug",
-                              task.completed
-                                ? "line-through text-slate-400"
-                                : todayData?.isClosed
-                                ? "text-slate-300"
-                                : "text-white"
-                            )}
-                          >
-                            {task.displayTitle || task.description}
-                          </h4>
-
-                          <div className="flex flex-wrap items-center gap-3 text-xs text-slate-400 pt-0.5">
-                            <span>⏱️ {task.minutesTarget} mins</span>
-                            <span>·</span>
-                            <span className="text-amber-400 font-bold">+{task.xpTarget || Math.round(task.minutesTarget * 1.2)} XP</span>
-                            {isReadingTask && (
-                              <Link
-                                href="/reading"
-                                className="text-purple-400 hover:text-purple-300 font-bold flex items-center gap-1 underline"
-                              >
-                                Open Reading OS & Reflections <ArrowRight size={12} />
-                              </Link>
-                            )}
-                            {task.completed && (
-                              <span className="text-emerald-400 font-bold text-[11px]">✓ Completed & Saved</span>
-                            )}
-                            {!task.completed && todayData?.isClosed && (
-                              <span className="text-rose-400 font-bold text-[11px]">🔴 MISSED (Closed at 09:28 PM)</span>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Subtopics Toggle */}
-                        {hasSubtopics && (
-                          <button
-                            onClick={() =>
-                              setExpandedTasks((prev) => ({
-                                ...prev,
-                                [task.id]: !prev[task.id],
-                              }))
-                            }
-                            className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800"
-                            title="Toggle Subtopics"
-                          >
-                            {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-                          </button>
-                        )}
-                      </div>
-
-                      {/* Subtopics Drawer */}
-                      {hasSubtopics && isExpanded && (
-                        <div className="ml-10 mt-1 rounded-xl bg-slate-950/80 border border-slate-800 p-3 text-xs space-y-1.5">
-                          <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
-                            Included Subtopics & Drills:
-                          </span>
-                          <ul className="space-y-1 text-slate-300">
-                            {task.subtopics?.map((st, idx) => (
-                              <li key={idx} className="flex items-start gap-1.5">
-                                <span className="text-orange-400 font-bold">→</span>
-                                <span>{st}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
-                    </article>
-                  );
-                })}
+              <div className="space-y-4">
+                {todayData?.tasks.map((task, index) => (
+                  <PlanTaskCard
+                    key={task.id}
+                    task={task}
+                    index={index}
+                    isDone={task.completed}
+                    onToggle={() => handleToggleTask(task)}
+                  />
+                ))}
               </div>
 
               {/* Fast Add Task Input */}
@@ -1246,7 +1110,7 @@ export default function TodoPage() {
                   )}
                   <div>
                     <span className={clsx("text-sm font-bold", yt.completed ? "text-white" : "text-slate-300")}>
-                      {yt.description}
+                      {formatPlanTaskTitle(yt.description)}
                     </span>
                     <p className="text-xs text-slate-400">{yt.minutesTarget} mins planned</p>
                   </div>

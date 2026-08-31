@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { CalendarDays, LoaderCircle, Plus, Trash2 } from "lucide-react";
+import { formatPlanTaskTitle } from "@/lib/planParser";
 
 type PlanItem = {
   id: string;
@@ -171,7 +172,7 @@ export default function PlansPage() {
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <div className="text-[10px] font-bold uppercase tracking-[0.16em] text-[var(--workout)]">{plan.category}</div>
-                      <h3 className="mt-1 text-base font-semibold">{plan.title}</h3>
+                      <h3 className="mt-1 text-base font-semibold">{formatPlanTaskTitle(plan.title)}</h3>
                     </div>
                     <button className="p-2 text-[var(--text-muted)] hover:text-[var(--danger)]" aria-label="Delete plan" onClick={() => void deletePlan(plan.id)}>
                       <Trash2 size={15} />
@@ -181,7 +182,9 @@ export default function PlansPage() {
                     <div>{new Date(plan.date).toLocaleDateString(undefined, { dateStyle: "medium" })}</div>
                     {plan.startTime && <div>{plan.startTime} {plan.endTime ? `– ${plan.endTime}` : ""}</div>}
                     <div>{plan.priority} priority</div>
-                    {plan.description && <p className="mt-2 text-sm text-[var(--text-primary)]">{plan.description}</p>}
+                    {plan.description && !plan.description.trim().startsWith('{') && (
+                      <p className="mt-2 text-sm text-[var(--text-primary)]">{plan.description}</p>
+                    )}
                   </div>
                 </article>
               ))}

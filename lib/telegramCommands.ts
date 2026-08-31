@@ -1,15 +1,8 @@
 import { isGoogleCalendarConnected } from './googleCalendar';
+import { formatPlanTaskTitle } from './planParser';
 
 function formatTaskText(desc: string): string {
-  try {
-    const parsed = JSON.parse(desc);
-    if (parsed.title && parsed.description && parsed.title !== parsed.description) {
-      return `${parsed.title} - ${parsed.description}`;
-    }
-    return parsed.title || parsed.description || desc;
-  } catch {
-    return desc;
-  }
+  return formatPlanTaskTitle(desc);
 }
 
 import { prisma } from './prisma';

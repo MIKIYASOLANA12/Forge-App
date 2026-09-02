@@ -19,10 +19,10 @@ import {
   getTaskCategory,
 } from './smartSchedule';
 import { getSleepAccountabilityStatus } from './sleepAccountability';
-import { formatPlanTaskTitle } from './planParser';
+import { formatTaskForDisplay } from './planParser';
 
-function formatTaskText(desc: string): string {
-  return formatPlanTaskTitle(desc);
+function formatTaskText(desc: any): string {
+  return formatTaskForDisplay(desc);
 }
 
 /**
@@ -108,9 +108,9 @@ export async function sendDailyAccountabilityReminder(force: boolean = false) {
 
   // Determine missed context and generate roast
   const missedList: string[] = [];
-  if (isWorkoutMissed) missedList.push(`Workout: ${targetType} (${location})`);
+  if (isWorkoutMissed) missedList.push(`Workout — ${targetType}`);
   for (const t of pendingTasks) {
-    missedList.push(formatTaskText(t.description));
+    missedList.push(formatTaskText(t));
   }
 
   let roastCategory: RoastCategory = 'COMBINED_MISSED';

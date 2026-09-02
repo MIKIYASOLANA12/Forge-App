@@ -5,6 +5,7 @@ import { ensureTodayDailyPlan } from '@/lib/dailyPlanGenerator';
 import { prisma } from '@/lib/prisma';
 import { get2027DeadlineMetrics } from '@/lib/readingEngine';
 import { getAccountabilityStatus, detectMissedActivities } from '@/lib/accountabilityRecheck';
+import { formatTaskForDisplay } from '@/lib/planParser';
 
 export async function GET(req: NextRequest) {
   const session = await getSessionUserFromRequest(req);
@@ -54,11 +55,7 @@ export async function GET(req: NextRequest) {
     });
 
     const yesterdayTasks = (yesterdayPlan?.tasks || []).map((t) => {
-      let title = t.description;
-      try {
-        const parsed = JSON.parse(t.description);
-        title = parsed.title || t.description;
-      } catch {}
+      const title = formatTaskForDisplay(t);
 
       return {
         id: t.id,

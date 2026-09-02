@@ -152,11 +152,11 @@ export async function ensureTodayDailyPlan() {
       {
         domainId: domainByName.get('reading') || defaultDomainId,
         description: JSON.stringify({
-          title: `📚 Reading — ${activeBook?.title || 'Atomic Habits'} (Pages ${bookChunk.startPage}–${bookChunk.endPage})`,
+          title: `📚 Reading — ${activeBook?.title || 'How to Win Friends and Influence People'} (Pages ${bookChunk.startPage}–${bookChunk.endPage})`,
           subject: 'Reading',
-          bookTitle: activeBook?.title || 'Atomic Habits',
+          bookTitle: activeBook?.title || 'How to Win Friends and Influence People',
           pagesTarget: `${bookChunk.startPage}–${bookChunk.endPage}`,
-          pagesCount: bookChunk.pagesCount,
+          pagesCount: bookChunk.pagesCount || 11,
         }),
         minutesTarget: bookChunk.estimatedMinutes || 25,
         priority: 'MEDIUM',

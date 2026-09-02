@@ -8,7 +8,7 @@ import { sendTelegramMessage } from './telegram';
 import { getDailyBreakdown, getProgressHistory } from './progressEngine';
 import { computeLevel } from './xp';
 import { getAccountabilityRoast, RoastCategory } from './accountabilityRoast';
-import { parsePlanMetadata } from './planParser';
+import { parsePlanMetadata, formatTaskForDisplay } from './planParser';
 
 export type WorkoutWindow = ReturnType<typeof workoutWindowForAddisDate>;
 export type AccountabilityDeliveryState = 'NOT_SENT' | 'SENT' | 'DELIVERY_FAILED' | 'UNKNOWN';
@@ -49,9 +49,11 @@ export const REMINDER_ROASTS: string[] = [
 // ── Report types ─────────────────────────────────────────────────────────────
 
 export type MissedTaskItem = {
-  label: string;
+  title: string;
   category: string;
+  subject?: string;
   taskId?: string;
+  label?: string; // backwards compatibility
 };
 
 export type MissedReport = {
@@ -175,8 +177,7 @@ function classifyTask(subjectRaw?: string | null, titleRaw = '', descriptionRaw 
 
 /** Per-item display line (e.g. "Chemistry — Stoichiometry", "Reading — Book (pages 42–53)"). */
 function taskDisplayLabel(category: string, t: { subject?: string | null; topic?: string | null; description: string }): string {
-  const meta = parsePlanMetadata(t.description, t);
-  return meta.displayTitle || t.description;
+  return formatTaskForDisplay(t);
 }
 /**
  * Detect ALL missed + completed required activities for a closed Addis day
@@ -209,13 +210,19 @@ export async function detectMissedActivities(windowInfo: WorkoutWindow): Promise
   const missedTasks: MissedTaskItem[] = [];
   const completedTasks: string[] = [];
   for (const t of planres?.tasks ?? []) {
-    const meta = labelOf(t.description);
-    const category = classifyTask(t.subject, meta.title || t.description, t.description);
-    const label = taskDisplayLabel(category, t);
+    const meta = parsePlanMetadata(t.description, t);
+    const category = meta.category === 'GENERAL' ? classifyTask(t.subject, meta.displayTitle, t.description) : meta.category;
+    const formattedTitle = formatTaskForDisplay(t);
     if (t.completed) {
-      completedTasks.push(label);
+      completedTasks.push(formattedTitle);
     } else {
-      missedTasks.push({ label, category, taskId: t.id });
+      missedTasks.push({
+        title: formattedTitle,
+        category,
+        subject: meta.subject || t.subject || undefined,
+        taskId: t.id,
+        label: formattedTitle,
+      });
     }
   }
 
@@ -233,8 +240,8 @@ export async function detectMissedActivities(windowInfo: WorkoutWindow): Promise
     }
   };
   if (workoutMissed) pushMissed('Workout');
-  for (const m of missedTasks) pushMissed(m.label);
-  missedHabits.forEach(pushMissed);
+  for (const m of missedTasks) pushMissed(m.title);
+  missedHabits.forEach((h) => pushMissed(h));
 
   const completedAll: string[] = [];
   const cseen = new Set<string>();

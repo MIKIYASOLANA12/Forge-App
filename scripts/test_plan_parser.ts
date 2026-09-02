@@ -126,9 +126,9 @@ console.log('✅ Reading card parsed successfully:', readingParsed.displayTitle)
 console.log('\n5. Testing INVALID JSON fallback...');
 const invalidJson = '{"title":"Broken JSON without closing bracket';
 const invalidParsed = parsePlanMetadata(invalidJson, { domain: { name: 'Study' } });
-assert.strictEqual(invalidParsed.displayTitle, invalidJson);
-assert(!invalidParsed.displayTitle.startsWith('{"title": ""'));
-console.log('✅ Invalid JSON gracefully handled without crashing:', invalidParsed.displayTitle);
+assert(!invalidParsed.displayTitle.startsWith('{'), 'Must not start with {');
+assert(invalidParsed.displayTitle.includes('Broken JSON without closing bracket'), 'Clean text preserved');
+console.log('✅ Invalid JSON gracefully handled without raw JSON:', invalidParsed.displayTitle);
 
 // 6. Test Null & Undefined & Empty string
 console.log('\n6. Testing NULL, UNDEFINED, and EMPTY string...');
@@ -144,12 +144,12 @@ const emptyParsed = parsePlanMetadata('', { domain: { name: 'Personal' } });
 assert(emptyParsed.displayTitle.length > 0);
 console.log('✅ Null, undefined, and empty string handled gracefully!');
 
-// 7. Test formatPlanTaskTitle
+// 7. Test formatPlanTaskTitle / formatTaskForDisplay
 console.log('\n7. Testing formatPlanTaskTitle utility...');
-assert.strictEqual(formatPlanTaskTitle(codingJson), '5 Million Coders / JavaScript — Module 4 — Loops: While Loops & Counter Fundamentals');
+assert.strictEqual(formatPlanTaskTitle(codingJson), 'JavaScript — Module 4: Loops');
 assert.strictEqual(formatPlanTaskTitle(chemJson), 'Chemistry — Chemistry Basics & Classification of Matter');
 assert.strictEqual(formatPlanTaskTitle(workoutStr), 'Daily Workout Protocol: Pull (GYM)');
-assert.strictEqual(formatPlanTaskTitle(readingJson), '📚 Reading — How to Win Friends and Influence People (Pages 1–11)');
+assert.strictEqual(formatPlanTaskTitle(readingJson), 'Reading — How to Win Friends and Influence People, pages 1–11');
 console.log('✅ formatPlanTaskTitle returned clean readable titles for all items!');
 
 console.log('\n🎉 ALL PLAN PARSER TESTS PASSED PERFECTLY!\n');

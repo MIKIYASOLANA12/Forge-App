@@ -1,5 +1,6 @@
 import { prisma } from './prisma';
 import { getAddisNow, workoutWindowForAddisDate } from './workoutTime';
+import { formatTaskForDisplay } from './planParser';
 
 export type RoastCategory =
   | 'WORKOUT_MISSED'
@@ -188,11 +189,13 @@ export async function getAccountabilityRoast({
     Math.floor(Math.random() * (unrepeated.length > 0 ? unrepeated.length : available.length))
   ] || ROAST_CATALOG[0];
 
+  const cleanMissedItems = (missedItems || []).map((m) => formatTaskForDisplay(m));
+
   let finalMessage = chosenTemplate.text;
 
   // Add missed context if multiple items
-  if (category === 'COMBINED_MISSED' && missedItems.length > 0) {
-    finalMessage += `\n\n⚠️ Missed Targets:\n${missedItems.map((m) => `• ${m}`).join('\n')}`;
+  if (category === 'COMBINED_MISSED' && cleanMissedItems.length > 0) {
+    finalMessage += `\n\n⚠️ Missed Targets:\n${cleanMissedItems.map((m) => `• ${m}`).join('\n')}`;
   }
 
   // 4. Record roast log in DB
@@ -227,6 +230,6 @@ export async function getAccountabilityRoast({
   return {
     message: finalMessage,
     category,
-    missedItems,
+    missedItems: cleanMissedItems,
   };
 }

@@ -98,6 +98,36 @@ const DEFAULT_WORKOUT_EXERCISES: Record<string, Record<string, string[]>> = {
 };
 
 /**
+ * Helper to strip any raw JSON artifacts or formatting characters from text.
+ */
+function stripRawJson(str: string): string {
+  if (!str) return '';
+  const trimmed = str.trim();
+  if (trimmed.startsWith('{') || trimmed.startsWith('[') || trimmed.includes('{"') || trimmed.includes('":')) {
+    // If it looks like raw JSON, attempt to extract clean words
+    try {
+      const parsed = JSON.parse(trimmed);
+      if (parsed && typeof parsed === 'object') {
+        const candidate = parsed.title || parsed.subject || parsed.topic || parsed.mainTopic || parsed.name || parsed.description;
+        if (typeof candidate === 'string' && !candidate.startsWith('{') && candidate.toLowerCase() !== 'demo') {
+          return candidate.trim();
+        }
+      }
+    } catch {}
+    // Strip JSON structure characters
+    const cleaned = trimmed
+      .replace(/[{}\[\]"]/g, '')
+      .replace(/^(title|description|category|priority|startTime|endTime|subject|topic):\s*/gi, '')
+      .trim();
+    if (cleaned && !cleaned.includes('":"') && cleaned.length > 2) {
+      return cleaned;
+    }
+    return '';
+  }
+  return trimmed;
+}
+
+/**
  * Safely parses any task description or metadata object.
  * Guaranteed never to throw or return raw JSON.
  */
@@ -106,14 +136,14 @@ export function parsePlanMetadata(rawInput: any, fallbackTask?: any): PlanMetada
   let rawStr = '';
 
   if (rawInput && typeof rawInput === 'object') {
-    obj = rawInput;
+    obj = { ...rawInput };
     rawStr = typeof obj.description === 'string' ? obj.description : (obj.title || '');
   } else if (typeof rawInput === 'string') {
     rawStr = rawInput.trim();
-    if (rawStr.startsWith('{') && rawStr.endsWith('}')) {
+    if (rawStr.startsWith('{') || rawStr.startsWith('[') || rawStr.includes('{"')) {
       try {
         const parsed = JSON.parse(rawStr);
-        if (parsed && typeof parsed === 'object') {
+        if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
           obj = parsed;
         }
       } catch {
@@ -125,13 +155,15 @@ export function parsePlanMetadata(rawInput: any, fallbackTask?: any): PlanMetada
 
   // Also check if fallbackTask has a json string description
   if (Object.keys(obj).length === 0 && fallbackTask) {
-    if (typeof fallbackTask.description === 'string' && fallbackTask.description.trim().startsWith('{')) {
+    if (typeof fallbackTask.description === 'string' && (fallbackTask.description.trim().startsWith('{') || fallbackTask.description.includes('{"'))) {
       try {
         const parsed = JSON.parse(fallbackTask.description.trim());
-        if (parsed && typeof parsed === 'object') {
+        if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
           obj = parsed;
         }
       } catch {}
+    } else if (typeof fallbackTask === 'object') {
+      obj = { ...fallbackTask };
     }
   }
 
@@ -140,12 +172,15 @@ export function parsePlanMetadata(rawInput: any, fallbackTask?: any): PlanMetada
 
   // Determine category
   let category: PlanTaskCategory = 'GENERAL';
-  const combinedText = `${subjectStr} ${rawTitle} ${rawStr} ${obj.module || ''} ${obj.topic || ''} ${obj.mainTopic || ''}`.toLowerCase();
+  const combinedText = `${subjectStr} ${rawTitle} ${rawStr} ${obj.module || ''} ${obj.topic || ''} ${obj.mainTopic || ''} ${obj.category || ''}`.toLowerCase();
+
+  const isExplicitStudy = ['biology', 'physics', 'mathematics', 'math', 'english', 'study'].includes(subjectStr.toLowerCase());
 
   if (
     subjectStr.toLowerCase() === 'javascript' ||
     combinedText.includes('5 million coders') ||
     combinedText.includes('javascript') ||
+    combinedText.includes('coding') ||
     obj.module ||
     obj.learningTarget ||
     (Array.isArray(obj.quizzes) && obj.quizzes.length > 0)
@@ -160,13 +195,14 @@ export function parsePlanMetadata(rawInput: any, fallbackTask?: any): PlanMetada
   ) {
     category = 'CHEMISTRY';
   } else if (
-    subjectStr.toLowerCase() === 'reading' ||
-    combinedText.includes('reading') ||
-    obj.bookTitle ||
-    obj.pagesTarget ||
-    combinedText.includes('pages ') ||
-    combinedText.includes('atomic habits') ||
-    combinedText.includes('win friends')
+    !isExplicitStudy && (
+      subjectStr.toLowerCase() === 'reading' ||
+      obj.bookTitle ||
+      obj.pagesTarget ||
+      combinedText.includes('atomic habits') ||
+      combinedText.includes('win friends') ||
+      (combinedText.includes('reading') && !combinedText.includes('reading comprehension') && !combinedText.includes('vocabulary'))
+    )
   ) {
     category = 'READING';
   } else if (
@@ -175,12 +211,13 @@ export function parsePlanMetadata(rawInput: any, fallbackTask?: any): PlanMetada
     combinedText.includes('push') ||
     combinedText.includes('pull') ||
     combinedText.includes('legscore') ||
-    fallbackTask?.domain?.name?.toLowerCase() === 'workout'
+    fallbackTask?.domain?.name?.toLowerCase() === 'workout' ||
+    obj.category?.toLowerCase() === 'workout'
   ) {
     category = 'WORKOUT';
   } else if (
     fallbackTask?.isStudy ||
-    ['biology', 'physics', 'mathematics', 'math', 'english', 'study'].includes(subjectStr.toLowerCase())
+    isExplicitStudy
   ) {
     category = 'STUDY';
   }
@@ -208,8 +245,9 @@ export function parsePlanMetadata(rawInput: any, fallbackTask?: any): PlanMetada
     const learningTarget = obj.learningTarget || 'Master loop initialization, conditional checks, loop increments, and nested loop patterns.';
     const targetMinutes = Number(obj.minutesTarget || fallbackTask?.minutesTarget || 100);
 
-    const displayTitle = obj.title && !obj.title.startsWith('{')
-      ? obj.title
+    const rawCandidate = stripRawJson(obj.title);
+    const displayTitle = rawCandidate && rawCandidate.toLowerCase() !== 'demo' && rawCandidate.toLowerCase() !== 'study'
+      ? rawCandidate
       : `5 Million Coders / JavaScript — ${moduleName}: ${mainTopic}`;
 
     return {
@@ -233,7 +271,7 @@ export function parsePlanMetadata(rawInput: any, fallbackTask?: any): PlanMetada
 
   // 2. Chemistry Card Extraction
   if (category === 'CHEMISTRY') {
-    const topic = obj.topic || obj.mainTopic || 'Chemistry Basics & Classification of Matter';
+    const topic = obj.topic || obj.mainTopic || (subjectStr.toLowerCase() === 'chemistry' && obj.title && obj.title.toLowerCase() !== 'demo' ? obj.title : 'Chemistry Basics & Classification of Matter');
     const subtopics = Array.isArray(obj.subtopics) && obj.subtopics.length > 0
       ? obj.subtopics
       : [
@@ -255,8 +293,9 @@ export function parsePlanMetadata(rawInput: any, fallbackTask?: any): PlanMetada
     const isEntrancePriority = Boolean(obj.isEntrancePriority);
     const targetMinutes = Number(obj.minutesTarget || fallbackTask?.minutesTarget || 75);
 
-    const displayTitle = obj.title && !obj.title.startsWith('{')
-      ? obj.title
+    const rawCandidate = stripRawJson(obj.title);
+    const displayTitle = rawCandidate && rawCandidate.toLowerCase() !== 'demo' && rawCandidate.toLowerCase() !== 'study' && rawCandidate.toLowerCase() !== 'chemistry'
+      ? rawCandidate
       : `Chemistry — ${topic}`;
 
     return {
@@ -320,21 +359,24 @@ export function parsePlanMetadata(rawInput: any, fallbackTask?: any): PlanMetada
 
   // 4. Reading Card Extraction
   if (category === 'READING') {
-    let bookTitle = obj.bookTitle || '';
-    let pagesTarget = obj.pagesTarget || '';
+    let bookTitle = stripRawJson(obj.bookTitle) || '';
+    let pagesTarget = stripRawJson(obj.pagesTarget) || '';
     let pagesCount = obj.pagesCount ? Number(obj.pagesCount) : 0;
 
-    // Parse from raw string if not structured
+    // Parse from clean title/string if not in structured fields
     if (!bookTitle) {
-      const match = rawStr.match(/Reading\s*[—–-]\s*(.+?)(?:\s*\(Pages\s*([\d–-]+)\))?$/i);
-      if (match) {
-        bookTitle = match[1].trim();
-        pagesTarget = match[2] ? match[2].trim() : '1–11';
+      const titleCandidate = typeof obj.title === 'string' && !obj.title.startsWith('{') ? obj.title : (!rawStr.startsWith('{') ? rawStr : '');
+      const match = titleCandidate.match(/(?:Reading\s*[—–-]\s*)?(.+?)(?:\s*\(Pages\s*([\d–-]+)\))?$/i);
+      if (match && match[1] && match[1].toLowerCase() !== 'reading' && match[1].toLowerCase() !== 'demo') {
+        bookTitle = match[1].replace(/^[📚📖\s]+/, '').trim();
+        if (match[2]) pagesTarget = match[2].trim();
       } else {
         bookTitle = 'How to Win Friends and Influence People';
-        pagesTarget = '1–11';
       }
     }
+    // Remove any leftover (Pages ...) in bookTitle
+    bookTitle = bookTitle.replace(/\s*\(Pages\s*[\d–-]+\)/i, '').replace(/^[📚📖\s]+/, '').trim();
+    if (!bookTitle) bookTitle = 'How to Win Friends and Influence People';
     if (!pagesTarget) pagesTarget = '1–11';
 
     if (!pagesCount && pagesTarget) {
@@ -347,8 +389,9 @@ export function parsePlanMetadata(rawInput: any, fallbackTask?: any): PlanMetada
     }
 
     const targetMinutes = Number(obj.minutesTarget || fallbackTask?.minutesTarget || 25);
-    const displayTitle = obj.title && !obj.title.startsWith('{')
-      ? obj.title
+    const rawCandidate = stripRawJson(obj.title);
+    const displayTitle = rawCandidate && rawCandidate.toLowerCase() !== 'demo' && rawCandidate.toLowerCase() !== 'study' && !rawCandidate.includes('{"')
+      ? rawCandidate
       : `📚 Reading — ${bookTitle} (Pages ${pagesTarget})`;
 
     return {
@@ -369,15 +412,20 @@ export function parsePlanMetadata(rawInput: any, fallbackTask?: any): PlanMetada
   }
 
   // 5. General / Other Study Task Extraction
-  const cleanTitle = obj.title && !obj.title.startsWith('{')
-    ? String(obj.title)
-    : (fallbackTask?.title || rawStr.replace(/^[{\[].*[}\]]$/, '').trim() || (typeof fallbackTask?.description === 'string' && !fallbackTask.description.startsWith('{') ? fallbackTask.description : '') || fallbackTask?.domain?.name || 'Scheduled Priority');
+  const cleanTitleCandidate = stripRawJson(obj.title) || stripRawJson(fallbackTask?.title) || stripRawJson(rawStr) || (typeof fallbackTask?.description === 'string' ? stripRawJson(fallbackTask.description) : '') || fallbackTask?.domain?.name || 'Scheduled Priority';
+  const cleanTitle = cleanTitleCandidate.toLowerCase() === 'demo' ? (subjectStr ? `${subjectStr} Core Drills` : 'Scheduled Priority') : cleanTitleCandidate;
 
   const subtopics = Array.isArray(obj.subtopics) ? obj.subtopics : [];
   const targetMinutes = Number(obj.minutesTarget || fallbackTask?.minutesTarget || 30);
-  const header = category === 'STUDY'
-    ? `📖 ${(subjectStr || 'STUDY').toUpperCase()}`
-    : `⚡ ${(fallbackTask?.domain?.name || 'PRIORITY').toUpperCase()}`;
+  
+  // Specific demo subject headers
+  const lowerSubj = (subjectStr || '').toLowerCase();
+  let header = `⚡ ${(fallbackTask?.domain?.name || 'PRIORITY').toUpperCase()}`;
+  if (lowerSubj === 'biology') header = '🧬 BIOLOGY';
+  else if (lowerSubj === 'mathematics' || lowerSubj === 'math') header = '📐 MATHEMATICS';
+  else if (lowerSubj === 'physics') header = '⚛️ PHYSICS';
+  else if (lowerSubj === 'english') header = '🇬🇧 ENGLISH';
+  else if (category === 'STUDY') header = `📖 ${(subjectStr || 'STUDY').toUpperCase()}`;
 
   return {
     category,
@@ -399,10 +447,92 @@ export function parsePlanMetadata(rawInput: any, fallbackTask?: any): PlanMetada
 }
 
 /**
- * Returns a clean, human-readable one-line title from any task description or object.
- * Ideal for notifications, simple lists, or logs.
+ * Universal safe task display formatter for Forge OS.
+ * 
+ * Safely handles:
+ * - Plain string
+ * - Object with metadata
+ * - JSON string (parses and extracts meaningful fields)
+ * - null, undefined, empty, or malformed JSON
+ * 
+ * GUARANTEE: NEVER returns raw JSON like `{"title":...}`.
+ * Formats cleanly as:
+ * - "Workout — Pull"
+ * - "Chemistry — Chemistry Basics & Classification of Matter"
+ * - "JavaScript — Module 4: Loops"
+ * - "Reading — How to Win Friends and Influence People, pages 1–11"
+ * - "English — Advanced Vocabulary"
+ */
+export function formatTaskForDisplay(task: any): string {
+  if (task === null || task === undefined) {
+    return 'Focus Session';
+  }
+
+  // If already a simple string without any JSON markers
+  if (typeof task === 'string') {
+    const trimmed = task.trim();
+    if (!trimmed) return 'Focus Session';
+    
+    // If it is pure plain text (no '{', '}', or '":')
+    if (!trimmed.startsWith('{') && !trimmed.startsWith('[') && !trimmed.includes('{"') && !trimmed.includes('":')) {
+      // If it's a known single subject name, give it standard representation
+      const lower = trimmed.toLowerCase();
+      if (lower === 'workout') return 'Workout';
+      if (lower === 'chemistry') return 'Chemistry — Chemistry Basics & Classification of Matter';
+      if (lower === 'javascript') return 'JavaScript — Module 4: Loops';
+      if (lower === 'reading') return 'Reading — How to Win Friends and Influence People';
+      return trimmed;
+    }
+  }
+
+  const meta = parsePlanMetadata(task);
+
+  // Format based on extracted category & metadata
+  if (meta.category === 'WORKOUT') {
+    return meta.workoutType ? `Workout — ${meta.workoutType}` : 'Workout';
+  }
+
+  if (meta.category === 'CHEMISTRY') {
+    const topic = meta.topic || meta.mainTopic || 'Chemistry Basics & Classification of Matter';
+    return `Chemistry — ${topic}`;
+  }
+
+  if (meta.category === 'CODING') {
+    if (meta.module && meta.mainTopic) {
+      // If module already contains "Module", format nicely
+      return `JavaScript — ${meta.module.replace(/\s*—\s*/g, ': ')}`;
+    }
+    const topic = meta.mainTopic || meta.topic || 'Loops';
+    return `JavaScript — ${topic}`;
+  }
+
+  if (meta.category === 'READING') {
+    const book = meta.bookTitle || 'How to Win Friends and Influence People';
+    const pages = meta.pagesTarget ? `, pages ${meta.pagesTarget}` : '';
+    return `Reading — ${book}${pages}`;
+  }
+
+  // If subject is known (e.g. Biology, Mathematics, Physics, English)
+  if (meta.subject) {
+    const topic = meta.topic || meta.displayTitle;
+    if (topic && topic.toLowerCase() !== meta.subject.toLowerCase()) {
+      return `${meta.subject} — ${topic}`;
+    }
+    return meta.subject;
+  }
+
+  // Clean fallback
+  const fallback = stripRawJson(meta.displayTitle);
+  return fallback || 'Focus Session';
+}
+
+/**
+ * Legacy alias for formatTaskForDisplay to maintain backward compatibility.
  */
 export function formatPlanTaskTitle(rawInput: any, fallbackTask?: any): string {
-  const meta = parsePlanMetadata(rawInput, fallbackTask);
-  return meta.displayTitle;
+  if (fallbackTask) {
+    const meta = parsePlanMetadata(rawInput, fallbackTask);
+    return formatTaskForDisplay(meta);
+  }
+  return formatTaskForDisplay(rawInput);
 }

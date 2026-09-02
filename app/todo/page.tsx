@@ -34,7 +34,13 @@ import {
 } from "lucide-react";
 import { clsx } from "clsx";
 import { PlanTaskCard } from "@/components/tasks/PlanTaskCard";
-import { formatPlanTaskTitle } from "@/lib/planParser";
+import { formatPlanTaskTitle, parsePlanMetadata } from "@/lib/planParser";
+import StudyFocusModal, {
+  ActiveFocusPayload,
+  getStoredFocusSession,
+  saveStoredFocusSession,
+} from "@/components/tasks/StudyFocusModal";
+import FocusStatsBanner from "@/components/tasks/FocusStatsBanner";
 
 type TaskItem = {
   id: string;
@@ -256,6 +262,45 @@ export default function TodoPage() {
   >([]);
   const [savingTomorrow, setSavingTomorrow] = useState(false);
   const [tomorrowSavedMessage, setTomorrowSavedMessage] = useState("");
+
+  // Study Focus Timer / Locked In Mode state
+  const [focusModalOpen, setFocusModalOpen] = useState(false);
+  const [activeFocusPayload, setActiveFocusPayload] = useState<ActiveFocusPayload | null>(null);
+  const [focusRefreshTrigger, setFocusRefreshTrigger] = useState(0);
+
+  // Check stored active session on mount
+  useEffect(() => {
+    const stored = getStoredFocusSession();
+    if (stored) {
+      setActiveFocusPayload(stored);
+    }
+  }, []);
+
+  const handleStartLockIn = (taskOrPayload: any) => {
+    let payload: ActiveFocusPayload;
+    if (taskOrPayload.startTimestamp) {
+      payload = taskOrPayload;
+    } else {
+      const meta = parsePlanMetadata(taskOrPayload.description, taskOrPayload);
+      const plannedMinutes = Number(taskOrPayload.minutesTarget || meta.targetMinutes || 45);
+      payload = {
+        taskId: taskOrPayload.id,
+        subject: taskOrPayload.subject || meta.subject || 'Study',
+        taskTitle: taskOrPayload.taskTitle || meta.displayTitle || taskOrPayload.description || 'Focus Session',
+        subtopics: taskOrPayload.subtopics || meta.subtopics,
+        learningTarget: taskOrPayload.learningTarget || meta.learningTarget,
+        plannedMinutes,
+        startTimestamp: Date.now(),
+        durationMinutes: plannedMinutes,
+        sessionState: 'RUNNING',
+        accumulatedPausedMs: 0,
+        pausedAt: null,
+      };
+      saveStoredFocusSession(payload);
+    }
+    setActiveFocusPayload(payload);
+    setFocusModalOpen(true);
+  };
 
   const loadData = async () => {
     try {
@@ -605,162 +650,215 @@ export default function TodoPage() {
 
       {/* ── TAB 1: TODAY'S ACTIVE EXECUTION & STUDY SCHEDULES ───────────────── */}
       {tab === "today" && (
-        <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
-          {/* Main Column */}
-          <div className="space-y-6">
-            {/* ── SECTION A: TODAY'S STUDY ROADMAP SCHEDULE ───────────────────────── */}
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-black text-white flex items-center gap-2">
-                  <GraduationCap className="text-orange-400" size={20} />
-                  Today's Active Study Roadmaps
-                </h3>
-                <span className="text-xs font-bold text-slate-400">Exact Topic Breakdown</span>
-              </div>
+        <div className="space-y-6">
+          {/* ── FOCUS STATS & ACTIVE FOCUS HUD BAR ── */}
+          <FocusStatsBanner
+            onOpenActiveSession={(s) => {
+              setActiveFocusPayload(s);
+              setFocusModalOpen(true);
+            }}
+            onRefreshTrigger={focusRefreshTrigger}
+          />
 
-              <div className="grid gap-4 md:grid-cols-2">
-                {/* 🧪 Chemistry Card */}
-                {chemProgress && (
-                  <div className="rounded-2xl border border-cyan-500/30 bg-gradient-to-br from-cyan-950/20 via-slate-900 to-slate-950 p-5 shadow-xl space-y-3 flex flex-col justify-between">
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between border-b border-cyan-500/20 pb-2">
-                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-cyan-500/15 text-cyan-400 border border-cyan-500/30 flex items-center gap-1">
-                          <FlaskConical size={12} /> {chemProgress.formattedDay} (30-Day Goal)
-                        </span>
-                        <span className="text-[11px] font-bold text-cyan-300">
-                          {chemProgress.statusText}
-                        </span>
-                      </div>
-
-                      <div>
-                        <h4 className="text-base font-black text-white leading-snug">
-                          {chemProgress.currentTopic.name}
-                        </h4>
-                        <div className="flex items-center gap-2 mt-1 text-xs text-slate-400">
-                          <span>⏱️ {chemProgress.minutesPerDay} mins target</span>
-                          <span>·</span>
-                          <span className="text-amber-400 font-bold">Week {chemProgress.currentTopic.weekNumber}</span>
-                          {chemProgress.currentTopic.isEntrancePriority && (
-                            <span className="px-1.5 py-0.2 rounded text-[9px] font-black bg-rose-500/20 text-rose-400 border border-rose-500/30">
-                              HIGH ENTRANCE WEIGHT
-                            </span>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Small Subtopics List */}
-                      <div className="rounded-xl bg-slate-950/80 border border-slate-800 p-3 space-y-1.5 text-xs">
-                        <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block">
-                          Today's Small Topics:
-                        </span>
-                        <ul className="space-y-1 text-slate-200">
-                          {chemProgress.currentTopic.subtopics.map((st, i) => (
-                            <li key={i} className="flex items-start gap-1.5">
-                              <span className="text-cyan-400 font-bold">→</span>
-                              <span>{st}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    </div>
-
-                    <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400">
-                      <span>🎯 {chemProgress.currentTopic.practiceTarget}</span>
-                    </div>
-                  </div>
-                )}
-
-                {/* 💻 5 Million Coders — JavaScript Card */}
-                {jsProgress && (
-                  <div className="rounded-2xl border border-amber-500/30 bg-gradient-to-br from-amber-950/20 via-slate-900 to-slate-950 p-5 shadow-xl space-y-3 flex flex-col justify-between">
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between border-b border-amber-500/20 pb-2">
-                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-500/15 text-amber-400 border border-amber-500/30 flex items-center gap-1">
-                          <Code2 size={12} /> {jsProgress.formattedDay} (14-Day Goal)
-                        </span>
-                        <span className="text-[11px] font-bold text-amber-300">
-                          {jsProgress.statusText}
-                        </span>
-                      </div>
-
-                      <div>
-                        <h4 className="text-base font-black text-white leading-snug">
-                          {jsProgress.currentLesson.module}
-                        </h4>
-                        <p className="text-xs font-bold text-amber-400 mt-0.5">
-                          {jsProgress.currentLesson.mainTopic} ({jsProgress.currentLesson.itemRange})
-                        </p>
-                        <div className="flex items-center gap-2 mt-1 text-xs text-slate-400">
-                          <span>⏱️ {jsProgress.currentLesson.targetMinutes} mins target</span>
-                          <span>·</span>
-                          <span className="text-slate-300 font-bold">{jsProgress.completedCount}/154 items</span>
-                        </div>
-                      </div>
-
-                      {/* JavaScript Roadmap Items List */}
-                      <div className="rounded-xl bg-slate-950/80 border border-slate-800 p-3 space-y-1.5 text-xs max-h-48 overflow-y-auto">
-                        <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block">
-                          Today's Roadmap Items:
-                        </span>
-                        <ul className="space-y-1 text-slate-200">
-                          {jsProgress.currentLesson.subtopics.map((st, i) => (
-                            <li key={i} className="flex items-start gap-1.5">
-                              <span className="text-amber-400 font-bold">→</span>
-                              <span className={clsx(st.includes("Quiz:") ? "text-amber-200 font-semibold" : "")}>{st}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    </div>
-
-                    <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400">
-                      <span>🎯 {jsProgress.currentLesson.learningTarget}</span>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* ── SECTION B: DAILY TASK CHECKLIST ───────────────────────────────── */}
-            <div className="space-y-4">
-              {/* Progress Metric Bar */}
-              <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-surface)] p-5 shadow-lg space-y-3">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-base font-extrabold text-white">Daily Execution Checklist</h3>
-                    <p className="text-xs text-slate-400">
-                      {todayData?.isClosed ? "🔒 Window closed at 09:28 PM" : "Check items as you complete each study, reading, and workout block"}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-2xl font-black text-orange-400">{completionPercentage}%</div>
-                    <div className="text-[11px] text-slate-500 font-bold">
-                      {completedCount} of {totalCount} completed
-                    </div>
-                  </div>
-                </div>
-
-                {/* Progress Bar */}
-                <div className="h-2.5 w-full rounded-full bg-slate-950 overflow-hidden border border-slate-800">
-                  <div
-                    className="h-full bg-gradient-to-r from-orange-500 to-amber-400 transition-all duration-500"
-                    style={{ width: `${completionPercentage}%` }}
-                  />
-                </div>
-              </div>
-
-              {/* Task Cards List */}
+          <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
+            {/* Main Column */}
+            <div className="space-y-6">
+              {/* ── SECTION A: TODAY'S STUDY ROADMAP SCHEDULE ───────────────────────── */}
               <div className="space-y-4">
-                {todayData?.tasks.map((task, index) => (
-                  <PlanTaskCard
-                    key={task.id}
-                    task={task}
-                    index={index}
-                    isDone={task.completed}
-                    onToggle={() => handleToggleTask(task)}
-                  />
-                ))}
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-black text-white flex items-center gap-2">
+                    <GraduationCap className="text-orange-400" size={20} />
+                    Today's Active Study Roadmaps
+                  </h3>
+                  <span className="text-xs font-bold text-slate-400">Exact Topic Breakdown</span>
+                </div>
+
+                <div className="grid gap-4 md:grid-cols-2">
+                  {/* 🧪 Chemistry Card */}
+                  {chemProgress && (
+                    <div className="rounded-2xl border border-cyan-500/30 bg-gradient-to-br from-cyan-950/20 via-slate-900 to-slate-950 p-5 shadow-xl space-y-3 flex flex-col justify-between">
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between border-b border-cyan-500/20 pb-2">
+                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-cyan-500/15 text-cyan-400 border border-cyan-500/30 flex items-center gap-1">
+                            <FlaskConical size={12} /> {chemProgress.formattedDay} (30-Day Goal)
+                          </span>
+                          <span className="text-[11px] font-bold text-cyan-300">
+                            {chemProgress.statusText}
+                          </span>
+                        </div>
+
+                        <div>
+                          <h4 className="text-base font-black text-white leading-snug">
+                            {chemProgress.currentTopic.name}
+                          </h4>
+                          <div className="flex items-center gap-2 mt-1 text-xs text-slate-400">
+                            <span>⏱️ {chemProgress.minutesPerDay} mins target</span>
+                            <span>·</span>
+                            <span className="text-amber-400 font-bold">Week {chemProgress.currentTopic.weekNumber}</span>
+                            {chemProgress.currentTopic.isEntrancePriority && (
+                              <span className="px-1.5 py-0.2 rounded text-[9px] font-black bg-rose-500/20 text-rose-400 border border-rose-500/30">
+                                HIGH ENTRANCE WEIGHT
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Small Subtopics List */}
+                        <div className="rounded-xl bg-slate-950/80 border border-slate-800 p-3 space-y-1.5 text-xs">
+                          <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block">
+                            Today's Small Topics:
+                          </span>
+                          <ul className="space-y-1 text-slate-200">
+                            {chemProgress.currentTopic.subtopics.map((st, i) => (
+                              <li key={i} className="flex items-start gap-1.5">
+                                <span className="text-cyan-400 font-bold">→</span>
+                                <span>{st}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      </div>
+
+                      <div className="pt-3 border-t border-slate-800/80 space-y-2">
+                        <div className="flex items-center justify-between text-xs text-slate-400">
+                          <span>🎯 {chemProgress.currentTopic.practiceTarget}</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const matchingTask = todayData?.tasks.find(
+                              (t) => t.subject?.toLowerCase().includes('chemistry') || t.description?.toLowerCase().includes('chemistry')
+                            );
+                            handleStartLockIn({
+                              id: matchingTask?.id,
+                              subject: 'Chemistry',
+                              taskTitle: `Chemistry — ${chemProgress.currentTopic.name}`,
+                              minutesTarget: chemProgress.minutesPerDay || 75,
+                              subtopics: chemProgress.currentTopic.subtopics,
+                              learningTarget: chemProgress.currentTopic.practiceTarget,
+                            });
+                          }}
+                          className="btn w-full bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-black text-xs py-2.5 rounded-xl flex items-center justify-center gap-1.5 shadow-lg shadow-cyan-950/40"
+                        >
+                          <Lock size={14} /> LOCK IN CHEMISTRY ({chemProgress.minutesPerDay} MIN)
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 💻 5 Million Coders — JavaScript Card */}
+                  {jsProgress && (
+                    <div className="rounded-2xl border border-amber-500/30 bg-gradient-to-br from-amber-950/20 via-slate-900 to-slate-950 p-5 shadow-xl space-y-3 flex flex-col justify-between">
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between border-b border-amber-500/20 pb-2">
+                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-500/15 text-amber-400 border border-amber-500/30 flex items-center gap-1">
+                            <Code2 size={12} /> {jsProgress.formattedDay} (14-Day Goal)
+                          </span>
+                          <span className="text-[11px] font-bold text-amber-300">
+                            {jsProgress.statusText}
+                          </span>
+                        </div>
+
+                        <div>
+                          <h4 className="text-base font-black text-white leading-snug">
+                            {jsProgress.currentLesson.module}
+                          </h4>
+                          <p className="text-xs font-bold text-amber-400 mt-0.5">
+                            {jsProgress.currentLesson.mainTopic} ({jsProgress.currentLesson.itemRange})
+                          </p>
+                          <div className="flex items-center gap-2 mt-1 text-xs text-slate-400">
+                            <span>⏱️ {jsProgress.currentLesson.targetMinutes} mins target</span>
+                            <span>·</span>
+                            <span className="text-slate-300 font-bold">{jsProgress.completedCount}/154 items</span>
+                          </div>
+                        </div>
+
+                        {/* JavaScript Roadmap Items List */}
+                        <div className="rounded-xl bg-slate-950/80 border border-slate-800 p-3 space-y-1.5 text-xs max-h-48 overflow-y-auto">
+                          <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block">
+                            Today's Roadmap Items:
+                          </span>
+                          <ul className="space-y-1 text-slate-200">
+                            {jsProgress.currentLesson.subtopics.map((st, i) => (
+                              <li key={i} className="flex items-start gap-1.5">
+                                <span className="text-amber-400 font-bold">→</span>
+                                <span className={clsx(st.includes("Quiz:") ? "text-amber-200 font-semibold" : "")}>{st}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      </div>
+
+                      <div className="pt-3 border-t border-slate-800/80 space-y-2">
+                        <div className="flex items-center justify-between text-xs text-slate-400">
+                          <span>🎯 {jsProgress.currentLesson.learningTarget}</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const matchingTask = todayData?.tasks.find(
+                              (t) => t.subject?.toLowerCase().includes('javascript') || t.description?.toLowerCase().includes('javascript')
+                            );
+                            handleStartLockIn({
+                              id: matchingTask?.id,
+                              subject: 'JavaScript',
+                              taskTitle: `5 Million Coders / JavaScript — ${jsProgress.currentLesson.module}: ${jsProgress.currentLesson.mainTopic}`,
+                              minutesTarget: jsProgress.currentLesson.targetMinutes || 100,
+                              subtopics: jsProgress.currentLesson.subtopics,
+                              learningTarget: jsProgress.currentLesson.learningTarget,
+                            });
+                          }}
+                          className="btn w-full bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white font-black text-xs py-2.5 rounded-xl flex items-center justify-center gap-1.5 shadow-lg shadow-amber-950/40"
+                        >
+                          <Lock size={14} /> LOCK IN JAVASCRIPT ({jsProgress.currentLesson.targetMinutes} MIN)
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
+
+              {/* ── SECTION B: DAILY TASK CHECKLIST ───────────────────────────────── */}
+              <div className="space-y-4">
+                {/* Progress Metric Bar */}
+                <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-surface)] p-5 shadow-lg space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-base font-extrabold text-white">Daily Execution Checklist</h3>
+                      <p className="text-xs text-slate-400">
+                        {todayData?.isClosed ? "🔒 Window closed at 09:28 PM" : "Check items or Lock In to execute each study, reading, and workout block"}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-2xl font-black text-orange-400">{completionPercentage}%</div>
+                      <div className="text-[11px] text-slate-500 font-bold">
+                        {completedCount} of {totalCount} completed
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Progress Bar */}
+                  <div className="h-2.5 w-full rounded-full bg-slate-950 overflow-hidden border border-slate-800">
+                    <div
+                      className="h-full bg-gradient-to-r from-orange-500 to-amber-400 transition-all duration-500"
+                      style={{ width: `${completionPercentage}%` }}
+                    />
+                  </div>
+                </div>
+
+                {/* Task Cards List */}
+                <div className="space-y-4">
+                  {todayData?.tasks.map((task, index) => (
+                    <PlanTaskCard
+                      key={task.id}
+                      task={task}
+                      index={index}
+                      isDone={task.completed}
+                      onToggle={() => handleToggleTask(task)}
+                      onLockIn={(t) => handleStartLockIn(t)}
+                    />
+                  ))}
+                </div>
 
               {/* Fast Add Task Input */}
               {!todayData?.isClosed && (
@@ -873,7 +971,8 @@ export default function TodoPage() {
             </div>
           </aside>
         </div>
-      )}
+      </div>
+    )}
 
       {/* ── TAB 2: DEMO SUBJECTS HUB (BIOLOGY, MATH, PHYSICS, ENGLISH) ────── */}
       {tab === "demo" && (
@@ -1129,6 +1228,17 @@ export default function TodoPage() {
           </div>
         </section>
       )}
+
+      {/* ── IMMERSIVE LOCKED IN STUDY FOCUS MODAL ── */}
+      <StudyFocusModal
+        isOpen={focusModalOpen}
+        onClose={() => setFocusModalOpen(false)}
+        sessionPayload={activeFocusPayload}
+        onSessionComplete={() => {
+          loadData();
+          setFocusRefreshTrigger((n) => n + 1);
+        }}
+      />
     </div>
   );
 }

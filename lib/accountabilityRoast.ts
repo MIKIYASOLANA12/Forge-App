@@ -189,7 +189,9 @@ export async function getAccountabilityRoast({
     Math.floor(Math.random() * (unrepeated.length > 0 ? unrepeated.length : available.length))
   ] || ROAST_CATALOG[0];
 
-  const cleanMissedItems = (missedItems || []).map((m) => formatTaskForDisplay(m));
+  const cleanMissedItems = (missedItems || [])
+    .map((m) => formatTaskForDisplay(m))
+    .filter((m) => Boolean(m) && m.trim().length > 0 && !m.startsWith('{') && m !== 'Focus Session');
 
   let finalMessage = chosenTemplate.text;
 

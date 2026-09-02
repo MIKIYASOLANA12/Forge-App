@@ -628,11 +628,29 @@ export async function getAccountabilityStatus() {
   const session = await prisma.accountabilitySession.findUnique({ where: { addisDateKey } });
   const active = session && session.state === 'PENDING' ? session : null;
 
+  let rawMissed: any[] = [];
+  if (session?.missedItems) {
+    try {
+      rawMissed = JSON.parse(session.missedItems);
+    } catch {
+      rawMissed = [];
+    }
+  }
+  const cleanMissed = rawMissed
+    .map((m) => formatTaskForDisplay(m))
+    .filter((m) => Boolean(m) && m.trim().length > 0 && !m.startsWith('{'));
+
+  // Sanitize initial roast text in case legacy records had raw JSON in it
+  let cleanRoast = session?.initialRoast ?? null;
+  if (cleanRoast && cleanRoast.includes('{"')) {
+    cleanRoast = cleanRoast.replace(/\{[^{}]*\}/g, (match) => formatTaskForDisplay(match));
+  }
+
   return {
     status: active ? 'PENDING' : 'RESOLVED',
     addisDateKey,
-    missedItems: session ? JSON.parse(session.missedItems || '[]') : [],
-    roast: session?.initialRoast ?? null,
+    missedItems: cleanMissed,
+    roast: cleanRoast,
     acknowledged: Boolean(session?.acknowledgementText),
     acknowledgementText: session?.acknowledgementText ?? null,
     acknowledgementAt: session?.acknowledgementAt ?? null,

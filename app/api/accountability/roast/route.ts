@@ -3,6 +3,7 @@ import { getAccountabilityRoast, RoastCategory } from '@/lib/accountabilityRoast
 import { getDailyBreakdown } from '@/lib/progressEngine';
 import { getAddisNow, workoutWindowForAddisDate } from '@/lib/workoutTime';
 import { prisma } from '@/lib/prisma';
+import { formatTaskForDisplay } from '@/lib/planParser';
 
 export async function GET(req: NextRequest) {
   try {
@@ -18,7 +19,9 @@ export async function GET(req: NextRequest) {
     ]);
 
     const missedTasks = plan ? plan.tasks.filter((t) => !t.completed) : [];
-    const missedDescriptions = missedTasks.map((t) => t.description);
+    const missedTitles = missedTasks
+      .map((t) => formatTaskForDisplay(t))
+      .filter((title) => Boolean(title) && !title.startsWith('{'));
 
     let category: RoastCategory = 'COMBINED_MISSED';
 
@@ -26,21 +29,28 @@ export async function GET(req: NextRequest) {
       category = 'PERFECT_DAY';
     } else if (!breakdown.workout.completed && missedTasks.length === 0) {
       category = 'WORKOUT_MISSED';
-    } else if (missedDescriptions.some((d) => d.toLowerCase().includes('chemistry'))) {
+    } else if (missedTitles.some((d) => d.toLowerCase().includes('chemistry'))) {
       category = 'CHEMISTRY_MISSED';
-    } else if (missedDescriptions.some((d) => d.toLowerCase().includes('javascript') || d.toLowerCase().includes('coding'))) {
+    } else if (missedTitles.some((d) => d.toLowerCase().includes('javascript') || d.toLowerCase().includes('coding'))) {
       category = 'JAVASCRIPT_MISSED';
     } else {
       category = 'COMBINED_MISSED';
     }
 
+    const missedItemsList: string[] = [];
+    if (!breakdown.workout.completed) {
+      missedItemsList.push('Workout — Daily Workout Session');
+    }
+    for (const title of missedTitles.slice(0, 4)) {
+      if (!missedItemsList.includes(title)) {
+        missedItemsList.push(title);
+      }
+    }
+
     const roast = await getAccountabilityRoast({
       category,
       intensity: 3,
-      missedItems: [
-        ...(!breakdown.workout.completed ? ['Daily Workout Session'] : []),
-        ...missedDescriptions.slice(0, 3),
-      ],
+      missedItems: missedItemsList,
     });
 
     return NextResponse.json({

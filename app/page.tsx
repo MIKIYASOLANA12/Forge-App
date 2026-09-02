@@ -38,6 +38,7 @@ import { DailyMotivation } from "@/components/dashboard/DailyMotivation";
 
 import { clsx } from "clsx";
 import { CommandCenterGreeting } from "@/components/dashboard/CommandCenterGreeting";
+import { formatTaskForDisplay } from "@/lib/planParser";
 import { SmartScheduleCard } from "@/components/dashboard/SmartScheduleCard";
 import { CountdownsGrid } from "@/components/dashboard/CountdownsGrid";
 import { HolidayWorkoutCard } from "@/components/dashboard/HolidayWorkoutCard";
@@ -345,11 +346,11 @@ export default function Home() {
               <p className="text-rose-200/90">
                 Missed:{" "}
                 {accountability.missedItems.length > 0
-                  ? accountability.missedItems.map((m) => `❌ ${m}`).join(" · ")
+                  ? accountability.missedItems.map((m) => `❌ ${formatTaskForDisplay(m)}`).join(" · ")
                   : "—"}
               </p>
               {accountability.roast && (
-                <p className="italic text-rose-300/70">"{accountability.roast}"</p>
+                <p className="italic text-rose-300/70">"{formatTaskForDisplay(accountability.roast)}"</p>
               )}
               <p className="text-rose-200/70 text-xs">
                 Acknowledge by replying to Forge on Telegram: "I'm so sorry, I will not do it again".
@@ -377,7 +378,7 @@ export default function Home() {
           <ul className="space-y-1.5">
             {yesterday.missedItems.map((m) => (
               <li key={m} className="flex items-center justify-between text-sm text-rose-300">
-                <span className="font-semibold">🔴 {m}</span>
+                <span className="font-semibold">🔴 {formatTaskForDisplay(m)}</span>
                 <span className="text-[10px] font-bold text-rose-400 uppercase bg-rose-500/10 px-2 py-0.5 rounded border border-rose-500/20">
                   MISSED / LOCKED
                 </span>

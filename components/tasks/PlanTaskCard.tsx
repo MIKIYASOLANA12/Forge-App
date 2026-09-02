@@ -40,6 +40,7 @@ export interface PlanTaskCardProps {
   isDone?: boolean;
   onToggle?: (id: string) => void;
   onStartFocus?: (task: any) => void;
+  onLockIn?: (task: any) => void;
   compact?: boolean;
 }
 
@@ -49,6 +50,7 @@ export function PlanTaskCard({
   isDone = false,
   onToggle,
   onStartFocus,
+  onLockIn,
   compact = false,
 }: PlanTaskCardProps) {
   const [expanded, setExpanded] = useState(true);
@@ -170,15 +172,26 @@ export function PlanTaskCard({
               <span>+{xpAmount} XP</span>
             </span>
 
-            {onStartFocus && !isDone && (
+            {!isDone && (onLockIn || onStartFocus) && (
               <button
                 type="button"
-                aria-label={`Start focus session for ${meta.displayTitle}`}
-                onClick={() => onStartFocus(task)}
-                className="rounded-lg p-2 text-slate-400 hover:bg-slate-800 hover:text-orange-400 transition-colors"
-                title="Start Focus Timer"
+                aria-label={`Lock In Focus Mode for ${meta.displayTitle}`}
+                onClick={() => {
+                  if (onLockIn) onLockIn(task);
+                  else if (onStartFocus) onStartFocus(task);
+                }}
+                className={clsx(
+                  "inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-md active:scale-95",
+                  meta.category === 'CODING' && "bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 hover:bg-cyan-500/30",
+                  meta.category === 'CHEMISTRY' && "bg-blue-500/20 text-blue-300 border border-blue-500/40 hover:bg-blue-500/30",
+                  meta.category === 'READING' && "bg-purple-500/20 text-purple-300 border border-purple-500/40 hover:bg-purple-500/30",
+                  meta.category === 'WORKOUT' && "bg-orange-500/20 text-orange-300 border border-orange-500/40 hover:bg-orange-500/30",
+                  meta.category !== 'CODING' && meta.category !== 'CHEMISTRY' && meta.category !== 'READING' && meta.category !== 'WORKOUT' && "bg-amber-500/20 text-amber-300 border border-amber-500/40 hover:bg-amber-500/30"
+                )}
+                title="Lock In Focus Mode"
               >
-                <Play size={14} fill="currentColor" />
+                <Lock size={12} />
+                <span>LOCK IN</span>
               </button>
             )}
 

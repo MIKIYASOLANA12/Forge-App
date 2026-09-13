@@ -42,22 +42,25 @@ export const DEMO_STUDY_SUBJECTS = [
  * If a plan already exists, preserves all existing tasks and completion states.
  */
 export async function ensureTodayDailyPlan() {
-  const addisNow = getAddisNow();
-  const windowInfo = workoutWindowForAddisDate(addisNow);
+  try {
+    const addisNow = getAddisNow();
+    const windowInfo = workoutWindowForAddisDate(addisNow);
 
-  // 1. Fetch existing DailyPlan for this Addis window
-  let plan = await prisma.dailyPlan.findFirst({
-    where: { date: { gte: windowInfo.startUtc, lte: windowInfo.endUtc } },
-    include: {
-      tasks: {
-        orderBy: [{ isStudy: 'desc' }, { priority: 'asc' }],
+    // 1. Fetch existing DailyPlan for this Addis window
+    let plan = await prisma.dailyPlan.findFirst({
+      where: { date: { gte: windowInfo.startUtc, lte: windowInfo.endUtc } },
+      include: {
+        tasks: {
+          orderBy: [{ isStudy: 'desc' }, { priority: 'asc' }],
+        },
       },
-    },
-  });
+    }).catch(() => null);
 
-  const domains = await prisma.domain.findMany();
-  const domainByName = new Map(domains.map((d) => [d.name.toLowerCase(), d.id]));
-  const defaultDomainId = domains[0]?.id || 'singleton';
+    if (plan) return plan;
+
+    const domains = await prisma.domain.findMany().catch(() => []);
+    const domainByName = new Map(domains.map((d) => [d.name.toLowerCase(), d.id]));
+    const defaultDomainId = domains[0]?.id || 'singleton';
 
   // Query masteries to compute roadmaps
   const masteries = await prisma.studyTopicMastery.findMany();
@@ -207,20 +210,23 @@ export async function ensureTodayDailyPlan() {
     };
   });
 
-  return {
-    planId: plan?.id || null,
-    startAddis: windowInfo.startAddis,
-    closeAddis: windowInfo.closeAddis,
-    closeUtc: windowInfo.closeUtc,
-    nextUnlockUtc: windowInfo.nextUnlockUtc,
-    isClosed: windowInfo.isClosed,
-    isOpen: windowInfo.isOpen,
-    tasks: tasksWithDomain,
-    studyProgress: {
-      javascript: jsPacing,
-      chemistry: chemPacing,
-    },
-    readingStatus,
-    demoSubjects: DEMO_STUDY_SUBJECTS,
-  };
+    return {
+      planId: plan?.id || null,
+      startAddis: windowInfo.startAddis,
+      closeAddis: windowInfo.closeAddis,
+      closeUtc: windowInfo.closeUtc,
+      nextUnlockUtc: windowInfo.nextUnlockUtc,
+      isClosed: windowInfo.isClosed,
+      isOpen: windowInfo.isOpen,
+      tasks: tasksWithDomain,
+      studyProgress: {
+        javascript: jsPacing,
+        chemistry: chemPacing,
+      },
+      readingStatus,
+      demoSubjects: DEMO_STUDY_SUBJECTS,
+    };
+  } catch {
+    return null;
+  }
 }

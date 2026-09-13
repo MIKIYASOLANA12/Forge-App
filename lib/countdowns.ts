@@ -60,7 +60,7 @@ export async function getDashboardCountdowns(customNow?: Date): Promise<Countdow
   // 1. Fetch User Settings for Exam Date (defaults to authoritative June 21, 2027 / Sene 14, 2019 E.C.)
   const profile = await prisma.userProfile.findUnique({
     where: { id: 'singleton' },
-  });
+  }).catch(() => null);
 
   const defaultExamDate = new Date(`${TARGET_EXAM_GREGORIAN}T00:00:00+03:00`);
   const examDate = profile?.examDate || defaultExamDate;
@@ -113,7 +113,7 @@ export async function getDashboardCountdowns(customNow?: Date): Promise<Countdow
       submittedAt: { not: null },
       completedAt: { gte: btStartDate },
     },
-  });
+  }).catch(() => 0);
 
   const btProgressPercent = Math.min(100, Math.max(0, Math.round((daysFromStart / totalChallengeDays) * 100)));
 

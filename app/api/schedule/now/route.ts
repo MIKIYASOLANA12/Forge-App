@@ -25,8 +25,14 @@ export async function GET(req: NextRequest) {
   try {
     const addisNow = getAddisNow();
     const [smartSchedule, countdowns, holidayStatus, goalYear] = await Promise.all([
-      getSmartScheduleStatus(addisNow),
-      getDashboardCountdowns(addisNow),
+      getSmartScheduleStatus(addisNow).catch((err) => {
+        console.error('getSmartScheduleStatus error:', err);
+        return null;
+      }),
+      getDashboardCountdowns(addisNow).catch((err) => {
+        console.error('getDashboardCountdowns error:', err);
+        return [];
+      }),
       Promise.resolve(getHolidayWorkoutStatus(addisNow)),
       Promise.resolve(getGoalYearStatus(addisNow)),
     ]);

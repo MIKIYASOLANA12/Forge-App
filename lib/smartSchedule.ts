@@ -184,7 +184,7 @@ export async function getSmartScheduleStatus(customNow?: Date): Promise<SmartSch
   const holidayStatus = getHolidayWorkoutStatus(now);
 
   // 1. Fetch today's actual plan and tasks from database (Single Source of Truth)
-  const todayPlan = await ensureTodayDailyPlan();
+  const todayPlan = await ensureTodayDailyPlan().catch(() => null);
   const tasks = todayPlan?.tasks || [];
 
   // Check today's workout completion
@@ -193,7 +193,7 @@ export async function getSmartScheduleStatus(customNow?: Date): Promise<SmartSch
       completedAt: { gte: windowInfo.startUtc, lte: windowInfo.endUtc },
       submittedAt: { not: null },
     },
-  });
+  }).catch(() => null);
   const workoutCompleted = Boolean(todayWorkoutLog);
 
   // Build sorted parsed activities from database tasks

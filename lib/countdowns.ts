@@ -6,6 +6,7 @@
  */
 import { getAddisNow, toAddisDateString } from './workoutTime';
 import { getHolidayWorkoutStatus } from './holidayWorkout';
+import { TARGET_EXAM_GREGORIAN, TARGET_EXAM_ETHIOPIAN } from './ethiopianCalendar';
 import { prisma } from './prisma';
 
 export interface CountdownCard {
@@ -56,32 +57,37 @@ export async function getDashboardCountdowns(customNow?: Date): Promise<Countdow
   const now = customNow || getAddisNow();
   const dateKey = toAddisDateString(now);
 
-  // 1. Fetch User Settings for Exam Date
+  // 1. Fetch User Settings for Exam Date (defaults to authoritative June 21, 2027 / Sene 14, 2019 E.C.)
   const profile = await prisma.userProfile.findUnique({
     where: { id: 'singleton' },
   });
 
-  const defaultExamDate = new Date('2027-06-15T00:00:00Z');
+  const defaultExamDate = new Date(`${TARGET_EXAM_GREGORIAN}T00:00:00+03:00`);
   const examDate = profile?.examDate || defaultExamDate;
 
   // ── A. ENTRANCE EXAM COUNTDOWN ───────────────────────────────────────────────
   const examDiff = calculateDaysRemaining(examDate, now);
-  const examDateFormatted = examDate.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  });
+  const examDateFormatted = 'June 21, 2027';
+
+  let examStatusText = `${examDiff.days} DAYS LEFT`;
+  if (examDiff.days === 0) {
+    examStatusText = '🎯 EXAM DAY';
+  } else if (examDiff.isPassed) {
+    examStatusText = '🎯 EXAM COMPLETED';
+  }
 
   const entranceExamCard: CountdownCard = {
     id: 'entrance_exam',
     title: 'Grade 12 Entrance Exam',
-    badge: examDiff.isPassed ? 'COMPLETED' : 'NATIONAL EXAM',
+    badge: examDiff.isPassed ? 'COMPLETED' : examDiff.days === 0 ? 'EXAM DAY' : 'NATIONAL EXAM',
     badgeColor: 'blue',
     daysRemaining: examDiff.days,
     progressPercent: Math.min(100, Math.max(0, Math.round(((300 - examDiff.days) / 300) * 100))),
-    targetDateFormatted: examDateFormatted,
-    statusText: examDiff.isPassed ? 'Exam Period Reached' : `${examDiff.days} days left`,
-    subText: examDiff.isPassed ? 'Exam passed or completed' : `Target Exam Date: ${examDateFormatted}`,
+    targetDateFormatted: `${examDateFormatted} (${TARGET_EXAM_ETHIOPIAN})`,
+    statusText: examStatusText,
+    subText: examDiff.isPassed
+      ? 'National Exam period completed'
+      : `Target: ${examDateFormatted} · ${TARGET_EXAM_ETHIOPIAN}`,
     isCompleted: examDiff.isPassed,
     isVisible: true,
     icon: 'GraduationCap',

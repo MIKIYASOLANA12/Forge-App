@@ -43,9 +43,11 @@ import { SmartScheduleCard } from "@/components/dashboard/SmartScheduleCard";
 import { CountdownsGrid } from "@/components/dashboard/CountdownsGrid";
 import { HolidayWorkoutCard } from "@/components/dashboard/HolidayWorkoutCard";
 import { SleepScheduleCard } from "@/components/dashboard/SleepScheduleCard";
+import { EthiopianGoalYearCard } from "@/components/dashboard/EthiopianGoalYearCard";
 import type { SmartScheduleStatus } from "@/lib/smartSchedule";
 import type { CountdownCard } from "@/lib/countdowns";
 import type { HolidayStatus } from "@/lib/holidayWorkout";
+import type { GoalYearStatus } from "@/lib/ethiopianCalendar";
 import { PlanTaskCard } from "@/components/tasks/PlanTaskCard";
 
 type PlanTask = {
@@ -133,6 +135,7 @@ export default function Home() {
   const [smartSchedule, setSmartSchedule] = useState<SmartScheduleStatus | null>(null);
   const [countdowns, setCountdowns] = useState<CountdownCard[]>([]);
   const [holidayStatus, setHolidayStatus] = useState<HolidayStatus | null>(null);
+  const [goalYear, setGoalYear] = useState<GoalYearStatus | null>(null);
 
   // AI Nutrition Coach State
   const [mealInput, setMealInput] = useState("");
@@ -190,6 +193,7 @@ export default function Home() {
           if (schedData.schedule) setSmartSchedule(schedData.schedule);
           if (schedData.countdowns) setCountdowns(schedData.countdowns);
           if (schedData.holiday) setHolidayStatus(schedData.holiday);
+          if (schedData.goalYear) setGoalYear(schedData.goalYear);
         }
       } catch (err) {
         console.error("Failed to load dashboard data:", err);
@@ -299,7 +303,10 @@ export default function Home() {
         onQuickCompleteTask={toggleTask}
       />
 
-      {/* ── 3. CRITICAL COUNTDOWNS GRID (Exam, 7-Month Transformation, Holiday) */}
+      {/* ── 3. FIXED ETHIOPIAN 2019 E.C. GOAL YEAR + EXAM COUNTDOWN ───────── */}
+      <EthiopianGoalYearCard goalYear={goalYear} />
+
+      {/* ── 4. CRITICAL COUNTDOWNS GRID (Exam, 7-Month Transformation, Holiday) */}
       <CountdownsGrid countdowns={countdowns} />
 
       {/* ── 4. 16-DAY GRANDMOTHER-HOUSE HOLIDAY WORKOUT (Aug 31 - Sep 15) ───── */}

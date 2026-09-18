@@ -6,7 +6,7 @@ import {
   calculateBookPacing,
   ensureReadingCurriculum,
 } from '../lib/readingEngine';
-import { ensureTodayDailyPlan } from '../lib/dailyPlanGenerator';
+import { ensureTodayDailyPlan, DemoStudySubject } from '../lib/dailyPlanGenerator';
 import {
   saveLocalWorkoutState,
   loadLocalWorkoutState,
@@ -80,7 +80,7 @@ async function main() {
   console.log(`  - Chemistry: ${todayPlan.studyProgress.chemistry.currentTopic.name}`);
   console.log(`  - JavaScript: ${todayPlan.studyProgress.javascript.currentLesson.mainTopic}`);
   console.log(`  - Reading: ${todayPlan.readingStatus.activeBook?.title}`);
-  console.log(`  - Demo Subjects Available: ${todayPlan.demoSubjects.map((s) => s.subject).join(', ')}`);
+  console.log(`  - Demo Subjects Available: ${todayPlan.demoSubjects.map((s: DemoStudySubject) => s.subject).join(', ')}`);
 
   console.log('\n==================================================');
   console.log('✅ ALL STAGE 8 INTEGRATION TESTS PASSED!');

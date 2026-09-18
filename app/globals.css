@@ -363,3 +363,57 @@
   h1 { font-size: 1.5rem; }
   h2 { font-size: 1.25rem; }
 }
+
+/* ── Rotating Gradient Border Card & Effects ───────────────────────────── */
+@keyframes spin-gradient {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.rotating-gradient-card {
+  position: relative;
+  border-radius: 1.25rem;
+  overflow: hidden;
+  isolation: isolate;
+  background: rgba(17, 17, 24, 0.95);
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.7);
+}
+
+.rotating-gradient-card::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: conic-gradient(
+    from 0deg at 50% 50%,
+    transparent 0deg,
+    #3b82f6 60deg,
+    #06b6d4 120deg,
+    transparent 180deg,
+    #8b5cf6 240deg,
+    #3b82f6 360deg
+  );
+  animation: spin-gradient 6s linear infinite;
+  z-index: -2;
+  opacity: 0.85;
+}
+
+.rotating-gradient-card::after {
+  content: '';
+  position: absolute;
+  inset: 2px;
+  background: #0f111a;
+  border-radius: calc(1.25rem - 2px);
+  z-index: -1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rotating-gradient-card::before {
+    animation: none !important;
+    background: linear-gradient(135deg, #3b82f6, #8b5cf6) !important;
+    opacity: 0.4 !important;
+  }
+}
+

@@ -1,0 +1,1072 @@
+ 
+# MASTER SUBJECT MAP — CHEMISTRY
+
+## GRADE 9
+
+The Grade 9 textbook contains **5 units**. 
+
+### Unit 1 — CHEMISTRY AND ITS IMPORTANCE
+
+**1.1 Definition and Scope of Chemistry**
+
+* 1.1.1 Definition of Chemistry
+* 1.1.2 Scope of Chemistry
+
+Scope includes the textbook's five chemistry disciplines:
+
+* Physical chemistry
+* Organic chemistry
+* Inorganic chemistry
+* Analytical chemistry
+* Biochemistry
+
+**1.2 Relationship Between Chemistry and Other Natural Sciences**
+
+Connections discussed include:
+
+* Chemistry and physics
+* Chemistry and biology
+* Chemistry and geology
+* Chemistry and medicine
+* Biochemistry
+* Geochemistry
+* Physical chemistry / chemical physics
+
+**1.3 The Role Chemistry Plays in Production and in Society**
+
+* Agriculture
+* Food production
+* Medicine
+* Building construction
+* Other societal and technological applications
+
+**1.4 Some Common Chemical Industries in Ethiopia**
+
+* Chemical industries in Ethiopia
+* Their products and applications
+
+---
+
+### Unit 2 — MEASUREMENTS AND SCIENTIFIC METHODS
+
+**2.1 Measurements and Units in Chemistry**
+
+* 2.1.1 SI Units / International System of Units
+* 2.1.2 Derived Units
+* 2.1.3 Common Prefixes Used in SI Units
+* 2.1.4 Uncertainty in Measurements
+* 2.1.5 Precision and Accuracy
+* 2.1.6 Significant Figures
+* 2.1.7 Scientific Notation and Decimal Places
+
+The textbook specifically treats measurements such as:
+
+* mass
+* volume
+* density
+* temperature
+* time
+* SI units and prefixes
+* uncertainty
+
+The book explicitly distinguishes systematic and random uncertainty and develops measurement/reporting skills. 
+
+**2.2 Chemistry as Experimental Science**
+
+* 2.2.1 The Scientific Method
+* 2.2.2 Some Experimental Skills in Chemistry
+* 2.2.3 Writing a Laboratory Report
+
+---
+
+### Unit 3 — STRUCTURE OF THE ATOM
+
+**3.1 Historical Development of the Atomic Theories of Matter**
+
+**3.2 Fundamental Laws of Chemical Reactions**
+
+* 3.2.1 Law of Conservation of Mass
+* 3.2.2 Law of Definite Proportions
+* 3.2.3 Law of Multiple Proportions
+
+**3.3 Atomic Theory**
+
+* 3.3.1 Dalton's Atomic Theory
+* 3.3.2 Modern Atomic Theory
+
+**3.4 Discoveries of the Fundamental Subatomic Particles**
+
+* 3.4.1 Discovery of the Proton
+* 3.4.2 Discovery of the Electron
+* 3.4.3 Discovery of the Nucleus
+* 3.4.4 Discovery of the Neutron
+
+**3.5 Composition of an Atom and the Isotopes**
+
+* 3.5.1 Electrons, Protons and Neutrons
+* 3.5.2 Atomic Number and Mass Number
+* 3.5.3 Atomic Mass and Isotope
+* 3.5.4 Main Energy Levels
+* 3.5.5 Electronic Configuration on Main Shells
+* 3.5.6 Valence Electrons
+
+---
+
+### Unit 4 — PERIODIC CLASSIFICATION OF ELEMENTS
+
+**4.1 Historical Development of Periodic Classification of the Elements**
+
+* 4.1.1 Döbereiner's Triads
+* 4.1.2 Newlands' Law of Octaves
+
+**4.2 Mendeleev's Classification of the Elements**
+
+* 4.2.1 Mendeleev's Periodic Law
+* 4.2.2 Periodicity
+
+**4.3 The Modern Periodic Table**
+
+* 4.3.1 The Periodic Law
+* 4.3.2 Groups and Periods
+* 4.3.3 Classification of the Elements
+* 4.3.4 The Representative Elements
+
+**4.4 The Major Trends in the Periodic Table**
+
+* 4.4.1 Atomic Radius
+* 4.4.2 Ionization Energy
+* 4.4.3 Electron Affinity
+* 4.4.4 Electronegativity
+
+---
+
+### Unit 5 — CHEMICAL BONDING
+
+**5.1 Chemical Bonding**
+
+**5.2 Ionic Bonding**
+
+* 5.2.1 Formation of Ionic Bonding
+* 5.2.2 Lewis Formulas of Ionic Compounds
+* 5.2.3 General Properties of Ionic Compounds
+
+**5.3 Covalent Bonding**
+
+* 5.3.1 Formation of Covalent Bond
+* 5.3.2 Lewis's Formula of Covalent Molecules
+* 5.3.3 Polarity in Covalent Molecules
+* 5.3.4 Coordinate Covalent Bond / Dative Bond
+* 5.3.5 General Properties of Covalent Compounds
+
+**5.4 Metallic Bonding**
+
+* 5.4.1 Formation of Metallic Bond
+* 5.4.2 Properties of Metallic Bond
+
+The Grade 9 book's later bonding material explicitly builds Lewis structures and polarity on the preceding periodic-table/electronegativity work. 
+
+---
+
+# GRADE 10
+
+The Grade 10 textbook contains **6 units**. 
+
+## Unit 1 — CHEMICAL REACTIONS AND STOICHIOMETRY
+
+**1.1 Introduction**
+
+* Physical changes
+* Chemical changes
+* Chemical reactions
+
+**1.2 Chemical Equations**
+
+* 1.2.1 Writing Chemical Equations
+* 1.2.2 Balancing Chemical Equations
+
+  * Inspection method
+  * LCM method
+  * Algebraic method
+
+**1.3 Types of Chemical Reactions**
+
+* Combination reactions
+* Decomposition reactions
+* Single displacement reactions
+* Double displacement reactions
+
+The textbook explicitly identifies these as the four basic reaction types. 
+
+**1.4 Oxidation and Reduction Reactions**
+
+* 1.4.1 Oxidation Number / Oxidation State
+* 1.4.2 Oxidizing and Reducing Agents
+* 1.4.3 Analyzing Redox Reactions
+* 1.4.4 Balancing Redox Reactions: Oxidation-Number-Change Method
+
+**1.5 Molecular and Formula Masses, the Mole Concept and Chemical Formulas**
+
+* 1.5.1 Molecular Mass and Formula Mass
+* 1.5.2 The Mole Concept
+* 1.5.3 Chemical Formulas
+
+  * Empirical formulas
+  * Molecular formulas
+  * Percentage composition
+
+The textbook develops the mole, Avogadro's number, molar mass, empirical formula and molecular formula as connected concepts. 
+
+**1.6 Stoichiometry**
+
+* 1.6.1 Molar Ratios in Balanced Chemical Equations
+* 1.6.2 Mass-Mass Relationships
+* 1.6.3 Volume-Volume Relationships
+* 1.6.4 Mass-Volume Relationships
+* 1.6.5 Limiting and Excess Reactants
+* 1.6.6 Theoretical, Actual and Percentage Yields
+
+This is one of the major quantitative sections of the entire provided syllabus.
+
+---
+
+## Unit 2 — SOLUTIONS
+
+**2.1 Heterogeneous and Homogeneous Mixtures**
+
+* 2.1.1 Suspensions, Solutions, Colloids
+
+**2.2 The Solution Process**
+
+* 2.2.1 Liquid Solutions and Inter-particle Forces of Attraction
+* 2.2.2 Solutions of Ionic Solids in Water
+* 2.2.3 Solubility Rules for Ionic Solids
+* 2.2.4 Solution of Liquids in Liquids
+* 2.2.5 Rate of Dissolution
+* 2.2.6 Energy Changes in Solution Process
+
+**2.3 Solubility as an Equilibrium Process**
+
+* 2.3.1 Unsaturated, Saturated and Supersaturated Solutions
+* 2.3.2 Factors Affecting Solubility of Substances
+
+**2.4 Ways of Expressing Concentration of Solutions**
+
+* 2.4.1 Percent by Mass/Volume
+* 2.4.2 Mole Fraction
+* 2.4.3 Molarity
+* 2.4.4 Molality
+* 2.4.5 Normality
+* 2.4.6 Conversion of Concentration Units
+
+**2.5 Preparation of Solutions**
+
+* 2.5.1 Preparation of Stock Solutions from Pure Compound
+* 2.5.2 Diluting a Solution
+
+**2.6 Solution Stoichiometry**
+
+**2.7 Describing Reactions in Solution**
+
+* Reacting ions
+* Spectator ions
+* Precipitation
+* Solubility
+* Net ionic equations
+
+---
+
+## Unit 3 — IMPORTANT INORGANIC COMPOUNDS
+
+**3.1 Introduction**
+
+**3.2 Oxides**
+
+**3.3 Acids**
+
+**3.4 Bases**
+
+**3.5 Salts**
+
+The textbook groups these four major classes of inorganic compounds together as the main content of the unit. 
+
+---
+
+## Unit 4 — ENERGY CHANGES AND ELECTROCHEMISTRY
+
+**4.1 Introduction**
+
+* 4.1.1 Exothermic and Endothermic Chemical Reactions
+* 4.1.2 Importance of Chemical Changes
+
+**4.2 Energy Changes in Electrochemistry**
+
+* 4.2.1 Electrochemistry
+* 4.2.2 Electrical Conductivity
+
+  * Metallic conductivity
+  * Electrolytic conductivity
+
+**4.3 Electrochemical Cells**
+
+* 4.3.1 Galvanic / Voltaic Cells
+
+**4.4 Electrolysis**
+
+* 4.4.1 Electrolysis of Molten / Fused Electrolytes
+
+---
+
+## Unit 5 — METALS AND NONMETALS
+
+**5.1 Introduction**
+
+**5.2 General Properties of Metals and Production of Some Metals**
+
+* 5.2.1 Properties and Extraction of Metals
+* 5.2.2 Alloys
+* 5.2.3 Production of Aluminum, Iron and Copper
+
+**5.3 Production of Some Important Nonmetals**
+
+* 5.3.1 General Properties of Nonmetals and Common Uses of Some Nonmetals
+* 5.3.2 Production of Nitrogen, Phosphorous, Oxygen, Sulphur and Chlorine
+
+The metal section specifically develops occurrence, extraction and applications of aluminum, iron and copper. 
+
+---
+
+## Unit 6 — HYDROCARBONS AND THEIR NATURAL SOURCES
+
+**6.1 Introduction**
+
+* 6.1.1 History of Organic Chemistry
+* 6.1.2 Structural Representations of Organic Molecules
+* 6.1.3 Classes of Organic Compounds
+
+**6.2 Saturated Hydrocarbons: Alkanes**
+
+* 6.2.1 Alkane Homologous Series
+* 6.2.2 Physical Properties of Alkanes
+* 6.2.3 Nomenclature of Alkanes
+* 6.2.4 Isomerism in Alkanes
+* 6.2.5 Preparation of Alkanes
+* 6.2.6 Chemical Properties of Alkanes
+* 6.2.7 Cycloalkanes / Alicyclic Hydrocarbons
+* 6.2.8 Uses of Alkanes
+
+**6.3 Unsaturated Hydrocarbons: Alkenes, Alkynes and Aromatic Hydrocarbons**
+
+* 6.3.1 Alkenes / Olefins
+* 6.3.2 Alkynes and Their Physical Properties
+
+**6.4 Aromatic Hydrocarbons: Benzene**
+
+* 6.4.1 Benzene
+* 6.4.2 Nomenclature of Substituted Benzenes
+* 6.4.3 Physical Properties of Benzene
+* 6.4.4 Chemical Properties of Benzene
+
+**6.5 Natural Sources of Hydrocarbons**
+
+The Grade 10 organic section explicitly builds structural representations before moving into alkane, alkene, alkyne and benzene chemistry. 
+
+---
+
+# GRADE 11
+
+## STATUS: NOT AVAILABLE IN THE PROVIDED FILES
+
+I checked the conversation's uploaded-file set: there are **exactly three uploaded files** — Grade 9, Grade 10, and Grade 12. 
+
+Therefore:
+
+**Grade 11 official syllabus**
+→ **Not specified in the provided PDFs.**
+
+I will **not invent Grade 11 chapters from general knowledge**.
+
+Once the official Grade 11 Chemistry PDF is supplied, I will insert its complete structure between Grade 10 and Grade 12 and update the dependency map.
+
+---
+
+# GRADE 12
+
+The Grade 12 textbook contains **5 units**.  
+
+## Unit 1 — ACID-BASE EQUILIBRIA
+
+**1.1 Acid-Base Concepts**
+
+* 1.1.1 Arrhenius Concept of Acids and Bases
+* 1.1.2 Brønsted-Lowry Concept of Acids and Bases
+
+  * 1.1.2.1 Conjugate Acid-Base Pairs
+  * 1.1.2.2 Auto-ionization of Substances
+  * 1.1.2.3 Amphiprotic Species
+* 1.1.3 Lewis Concept of Acids and Bases
+
+**1.2 Ionic Equilibria of Weak Acids and Bases**
+
+* 1.2.1 Ionization of Water
+* 1.2.2 Measures of the Strength of Acids and Bases in Aqueous Solution
+
+  * 1.2.2.1 Concentration of Hydrogen and Hydroxide Ions
+  * 1.2.2.2 pH and pOH
+  * 1.2.2.3 Percent Ionization
+  * 1.2.2.4 Dissociation / Ionization Constants
+
+**1.3 Common Ion Effect and Buffer Solution**
+
+* 1.3.1 Common Ion Effect
+* 1.3.2 Buffer Solutions
+
+**1.4 Hydrolysis of Salts**
+
+* 1.4.1 Hydrolysis of Salts of Strong Acids and Strong Bases
+* 1.4.2 Hydrolysis of Salts of Weak Acids and Strong Bases
+* 1.4.3 Hydrolysis of Salts of Strong Acids and Weak Bases
+* 1.4.4 Hydrolysis of Salts of Weak Acids and Weak Bases
+
+**1.5 Acid-Base Indicators and Titrations**
+
+* 1.5.1 Acid-Base Indicators
+* 1.5.2 Equivalents of Acids and Bases
+* 1.5.3 Acid-Base Titrations
+
+The textbook's Unit 1 outcomes explicitly include equilibrium calculations involving concentration, \(K_a\), \(K_b\), pH and pOH, plus buffer, hydrolysis and titration work. 
+
+---
+
+## Unit 2 — ELECTROCHEMISTRY
+
+**2.1 Oxidation-Reduction Reactions**
+
+* 2.1.1 Oxidation
+* 2.1.2 Reduction
+* 2.1.3 Balancing Oxidation-Reduction / Redox Reactions
+
+**2.2 Electrolysis of Aqueous Solutions**
+
+* 2.2.1 Electrolytic Cells
+* 2.2.2 Preferential Discharge
+* 2.2.3 Electrolysis of Some Selected Aqueous Solutions
+
+**2.3 Quantitative Aspects of Electrolysis**
+
+* 2.3.1 Faraday's First Law of Electrolysis
+* 2.3.2 Faraday's Second Law of Electrolysis
+
+**2.4 Industrial Application of Electrolysis**
+
+**2.5 Voltaic Cells**
+(The contents page spells this as "Volatic Cells.")
+
+The book explicitly develops metallic versus electrolytic conduction, electrolytic cells, preferential discharge, quantitative electrolysis and voltaic cells.  
+
+---
+
+## Unit 3 — INDUSTRIAL CHEMISTRY
+
+**3.1 Introduction**
+
+**3.2 Natural Resources and Industry**
+
+* 3.2.1 Natural Resources / Raw Materials
+* 3.2.2 Industry
+
+**3.3 Manufacturing of Valuable Products / Chemicals**
+
+* 3.3.1 Ammonia (NH₃)
+* 3.3.2 Nitric Acid
+* 3.3.3 Nitrogen-Based Fertilizers
+* 3.3.4 Sulphuric Acid
+* 3.3.5 Some Common Pesticides and Herbicides
+* 3.3.6 Sodium Carbonate
+* 3.3.7 Sodium Hydroxide (NaOH)
+
+**3.4 Some Manufacturing Industries in Ethiopia**
+
+* 3.4.1 Glass Manufacturing
+* 3.4.2 Manufacturing of Ceramics
+* 3.4.3 Cement
+* 3.4.4 Sugar Manufacturing
+* 3.4.5 Paper and Pulp
+* 3.4.6 Tannery
+* 3.4.7 Food Processing and Preservation
+* 3.4.8 Manufacturing of Ethanol
+* 3.4.9 Soap and Detergent
+
+---
+
+## Unit 4 — POLYMERS
+
+**4.1 Introduction to Polymers**
+
+**4.2 Polymerization Reactions**
+
+**4.3 Classification of Polymers**
+
+---
+
+## Unit 5 — INTRODUCTION TO ENVIRONMENTAL CHEMISTRY
+
+**5.1 Introduction**
+
+* 5.1.1 Components of the Environment
+* 5.1.2 Natural Cycles in the Environment
+* 5.1.3 Concepts Related to Environmental Chemistry
+
+**5.2 Environmental Pollution**
+
+* 5.2.1 Air Pollution
+* 5.2.2 Water Pollution
+* 5.2.3 Land Pollution
+
+**5.3 Global Warming and Climate Change**
+
+* 5.3.1 Global Warming and Climate Change
+* 5.3.2 Chemistry of Greenhouse Gases and Their Effects on Climate Change
+
+**5.4 Green Chemistry and Cleaner Production**
+
+* 5.4.1 Principle of Green Chemistry
+* 5.4.2 Cleaner Production in Chemistry
+
+All five Grade 12 units and these subsections appear in the official contents structure. 
+
+---
+
+# MASTER LEARNING ORDER
+
+The official textbook order is useful, but for **deep understanding**, I would make the conceptual dependency chain more explicit.
+
+## A. FOUNDATION
+
+### Foundation 1 — What Chemistry Is
+
+**Grade 9 Unit 1**
+
+* Nature and scope of chemistry
+* Matter and substances
+* Chemistry's relationship to other sciences
+* Applications of chemistry
+
+This establishes the language of the subject.
+
+### Foundation 2 — Measurement and Scientific Thinking
+
+**Grade 9 Unit 2**
+
+* SI units
+* Derived units
+* Density
+* Temperature
+* Uncertainty
+* Precision vs accuracy
+* Significant figures
+* Scientific notation
+* Scientific method
+* Laboratory skills
+
+This is the mathematical and experimental language needed later.
+
+### Foundation 3 — Atomic Structure
+
+**Grade 9 Unit 3**
+
+* Atomic theories
+* Chemical laws
+* Dalton
+* Subatomic particles
+* Nucleus
+* Isotopes
+* Atomic number/mass number
+* Energy levels
+* Electronic configuration
+* Valence electrons
+
+This is the microscopic foundation of the rest of chemistry.
+
+### Foundation 4 — Periodic Organization
+
+**Grade 9 Unit 4**
+
+* Periodic law
+* Groups/periods
+* Element classification
+* Atomic radius
+* Ionization energy
+* Electron affinity
+* Electronegativity
+
+### Foundation 5 — Chemical Bonding
+
+**Grade 9 Unit 5**
+
+* Ionic
+* Covalent
+* Lewis structures
+* Polarity
+* Coordinate covalent bonding
+* Metallic bonding
+
+This is especially important because later organic, inorganic and solution chemistry repeatedly relies on bonding ideas.
+
+---
+
+# B. INTERMEDIATE
+
+## Quantitative Chemical Reasoning
+
+**Grade 10 Unit 1**
+
+Recommended internal order:
+
+Chemical change
+→ chemical equations
+→ balancing
+→ reaction types
+→ oxidation/reduction
+→ oxidation number
+→ mole concept
+→ molar mass
+→ formulas
+→ stoichiometry
+→ limiting reactants
+→ yield
+
+The key dependency is:
+
+**balanced equation → mole ratios → quantitative calculations**
+
+The textbook itself describes stoichiometry as the quantitative relationship between reactants and products. 
+
+---
+
+## Solutions and Concentration
+
+**Grade 10 Unit 2**
+
+Recommended order:
+
+mixtures
+→ solution particles/interactions
+→ dissolution
+→ solubility
+→ saturated/unsaturated/supersaturated
+→ concentration
+→ molarity/molality/mole fraction/normality
+→ solution preparation
+→ dilution
+→ solution stoichiometry
+→ ionic equations
+
+This unit is a major prerequisite for Grade 12 acid-base equilibrium.
+
+---
+
+## Inorganic Compounds
+
+**Grade 10 Unit 3**
+
+* Oxides
+* Acids
+* Bases
+* Salts
+
+This provides the chemical vocabulary needed before Grade 12 acid-base equilibria.
+
+---
+
+## Energy and Electrochemistry
+
+**Grade 10 Unit 4**
+
+Chemical energy
+→ energy changes
+→ conductivity
+→ electrochemical systems
+→ galvanic cells
+→ electrolysis
+
+This prepares the conceptual base for Grade 12 electrochemistry.
+
+---
+
+## Metals and Nonmetals
+
+**Grade 10 Unit 5**
+
+* Metallic properties
+* Extraction
+* Alloys
+* Aluminum
+* Iron
+* Copper
+* Important nonmetals
+* Industrial production of selected nonmetals
+
+---
+
+## Organic Chemistry / Hydrocarbons
+
+**Grade 10 Unit 6**
+
+Structural representations
+→ classes of organic compounds
+→ alkanes
+→ nomenclature
+→ isomerism
+→ reactions
+→ cycloalkanes
+→ alkenes
+→ alkynes
+→ benzene
+→ natural hydrocarbon sources
+
+The structural-representation step should come before heavy organic problem solving because the textbook itself places it at the start of the hydrocarbons unit. 
+
+---
+
+# C. ADVANCED
+
+Within the material you provided, the most mathematically and conceptually advanced section is:
+
+## Grade 12 Unit 1 — Acid-Base Equilibria
+
+The progression is approximately:
+
+acid/base definitions
+→ proton transfer
+→ conjugate pairs
+→ water ionization
+→ weak-electrolyte equilibrium
+→ \(K_a/K_b\)
+→ pH/pOH
+→ percent ionization
+→ common-ion effect
+→ buffers
+→ salt hydrolysis
+→ indicators
+→ equivalents
+→ titration
+
+This is a genuine cumulative unit rather than a collection of isolated formulas.
+
+---
+
+## Grade 12 Unit 2 — Advanced Electrochemistry
+
+Progression:
+
+oxidation/reduction
+→ redox balancing
+→ electrolysis
+→ preferential discharge
+→ quantitative electrolysis
+→ Faraday's laws
+→ industrial electrolysis
+→ voltaic cells
+
+The Grade 12 book explicitly requires both conceptual reasoning and quantitative work in this unit. 
+
+---
+
+## Grade 12 Unit 3 — Industrial Chemistry
+
+This is more application/process oriented:
+
+raw materials
+→ industrial processes
+→ important chemicals
+→ Ethiopian manufacturing industries
+
+---
+
+## Grade 12 Unit 4 — Polymers
+
+* Polymer structure
+* Polymerization
+* Polymer classification
+
+---
+
+## Grade 12 Unit 5 — Environmental Chemistry
+
+Environment
+→ natural cycles
+→ environmental chemistry concepts
+→ pollution
+→ climate change
+→ greenhouse-gas chemistry
+→ green chemistry
+→ cleaner production
+
+---
+
+# D. IMPORTANT PREREQUISITE RELATIONSHIPS
+
+Here is the dependency structure I will use during teaching.
+
+**Atomic structure**
+→ electronic configuration
+→ valence electrons
+→ periodic trends
+→ electronegativity
+→ bonding
+
+**Bonding**
+→ Lewis structures
+→ polarity
+→ intermolecular interactions
+→ solutions
+→ organic structures
+
+**Measurements**
+→ units
+→ significant figures
+→ quantitative chemistry
+
+**Chemical equations**
+→ balancing
+→ mole ratios
+→ stoichiometry
+
+**Mole concept**
+→ molar mass
+→ empirical/molecular formula
+→ stoichiometry
+→ solution stoichiometry
+
+**Solutions**
+→ concentration
+→ molarity/molality
+→ dilution
+→ acid-base concentration problems
+
+**Grade 10 acids/bases**
+→ Grade 12 acid-base concepts
+
+**Grade 10 redox**
+→ Grade 10 electrochemistry
+→ Grade 12 electrochemistry
+
+**Electronegativity + bonding**
+→ polarity
+→ organic molecular structure
+
+**Organic structural representations**
+→ hydrocarbons
+→ later polymer understanding
+
+Because the Grade 11 source is missing, I will **not assert the Grade 11 prerequisite relationships** until that textbook is supplied.
+
+---
+
+# E. TOPICS LIKELY TO REQUIRE THE MOST PRACTICE
+
+This is **my study-planning estimate based on the nature and amount of calculation/problem-solving content in the provided textbooks**, not an invented examination weighting.
+
+### Very high practice requirement
+
+**Grade 10**
+
+* Mole concept
+* Empirical/molecular formulas
+* Stoichiometry
+* Limiting/excess reactants
+* Percentage yield
+* Solution concentration calculations
+* Molarity
+* Molality
+* Normality
+* Dilution
+* Solution stoichiometry
+* Redox balancing
+* Electrochemical calculations
+* Organic nomenclature/isomerism
+
+**Grade 12**
+
+* \(K_a\), \(K_b\)
+* pH and pOH
+* Weak-acid/weak-base equilibrium
+* Percent ionization
+* Common-ion effect
+* Buffer calculations
+* Salt hydrolysis
+* Acid-base titration
+* Faraday's laws
+* Voltaic-cell calculations
+
+Grade 12 Unit 1 explicitly states that students are expected to solve equilibrium problems involving concentration, \(K_a\), \(K_b\), pH and pOH. 
+
+### High revision requirement
+
+* Significant figures
+* Atomic number vs mass number
+* Isotopes
+* Electronic configuration
+* Periodic trends
+* Electronegativity
+* Lewis structures
+* Ionic vs covalent bonding
+* Oxidation vs reduction
+* Oxidizing vs reducing agents
+* Saturated vs unsaturated hydrocarbons
+* Alkane nomenclature
+* Structural isomerism
+* Electrochemical terminology
+
+### Primarily conceptual
+
+* Nature/scope of chemistry
+* Relationship between sciences
+* Applications of chemistry
+* Scientific method
+* Atomic theory history
+* Periodic-table history
+* General oxide/acid/base/salt concepts
+* Industrial chemistry processes
+* Polymer classification
+* Environmental chemistry
+
+### Heavier memorization component
+
+* Historical developments
+* Names and characteristics of industrial products/processes
+* Selected Ethiopian industries
+* Specific chemical uses
+* Production sequences
+* Environmental terminology
+* Some organic nomenclature rules
+* Specific chemical facts and examples
+
+The important distinction will be:
+
+**understand first → memorize only what genuinely needs memorization.**
+
+---
+
+# F. TOPICS WHERE MISUNDERSTANDINGS ARE LIKELY
+
+These are areas I will deliberately revisit and attack from different angles:
+
+**Grade 9**
+
+* Physical vs chemical change
+* Matter vs substance
+* Composition vs structure
+* Accuracy vs precision
+* Significant figures
+* Atomic number vs mass number
+* Isotope vs element
+* Energy level vs electron
+* Atomic radius vs ionization energy
+* Ionic vs covalent bonding
+* Polar bond vs polar molecule
+
+**Grade 10**
+
+* Coefficients vs subscripts when balancing equations
+* Reaction type recognition
+* Oxidation vs reduction
+* Oxidizing agent vs reducing agent
+* Mole vs molecule
+* Molar mass vs molecular/formula mass
+* Empirical vs molecular formula
+* Limiting vs excess reactant
+* Molarity vs molality
+* Solute vs solvent vs solution
+* Solubility vs rate of dissolution
+* Electrolyte vs nonelectrolyte
+* Anode/cathode terminology
+* Alkane vs alkene vs alkyne
+* Structural formula vs condensed formula vs bond-line representation
+
+**Grade 12**
+
+* Arrhenius vs Brønsted-Lowry vs Lewis definitions
+* Acid vs conjugate acid
+* Base vs conjugate base
+* Strong vs concentrated
+* Weak vs dilute
+* \(K_a\) vs acid concentration
+* pH vs pOH
+* Common-ion effect vs buffer action
+* Salt hydrolysis
+* Equivalence vs concentration
+* Oxidation vs reduction at electrodes
+* Electrolytic vs voltaic cells
+* First vs second Faraday law
+
+These are exactly the kinds of ideas I will repeatedly re-test using **different wording and unfamiliar situations**, rather than asking the same flashcard indefinitely.
+
+---
+
+# THE BIG PICTURE
+
+Your provided Chemistry curriculum forms a surprisingly coherent chain:
+
+**Matter**
+→ **Measurement**
+→ **Atoms**
+→ **Periodic organization**
+→ **Bonding**
+→ **Chemical reactions**
+→ **Moles**
+→ **Stoichiometry**
+→ **Solutions**
+→ **Acids/Bases**
+→ **Equilibrium**
+→ **Redox**
+→ **Electrochemistry**
+→ **Metals / Nonmetals**
+→ **Organic chemistry**
+→ **Industrial chemistry**
+→ **Polymers**
+→ **Environmental chemistry**
+
+That is the conceptual backbone I will use rather than treating the textbook as hundreds of unrelated facts.
+
+## Proposed master sequence
+
+**Grade 9**
+
+1. Chemistry and its Importance
+2. Measurements and Scientific Methods
+3. Structure of the Atom
+4. Periodic Classification of Elements
+5. Chemical Bonding
+
+**Grade 10**
+6. Chemical Reactions and Stoichiometry
+7. Solutions
+8. Important Inorganic Compounds
+9. Energy Changes and Electrochemistry
+10. Metals and Nonmetals
+11. Hydrocarbons and Their Natural Sources
+
+**Grade 11**
+12. **Pending official PDF**
+
+**Grade 12**
+13. Acid-Base Equilibria
+14. Electrochemistry
+15. Industrial Chemistry
+16. Polymers
+17. Introduction to Environmental Chemistry
+
+This ordering preserves the official grade/unit structure while making the **prerequisite relationships** explicit. I will still teach individual lessons one major concept at a time rather than dumping an entire unit.
+
+### Source boundary
+
+Everything above concerning the official syllabus is derived from the uploaded textbooks. I have **not filled Grade 11 from another curriculum**. When the textbooks do not specify examination weighting, I will use the wording:
+
+**"Not specified in the provided PDF."**
+
+### One remaining source gap
+
+Please upload the **official Grade 11 Chemistry PDF** so I can complete the true Grade 9–12 master map.
+
+Once that is supplied, we will have the complete source-based roadmap. **Then confirm that we should begin with Topic 1.**

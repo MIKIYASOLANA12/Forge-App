@@ -20,7 +20,8 @@ import {
   Dumbbell,
   BookOpen,
   Calendar as CalendarIcon,
-  Award
+  Award,
+  Lock
 } from "lucide-react";
 import Link from "next/link";
 import {
@@ -44,6 +45,7 @@ import { CountdownsGrid } from "@/components/dashboard/CountdownsGrid";
 import { HolidayWorkoutCard } from "@/components/dashboard/HolidayWorkoutCard";
 import { SleepScheduleCard } from "@/components/dashboard/SleepScheduleCard";
 import { EthiopianGoalYearCard } from "@/components/dashboard/EthiopianGoalYearCard";
+import { TopicQuizModal } from "@/components/study/TopicQuizModal";
 import type { SmartScheduleStatus } from "@/lib/smartSchedule";
 import type { CountdownCard } from "@/lib/countdowns";
 import type { HolidayStatus } from "@/lib/holidayWorkout";
@@ -137,21 +139,53 @@ export default function Home() {
   const [holidayStatus, setHolidayStatus] = useState<HolidayStatus | null>(null);
   const [goalYear, setGoalYear] = useState<GoalYearStatus | null>(null);
 
+  // Subject Mastery State
+  const [subjectOverview, setSubjectOverview] = useState<any>(null);
+  const [activeQuiz, setActiveQuiz] = useState<{ subject: string; topicId: string } | null>(null);
+
   // AI Nutrition Coach State
   const [mealInput, setMealInput] = useState("");
   const [analyzingMeal, setAnalyzingMeal] = useState(false);
   const [mealAnalysis, setMealAnalysis] = useState<MealAnalysis | null>(null);
   const [savedMealSuccess, setSavedMealSuccess] = useState(false);
 
+  const loadSubjectData = async () => {
+    try {
+      const res = await fetch("/api/subjects");
+      if (res.ok) {
+        const data = await res.json();
+        setSubjectOverview(data);
+      }
+    } catch (err) {
+      console.error("Failed to load subject overview in Home:", err);
+    }
+  };
+
+  const handleStartSubject = async (subjectKey: string) => {
+    try {
+      const res = await fetch("/api/subjects", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "START_SUBJECT", subject: subjectKey }),
+      });
+      if (res.ok) {
+        await loadSubjectData();
+      }
+    } catch (err) {
+      console.error("Failed to start subject:", err);
+    }
+  };
+
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [planRes, workoutRes, settingsRes, analyticsRes, scheduleRes] = await Promise.all([
+        const [planRes, workoutRes, settingsRes, analyticsRes, scheduleRes, subjectRes] = await Promise.all([
           fetch("/api/plan/today"),
           fetch("/api/workout/today"),
           fetch("/api/settings"),
           fetch("/api/analytics/weekly"),
           fetch("/api/schedule/now"),
+          fetch("/api/subjects"),
         ]);
 
         if (planRes.ok) {
@@ -194,6 +228,11 @@ export default function Home() {
           if (schedData.countdowns) setCountdowns(schedData.countdowns);
           if (schedData.holiday) setHolidayStatus(schedData.holiday);
           if (schedData.goalYear) setGoalYear(schedData.goalYear);
+        }
+
+        if (subjectRes.ok) {
+          const subData = await subjectRes.json();
+          setSubjectOverview(subData);
         }
       } catch (err) {
         console.error("Failed to load dashboard data:", err);
@@ -286,6 +325,9 @@ export default function Home() {
     return item;
   });
 
+  const activeSubjectCard = subjectOverview?.allSubjects?.find((s: any) => s.status === "ACTIVE");
+  const readySubjectCard = subjectOverview?.allSubjects?.find((s: any) => s.status === "READY");
+
   return (
     <div className="mx-auto w-full max-w-[1500px] animate-fade-in pb-16 space-y-6">
       {/* ── 1. COMMAND CENTER PERSONALIZED GREETING & LIVE STATS ─────────── */}
@@ -303,6 +345,202 @@ export default function Home() {
         onQuickCompleteTask={toggleTask}
       />
 
+      {/* ── 2.5 SUBJECT MASTERY — ACTIVE SUBJECT / STUDY JOURNEY HERO CARD ── */}
+      {subjectOverview && (
+        <section className="space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="text-xl">🇪🇹</span>
+              <h2 className="text-xs font-black uppercase tracking-widest text-cyan-400">
+                SUBJECT MASTERY & SEQUENTIAL PREPARATION
+              </h2>
+            </div>
+            <Link
+              href="/subjects"
+              className="text-xs font-bold text-slate-400 hover:text-cyan-300 flex items-center gap-1 transition"
+            >
+              View 5 Subject Cards <ChevronRight size={14} />
+            </Link>
+          </div>
+
+          {/* If Active Subject Exists */}
+          {activeSubjectCard ? (
+            <div className="rotating-gradient-card p-6 border border-transparent shadow-2xl space-y-4">
+              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800/80 pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-slate-800 border border-slate-700 text-3xl shadow-inner">
+                    {activeSubjectCard.icon}
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-xl font-black text-white tracking-tight">
+                        {activeSubjectCard.name.toUpperCase()}
+                      </h3>
+                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-cyan-500/20 text-cyan-300 border border-cyan-400/40 animate-pulse">
+                        ACTIVE SUBJECT
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-400">
+                      Sequential Subject 1 of 5 · Ethiopian National Curriculum
+                    </p>
+                  </div>
+                </div>
+
+                {/* Countdown Timer */}
+                <div className="text-right">
+                  <div className="text-2xl sm:text-3xl font-black text-white font-mono tracking-tight">
+                    {activeSubjectCard.countdownDisplay}
+                  </div>
+                  <span className="text-[10px] font-black uppercase tracking-widest text-cyan-400">
+                    LEFT IN 1-MONTH TARGET
+                  </span>
+                </div>
+              </div>
+
+              {/* Today's Target Block */}
+              {activeSubjectCard.todayTarget && (
+                <div className="rounded-xl bg-slate-950/80 border border-slate-800/80 p-4 space-y-2">
+                  <div className="flex items-center justify-between text-[11px] font-black uppercase tracking-wider text-cyan-400">
+                    <span className="flex items-center gap-1.5">
+                      <Flame size={14} className="text-orange-400" />
+                      TODAY'S TARGET
+                    </span>
+                    <span className="text-slate-400 font-mono">
+                      Target: {activeSubjectCard.todayTarget.targetMinutes} min · {activeSubjectCard.todayTarget.questionsCount} Questions
+                    </span>
+                  </div>
+
+                  <div className="text-sm font-bold text-white">
+                    Unit: <span className="text-slate-200">{activeSubjectCard.todayTarget.unit}</span>
+                  </div>
+                  <div className="text-xs font-semibold text-cyan-300">
+                    Topic: {activeSubjectCard.todayTarget.topic}
+                  </div>
+
+                  {activeSubjectCard.todayTarget.subtopics.length > 0 && (
+                    <div className="pt-1">
+                      <span className="text-[10px] uppercase font-bold text-slate-400 block mb-1">
+                        Today's Focus Subtopics:
+                      </span>
+                      <ul className="grid grid-cols-1 sm:grid-cols-2 gap-1 text-xs text-slate-300 pl-2">
+                        {activeSubjectCard.todayTarget.subtopics.map((sub: string, i: number) => (
+                          <li key={i} className="flex items-center gap-1.5">
+                            <span className="h-1.5 w-1.5 rounded-full bg-cyan-400" />
+                            <span>{sub}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* Actions: Locked in Focus & Quiz */}
+                  <div className="flex flex-wrap items-center gap-2 pt-3 border-t border-slate-800/60">
+                    <button
+                      onClick={() => setRunning(!running)}
+                      className="flex-1 min-w-[150px] flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white text-xs font-black tracking-wider uppercase transition shadow-lg"
+                    >
+                      <Lock size={14} />
+                      {running ? "PAUSE FOCUS" : "LOCKED IN (START FOCUS)"}
+                    </button>
+
+                    {activeSubjectCard.activeTopic && (
+                      <button
+                        onClick={() => setActiveQuiz({ subject: activeSubjectCard.key, topicId: activeSubjectCard.activeTopic!.id })}
+                        className="flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-cyan-300 border border-cyan-500/30 text-xs font-bold transition shadow"
+                      >
+                        <Zap size={14} />
+                        TEST MY UNDERSTANDING
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Progress Bar & Topic Statistics */}
+              <div className="pt-2">
+                <div className="flex items-center justify-between text-xs font-mono mb-1.5">
+                  <span className="text-slate-300 font-bold">
+                    Progress: {activeSubjectCard.completedTopics} / {activeSubjectCard.totalTopics} topics
+                  </span>
+                  <div className="flex items-center gap-2 font-bold">
+                    <span className="text-emerald-400">{activeSubjectCard.completionPercent}% COMPLETED</span>
+                    <span className="text-slate-600">|</span>
+                    <span className="text-amber-400">{activeSubjectCard.remainingPercent}% REMAINING</span>
+                  </div>
+                </div>
+                <div className="h-2.5 w-full overflow-hidden rounded-full bg-slate-950 border border-slate-800">
+                  <div
+                    className="h-full rounded-full bg-gradient-to-r from-blue-600 via-cyan-500 to-teal-400 transition-all duration-700"
+                    style={{ width: `${activeSubjectCard.completionPercent}%` }}
+                  />
+                </div>
+              </div>
+            </div>
+          ) : (
+            /* Initial State: No subject started yet */
+            <div className="rounded-2xl border-2 border-cyan-500/40 bg-gradient-to-b from-cyan-950/20 via-slate-900/90 to-slate-950 p-6 shadow-2xl space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-800 pb-4">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-black uppercase tracking-widest text-cyan-400 flex items-center gap-1.5">
+                      <Sparkles size={14} />
+                      STUDY JOURNEY
+                    </span>
+                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-800 text-slate-300 border border-slate-700">
+                      5 SUBJECTS READY
+                    </span>
+                  </div>
+                  <h3 className="text-xl sm:text-2xl font-black text-white">
+                    No subject started yet.
+                  </h3>
+                  <p className="text-xs text-slate-400 max-w-xl">
+                    Next Subject: <strong className="text-white">🧪 CHEMISTRY (READY TO START)</strong>.
+                    Progress starts at ZERO. Press the button below to initiate your 1-month countdown.
+                  </p>
+                </div>
+
+                {readySubjectCard && (
+                  <button
+                    onClick={() => handleStartSubject(readySubjectCard.key)}
+                    className="px-6 py-3.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white text-sm font-black uppercase tracking-wider shadow-lg transition active:scale-95 flex items-center justify-center gap-2 whitespace-nowrap"
+                  >
+                    <Play size={16} fill="white" />
+                    START CHEMISTRY
+                  </button>
+                )}
+              </div>
+
+              {/* 5 Subjects Status List */}
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5 pt-1">
+                {[
+                  { name: "Chemistry", icon: "🧪", status: "READY", color: "border-cyan-500/40 text-cyan-300 bg-cyan-950/30" },
+                  { name: "Biology", icon: "🧬", status: "LOCKED", color: "border-slate-800 text-slate-500 bg-slate-900/40" },
+                  { name: "Physics", icon: "⚛️", status: "LOCKED", color: "border-slate-800 text-slate-500 bg-slate-900/40" },
+                  { name: "English", icon: "🇬🇧", status: "LOCKED", color: "border-slate-800 text-slate-500 bg-slate-900/40" },
+                  { name: "Mathematics", icon: "📐", status: "LOCKED", color: "border-slate-800 text-slate-500 bg-slate-900/40" },
+                ].map((s, idx) => (
+                  <div key={idx} className={`p-3 rounded-xl border flex flex-col items-center justify-center text-center gap-1 ${s.color}`}>
+                    <span className="text-lg">{s.icon}</span>
+                    <span className="text-xs font-bold">{s.name}</span>
+                    <span className="text-[9px] font-mono uppercase font-black tracking-wider px-1.5 py-0.5 rounded bg-black/40">
+                      {s.status}
+                    </span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Progress Summary Row */}
+              <div className="flex flex-wrap items-center justify-between text-xs font-mono text-slate-400 pt-2 border-t border-slate-800/60">
+                <span>Current Study Progress: <strong className="text-white">0%</strong></span>
+                <span>Subjects Started: <strong className="text-white">0 / 5</strong></span>
+                <span>Topics Completed: <strong className="text-white">0</strong></span>
+                <span>Questions Completed: <strong className="text-white">0</strong></span>
+              </div>
+            </div>
+          )}
+        </section>
+      )}
+
       {/* ── 3. FIXED ETHIOPIAN 2019 E.C. GOAL YEAR + EXAM COUNTDOWN ───────── */}
       <EthiopianGoalYearCard goalYear={goalYear} />
 
@@ -319,6 +557,7 @@ export default function Home() {
 
       {/* ── 5. FIXED 11:00 AM WAKE-UP & SLEEP CONSISTENCY CARD ─────────────── */}
       <SleepScheduleCard />
+
 
       {/* ── ACCOUNTABILITY STATUS (spec section 10) ─────────────────────────── */}
       {accountability && (
@@ -646,6 +885,17 @@ export default function Home() {
           </section>
         </div>
       </div>
+
+      {/* Topic Quiz Modal */}
+      {activeQuiz && (
+        <TopicQuizModal
+          isOpen={true}
+          subjectKey={activeQuiz.subject}
+          topicId={activeQuiz.topicId}
+          onClose={() => setActiveQuiz(null)}
+          onQuizCompleted={loadSubjectData}
+        />
+      )}
     </div>
   );
 }

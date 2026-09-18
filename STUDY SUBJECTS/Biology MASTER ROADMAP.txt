@@ -1,0 +1,1851 @@
+# Grade 9–12 Biology MASTER ROADMAP
+
+I’ve completed the roadmap stage before teaching anything. The four Ethiopian Ministry of Education Biology textbooks are the basis of the official scope: Grade 9, Grade 10, Grade 11, and Grade 12.    
+
+I am treating the **numbered units, sections, and subsections in the textbooks as the syllabus map**. Activities, examples, review questions, and illustrations are learning material inside those topics rather than separate syllabus units.
+
+One important source-handling rule: several contents pages contain numbering/encoding problems. I will **not silently invent missing titles or pretend the textbook numbering is cleaner than it is**.
+
+---
+
+# 1. GRADE 9 — MASTER MAP
+
+The Grade 9 textbook has **6 units**: Introduction to Biology; Characteristics and classification of organisms; Cells; Reproduction; Human health, nutrition and diseases; Ecology. 
+
+## Unit 1 — Introduction to Biology — p.1
+
+**1.1 Definition of Biology**
+
+**1.2 Why do we study Biology?**
+
+**1.3 The scientific method**
+
+**1.4 Tools of a Biologist**
+
+* 1.4.1 Laboratory tools
+* 1.4.2 Field tools
+
+**1.5 Handling and using of light Microscope**
+
+* 1.5.1 Parts and function of light microscope
+* 1.5.2 Handling and using microscope
+
+**1.6 General Laboratory Safety Rules**
+
+The opening section also establishes the relationship of biology with other natural sciences and the characteristics of living things. 
+
+---
+
+## Unit 2 — Characteristics and Classification of Organisms — p.19
+
+**2.1 Characteristics of living things**
+
+**2.2 Taxonomy of living things**
+
+* 2.2.1 Principles of classification
+* 2.2.2 Taxonomic hierarchies in biological classification
+
+**2.3 Relevance of classification**
+
+**2.4 Linnaean system of nomenclature**
+
+**2.5 Common Ethiopian animals and plants**
+
+**2.6 The five-kingdom system of classification**
+
+**2.7 Renowned taxonomists in Ethiopia**
+
+The textbook explicitly places classification principles and taxonomic hierarchy under 2.2. 
+
+---
+
+## Unit 3 — Cells — p.44
+
+**3.1 What is a cell?**
+
+**3.2 Cell theory**
+
+**3.3 Cell structure and function**
+
+**3.4 Types of cells**
+
+**3.5 Animal and plant cells**
+
+**3.6 Observing cells under a microscope**
+
+**3.7 The cell and its environment**
+
+* 3.7.1 Passive transport
+* 3.7.2 Active transport
+
+**3.8 Levels of Biological Organization**
+
+This unit is one of the most important foundations for later genetics, enzymes, transport, reproduction, and human biology. 
+
+---
+
+## Unit 4 — Reproduction — p.74
+
+The contents box in the PDF contains a numbering error here: it prints **1.1–1.11**, while the actual Unit 4 section headings in the body use **4.1–4.11**. I will use the body numbering while explicitly preserving the source discrepancy.
+
+**4.1 Introduction to reproduction**
+
+**4.2 Asexual reproduction**
+
+**4.3 Types of asexual reproduction**
+
+* 4.3.1 Fission
+* 4.3.2 Fragmentation
+* 4.3.3 Budding
+* 4.3.4 Vegetative reproduction
+* 4.3.5 Parthenogenesis
+
+**4.4 Sexual reproduction**
+
+**4.5 Primary and secondary sexual characteristics**
+
+**4.6 Male reproductive structures**
+
+**4.7 Female reproductive structures**
+
+**4.8 The Menstrual cycle**
+
+**4.9 Fertilization and pregnancy**
+
+**4.10 Methods of birth control**
+
+**4.11 Sexually transmitted infection: transmission and prevention**
+
+The body of the textbook begins this unit as **4.1 Introduction to reproduction**, confirming the Unit 4 numbering. 
+
+---
+
+## Unit 5 — Human Health, Nutrition, and Disease — p.103
+
+**5.1 What is food?**
+
+**5.2 Nutrition**
+
+**5.3 Nutrients**
+
+**5.4 Balanced diet**
+
+**5.5 Deficiency diseases**
+
+**5.6 Malnutrition**
+
+**5.7 Substance abuse**
+
+**5.8 Types of diseases**
+
+* 5.8.1 Infectious diseases
+* 5.8.2 Non-infectious diseases
+
+**5.9 Renowned Nutritionists in Ethiopia**
+
+The unit covers food, nutrients, balanced diets, deficiency, malnutrition, substance abuse, and disease categories. 
+
+---
+
+## Unit 6 — Ecology — p.137
+
+**6.1 Ecology**
+
+* 6.1.1 Definition of ecology
+* 6.1.2 Biotic and abiotic components
+* 6.1.3 Ecological levels
+* 6.1.4 Ecosystems
+* 6.1.5 Biomes
+* 6.1.6 Ecological succession
+
+**6.2 Ecological relationships**
+
+
+
+---
+
+# 2. GRADE 10 — MASTER MAP
+
+The Grade 10 contents page gives **6 units**. Its contents text is badly encoded in machine extraction, so I checked the rendered contents pages rather than reconstructing titles from general Biology knowledge.
+
+## Unit 1 — Sub-fields of Biology — p.1
+
+**1.1 Sub-fields of Biology**
+
+**1.2 Pure and applied fields of biology**
+
+**1.3 Major discoveries in Biology**
+
+**1.4 The contributions of biological discoveries to society and the environment**
+
+* examples in the textbook include microscope, penicillin, inheritance, etc.
+
+**1.5 Major discoveries by Ethiopian Biologists**
+
+* examples include Aklilu Lemma
+* Gabissa Ejeta
+
+---
+
+## Unit 2 — Plants — p.17
+
+**2.1 Characteristics of plants**
+
+**2.2 Flowering and non-flowering plants**
+
+**2.3 Structure and function of plant parts**
+
+* 2.3.1 The internal structure of a leaf
+* 2.3.2 The internal structure of a stem
+* 2.3.3 The internal structure of a root
+
+**2.4 Reproduction in plants**
+
+* 2.4.2 Reproductive structure and life cycle of flowering plants
+* 2.4.3 Pollination
+
+**2.5 Seeds**
+
+**2.6 Seed dispersal and germination**
+
+* 2.6.1 Seed dispersal
+* 2.6.2 Germination of seed
+
+**2.7 Photosynthesis**
+
+* 2.7.1 The photosynthetic apparatus
+* 2.7.2 The light absorbing system in chloroplast
+* 2.7.3 Mechanism of photosynthesis
+* 2.7.4 Testing a leaf for starch
+
+**2.8 Transport in plant**
+
+* 2.8.1 Transporting systems in plants
+* 2.8.2 Mechanism of transport in plant
+
+**2.9 Response in plants**
+
+**2.10 Medicinal plants**
+
+**2.11 Renowned Ethiopian Botanist**
+
+**Source anomaly:** the contents page jumps from **2.4** to **2.4.2** and **2.4.3**; no 2.4.1 title is printed there. I will not invent one.
+
+---
+
+## Unit 3 — Biochemical Molecules — p.50
+
+**3.1 Biochemical Molecules**
+
+* 3.1.1 Inorganic molecule: Water
+* 3.1.2 Inorganic ions
+* 3.1.3 Organic molecules
+
+---
+
+## Unit 4 — Cell Reproduction — p.81
+
+**4.1 Cell cycle**
+
+**4.2 The Cell division**
+
+* 4.2.1 Mitosis
+* 4.2.2 Meiosis
+
+**4.3 Renowned Ethiopian Geneticist**
+
+---
+
+## Unit 5 — Human Biology — p.94
+
+**5.1 The Digestive System**
+
+**5.2 The circulatory and lymphatic system**
+
+* 5.2.1 Blood Donation
+* 5.2.2 Diseases of the circulatory and lymphatic systems
+
+**5.3 The breathing system**
+
+**5.4 The Human Urinary system**
+
+**5.5 The immune system**
+
+**5.6 Renowned Physicians in Ethiopia**
+
+---
+
+## Unit 6 — Ecological Interaction — p.153
+
+**6.1 Trophic Levels**
+
+* 6.1.1 Food chain and food web
+* 6.1.2 Flow of energy and matter through ecosystem
+
+**6.2 Cycling of Materials in an Ecosystem**
+
+* 6.2.2 Carbon cycle
+* 6.2.3 Nitrogen cycle
+* 6.2.4 Phosphorus cycle
+
+**Source anomaly:** the contents page jumps from **6.2** to **6.2.2**; no 6.2.1 title is printed there.
+
+
+
+---
+
+# 3. GRADE 11 — MASTER MAP
+
+The Grade 11 textbook has 6 units ranging from Biology and Technology through population and environmental topics. 
+
+## Unit 1 — Biology and Technology — p.7
+
+**1.1 Learning from nature**
+
+**1.2 Biology and technology**
+
+* 1.2.1 The benefits of biology to technology
+* 1.2.2 Uses of technology in biology
+
+**1.3 Impacts of biology and technology on society and the natural world**
+
+* 1.3.1 Impacts of biology on the society and the natural world
+* 1.3.2 Impacts of technology on the society and the natural world
+
+**1.4 Ethical issues in biology**
+
+* 1.4.1 Ethical treatment of plants and animals during biological studies
+
+---
+
+## Unit 2 — Animals — p.26
+
+**2.1 Characteristics of animals**
+
+**2.2 Invertebrates and Vertebrates**
+
+* 2.2.1 Invertebrate Animals
+* 2.2.2 Vertebrate Animals
+
+**2.3 Reproduction in Animals**
+
+* 2.3.1 Asexual reproduction in animals
+* 2.3.2 Sexual reproduction in animals
+* 2.3.3 Reproduction in insects (complete and incomplete metamorphosis)
+* 2.3.4 Reproduction in Frog
+* 2.3.5 Reproduction in Crocodiles
+* 2.3.6 Reproduction in Birds
+* 2.3.7 Reproduction in rat
+
+**2.4 The economic importance of animals (insects)**
+
+* 2.4.1 Beneficial aspects of insects
+* 2.4.2 Harmful aspects of insects
+
+**2.5 Animal Behavior**
+
+* 2.5.1 Types of Animal Behavior
+* 2.5.2 Patterns of Behavior
+
+**2.6 Homeostasis in animals**
+
+* 2.6.1 Thermoregulation
+* 2.6.2 Osmoregulation
+* 2.6.3 Blood Sugar Regulation
+* 2.6.4 Control of homeostasis
+
+**2.7 Renowned zoologists in Ethiopia**
+
+
+
+---
+
+## Unit 3 — Enzymes — p.79
+
+**3.1 What are enzymes?**
+
+**3.2 Properties and functions of enzymes**
+
+* 3.2.1 General properties of an enzyme
+* 3.2.2 The function of enzymes
+
+**3.3 Protein structures**
+
+**3.4 Enzyme substrate models**
+
+* 3.4.1 Enzyme-substrate binding models
+* 3.4.2 Enzymatic transition state
+
+**3.5 Enzyme regulation**
+
+**3.6 Types of enzymes**
+
+* 3.6.1 Enzyme structural classification
+* 3.6.2 Basic classification of enzymes
+
+**3.7 Factors affecting enzyme action**
+
+* 3.7.1 Description on factors affecting enzymatic actions
+
+**3.8 Enzyme kinetics**
+
+**3.9 Application of enzymes in industries and their benefits**
+
+* 3.9.1 Uses of enzyme application
+
+**3.10 Malting in Ethiopian tradition**
+
+* 3.10.1 Steps of modern malting
+* 3.10.2 Why is malting for?
+* 3.10.3 Traditional malting for local alcohol production
+
+**3.11 Renowned Biochemists in Ethiopia**
+
+
+
+---
+
+## Unit 4 — Genetics — p.113
+
+**4.1 The genetic materials**
+
+**4.2 The structure and function of DNA and RNA**
+
+* 4.2.1 The Structure and function of DNA
+* 4.2.3 DNA replication
+* 4.2.2 The structure and function of RNA
+
+**4.3 The process of cell division**
+
+* 4.3.1 Cell Division
+
+**4.4 Protein synthesis**
+
+**4.5 Mendelian inheritance**
+
+* 4.5.1 Mendelian crosses
+* 4.5.2 Monohybrid cross
+* 4.5.3 Dihybrid Cross
+* 4.5.4 Test Crosses
+
+**4.6 Sex determination**
+
+**4.7 Non-Mendelian inheritance**
+
+* 4.7.1 Co-dominance, Incomplete dominance and Multiple alleles
+* 4.7.2 Rh factor inheritance in humans and its medical importance
+* 4.7.3 Sex-linked inheritance in humans
+* 4.7.4 Environmental effects on phenotype
+
+**4.8 Human pedigree analysis and its importance**
+
+**4.9 Genetic disorders**
+
+**4.10 Genetic testing and counseling**
+
+**4.11 Gene therapy**
+
+**4.12 Breeding**
+
+* 4.12.1 Indigenous knowledge of Ethiopian farmers
+
+**4.13 Bioinformatics introduction**
+
+**Source anomaly:** the contents page lists **4.2.3 before 4.2.2**. I will preserve the actual concepts while teaching them in a logically useful order. 
+
+---
+
+## Unit 5 — The Human Body Systems — p.180
+
+**5.1 Human Musculoskeletal Systems**
+
+* 5.1.1 Types of muscles
+* 5.1.2 Mechanism of actions of skeletal muscles
+* 5.1.3 The human axial and appendicular skeletons
+* 5.1.4 Joints
+
+**5.2 The reproductive system**
+
+* 5.2.1 Human reproductive system (Male and Female)
+* 5.2.2 Gametogenesis
+* 5.2.2 Positive and negative feedbacks to control the menstrual cycle
+* 5.2.3 Fertilization and pregnancy
+* 5.2.4 Mechanism of action of contraceptives
+* 5.2.5 Causes of infertility in humans
+* 5.2.6 The major sexually transmitted infections (STIs) in Ethiopia
+* 5.2.8 Epidemiology of STIs in Ethiopia
+
+**5.3 Harmful traditional practices**
+
+* 5.3.1 Harmful traditional practices
+
+**5.4 Family planning**
+
+* 5.4.1 Risks related to the lack of family planning
+* 5.4.2 Family planning actions
+* 5.4.3 Family planning services
+
+**5.5 Effects of alcohol use, chewing Khat, cannabis and other drug uses on STIs transmission and unwanted pregnancy**
+
+* 5.5.1 The effects of alcohol uses
+* 5.5.2 Effects of chewing Khat
+* 5.5.3 Effects of drug uses
+
+**Source anomalies:** the contents page contains numbering gaps/duplicates, including two entries numbered **5.2.2**, and a jump to **5.2.8**. I will not silently manufacture missing numbered titles. 
+
+---
+
+## Unit 6 — Population and Natural Resources — p.236
+
+**6.1 Population ecology**
+
+* 6.1.1 Population size, density and dispersal
+* 6.1.2 Exponential and logistic growth in populations
+* 6.1.3 Demographic structure
+* 6.1.4 Population regulation
+
+**6.2 Natural resources**
+
+* 6.2.1 Renewable
+* 6.2.2 Non-renewable
+
+**6.3 Conservation of natural resources in Ethiopia**
+
+**6.4 Impact of traffic accident on wild and domestic animals**
+
+**6.5 Impact of human activities on the environment**
+
+* 6.5.1 Environmental pollution
+* 6.5.2 Climate change
+* 6.5.3 Global warming
+* 6.5.4 Ozone layer depletion
+* 6.5.5 Acid rain
+* 6.5.6 Loss of Biodiversity
+* 6.5.7 Toxic bioaccumulation
+* 6.5.8 Resource depletion
+
+**6.6 Indigenous conservation practices in Ethiopia**
+
+The contents page clearly lists the population, resource, conservation, and human-impact sequence. 
+
+---
+
+# 4. GRADE 12 — MASTER MAP
+
+The Grade 12 textbook has **6 units**, beginning with applications of Biology and ending with climate change. 
+
+## Unit 1 — Application of Biology — p.6
+
+**1.1 Application in conservation of natural resources**
+
+**1.2 Food and nutrition security**
+
+**1.3 Creating conscious citizens and ensuring sustainable development**
+
+**1.4 Applications in biotechnology**
+
+---
+
+## Unit 2 — Microorganisms — p.40
+
+**2.1 Eubacteria**
+
+* 2.1.1 Structure of Bacterial Cell
+* 2.1.2 Bacterial Shapes
+* 2.1.3 Nutritional types of bacteria
+* 2.1.4 Reproduction of bacteria
+
+  * 2.1.4.1 A sexual reproduction
+  * 2.1.4.2 Sexual reproduction in bacteria
+
+**2.2 Archaea**
+
+* 2.2.1 Beneficial aspects of Archaea
+* 2.2.2 Physical factors that affecting microbial growths
+
+**2.3 Fungi**
+
+* 2.3.1 General Characteristics of True Fungi
+* 2.3.2 Ecology of Fungi
+* 2.3.3 Classification of Fungi
+* 2.3.4 Reproduction in fungi
+* 2.3.5 Economic importance of fungi
+
+**2.4 Protozoa**
+
+* 2.4.1 Common diseases caused by protozoa
+
+**2.5 Viruses**
+
+* 2.5.1 Characteristics of virus
+* 2.5.2 Viral symmetry
+* 2.5.3 Classification of Viruses
+
+**2.6 Normal microbiota**
+
+**2.7 Modes of disease transmission and ways of prevention**
+
+**2.8 Uses of microorganisms**
+
+**2.9 Controlling microorganisms**
+
+**2.11 Renowned Microbiologists in Ethiopia**
+
+**Source anomaly:** the contents page jumps from **2.9 to 2.11**; 2.10 is not printed there, so I will not invent its title.
+
+---
+
+## Unit 3 — Energy Transformation — p.114
+
+**3.1 Cellular metabolism**
+
+**3.2 Photosynthesis**
+
+* 3.2.1 Photosynthetic pigments
+* 3.2.5 Light-Independent Reactions (Calvin cycle)
+
+**3.3 Contributions of photosynthesis for the continuity of life, for O₂ and CO₂ balance and global warming**
+
+**3.4 Cellular respiration**
+
+* 3.4.1 **title not printed in the contents page**
+* 3.4.2 **title not printed in the contents page**
+* 3.4.3 The site of cellular respiration
+
+The source contains these numbering gaps in the contents page. I will preserve the gaps until the actual relevant textbook section gives a supported title rather than filling them from outside knowledge.
+
+---
+
+## Unit 4 — Evolution — p.161
+
+**4.1 Evolution**
+
+* 4.1.1 Definition
+* 4.1.2 Theories of evolution
+* 4.1.3 The evidence for evolution
+* 4.1.4 Natural selection: Definition, Types & Examples
+* 4.1.5 Human evolution
+* 4.1.6 Mutation
+* 4.1.7 Genetic Drift
+* 4.1.8 Gene flow (immigration and emigration)
+* 4.1.9 Causes of species extinction
+
+**4.2 Renowned anthropologists in Ethiopia**
+
+**4.3 Renowned Evolutionists in Ethiopia**
+
+---
+
+## Unit 5 — Human Body System — p.236
+
+**5.1 The Nervous system**
+
+* 5.1.1 Neurons and their functions
+* 5.1.2 The Nerve Impulse and transmission
+* 5.1.3 Neurotransmitters
+* 5.1.4 Types of the nervous system
+* 5.1.6 Reflex action
+* 5.1.7 Drug abuse
+
+**5.2 Sense organs**
+
+* 5.2.1 Skin
+* 5.2.2 The Tongue
+* 5.2.3 The Nose
+* 5.2.4 The Eye
+* 5.2.5 The Ear
+* 5.2.6 The endocrine system
+* The endocrine glands
+
+**5.3 Homeostasis in the human body**
+
+* 5.3.1 The structure and function of the human kidney
+
+**Source anomaly:** the contents page jumps over **5.1.5**.
+
+The body text confirms that the nervous-system material includes the central and peripheral nervous systems and detailed brain structures. 
+
+---
+
+## Unit 6 — Climate Change — p.333
+
+**6.1 Climate change: causes and effects**
+
+* 6.1.1 Definition of Climate Change
+* 6.1.2 Causes of climate change
+
+**6.2 Effects of climate change**
+
+* 6.2.1 Effects of climate change on biodiversity
+* 6.2.2 Effects of climate change on Agriculture
+* 6.2.3 Effect of climate change on forest productivity
+* 6.2.4 Climate change and natural disasters
+
+**6.3 International conventions**
+
+* 6.3.1 The United Nations Framework Convention
+* 6.3.2 Kyoto Protocol on Climate Change
+* 6.3.3 International and national practices of Implementation of conventions
+
+---
+
+# MASTER SUBJECT MAP — THE BIG PICTURE
+
+This is the entire progression in one view:
+
+**GRADE 9**
+→ Introduction to Biology
+→ Characteristics & Classification
+→ Cells
+→ Reproduction
+→ Human Health, Nutrition & Disease
+→ Ecology
+
+**GRADE 10**
+→ Sub-fields of Biology
+→ Plants
+→ Biochemical Molecules
+→ Cell Reproduction
+→ Human Biology
+→ Ecological Interaction
+
+**GRADE 11**
+→ Biology & Technology
+→ Animals
+→ Enzymes
+→ Genetics
+→ Human Body Systems
+→ Population & Natural Resources
+
+**GRADE 12**
+→ Application of Biology
+→ Microorganisms
+→ Energy Transformation
+→ Evolution
+→ Human Body System
+→ Climate Change
+
+---
+
+# PHASE 2 — OUR LOGICAL LEARNING ORDER
+
+We will **preserve the official grade/unit structure**, but we do not have to study every topic in raw textbook order.
+
+The deeper dependency structure is approximately:
+
+**1. Scientific thinking**
+→ scientific method
+→ observation
+→ hypothesis
+→ experiment
+→ data interpretation
+
+**2. What life is**
+→ characteristics of living things
+→ classification
+→ biological organization
+
+**3. The cell**
+→ cell structure
+→ cell types
+→ plant vs animal cells
+→ cell membrane
+→ passive/active transport
+→ cell reproduction
+
+**4. Biological molecules**
+→ water
+→ ions
+→ organic molecules
+→ proteins
+
+**5. Enzymes**
+→ protein structure
+→ enzyme properties
+→ enzyme-substrate interaction
+→ factors affecting enzymes
+→ kinetics
+→ applications
+
+**6. Plants**
+→ plant structure
+→ roots/stems/leaves
+→ transport
+→ reproduction
+→ seeds
+→ photosynthesis
+→ plant responses
+
+**7. Energy transformation**
+→ metabolism
+→ photosynthesis
+→ cellular respiration
+→ relationship between energy, matter, O₂ and CO₂
+
+**8. Human and animal biology**
+→ tissues/structures
+→ digestive
+→ circulatory
+→ respiratory
+→ urinary
+→ immune
+→ musculoskeletal
+→ nervous
+→ endocrine
+→ homeostasis
+
+**9. Reproduction**
+→ asexual reproduction
+→ sexual reproduction
+→ reproductive structures
+→ menstrual cycle
+→ gametogenesis
+→ fertilization
+→ pregnancy
+→ contraception/STIs
+
+**10. Genetics**
+→ DNA/RNA
+→ replication
+→ cell division
+→ protein synthesis
+→ Mendelian inheritance
+→ non-Mendelian inheritance
+→ pedigree
+→ genetic disorders
+→ genetic testing
+→ gene therapy
+→ breeding
+→ bioinformatics
+
+**11. Microbiology**
+→ bacteria
+→ archaea
+→ fungi
+→ protozoa
+→ viruses
+→ microbiota
+→ microbial disease
+→ microbial control
+→ applications
+
+**12. Ecology**
+→ organism/environment
+→ populations
+→ communities
+→ ecosystems
+→ food chains/webs
+→ energy flow
+→ nutrient cycles
+→ population growth
+→ population regulation
+→ natural resources
+→ human environmental impacts
+
+**13. Evolution**
+→ evidence
+→ theories
+→ natural selection
+→ mutation
+→ genetic drift
+→ gene flow
+→ human evolution
+→ extinction
+
+**14. Global/environmental applications**
+→ biotechnology
+→ conservation
+→ sustainable development
+→ climate change
+→ biodiversity
+→ international environmental conventions
+
+---
+
+# A. FOUNDATION TOPICS
+
+These should become extremely strong before we build the advanced layers:
+
+**Grade 9**
+
+* Definition of Biology
+* characteristics of life
+* scientific method
+* classification
+* cells
+* cell structure
+* transport
+* biological organization
+
+**Grade 10**
+
+* biochemical molecules
+* plant structure
+* photosynthesis
+* cell cycle
+
+These are the "vocabulary and machinery" of much of the later Biology.
+
+---
+
+# B. INTERMEDIATE TOPICS
+
+These depend on the foundation:
+
+* plant transport and reproduction
+* human biology
+* animal biology
+* reproduction
+* ecology
+* biochemical processes
+* enzymes
+* population biology
+* body systems
+
+---
+
+# C. ADVANCED TOPICS
+
+The topics that will demand the deepest reasoning are:
+
+* enzyme kinetics
+* DNA replication
+* protein synthesis
+* Mendelian and non-Mendelian genetics
+* pedigree analysis
+* genetic disorders
+* gene therapy
+* bioinformatics
+* cellular metabolism
+* cellular respiration
+* evolution
+* natural selection
+* genetic drift
+* gene flow
+* population growth/regulation
+* nervous-system coordination
+* endocrine regulation
+* homeostasis
+* microorganisms and disease
+* climate change
+
+---
+
+# D. MAJOR DEPENDENCIES
+
+These are especially important:
+
+**Cells → Cell division → Genetics**
+
+**Biochemical molecules → Protein structure → Enzymes**
+
+**Plant structure → Photosynthesis → Energy transformation**
+
+**Cell structure → Membranes → Transport → Homeostasis**
+
+**Reproduction → Cell division → Gametogenesis → Genetics**
+
+**DNA/RNA → Protein synthesis → Genetics → Genetic disorders/gene therapy**
+
+**Ecology → Population ecology → Natural resources → Human environmental impacts → Climate change**
+
+**Microorganisms → Disease transmission → Disease prevention → Biotechnology**
+
+---
+
+# E. TOPICS THAT NEED FREQUENT REVISION
+
+These will repeatedly return in later lessons:
+
+**Cells and transport**
+
+**Photosynthesis and cellular respiration**
+
+**Enzymes**
+
+**Mitosis and meiosis**
+
+**DNA, RNA and protein synthesis**
+
+**Genetics and inheritance**
+
+**Human body systems**
+
+**Homeostasis**
+
+**Ecology and energy flow**
+
+**Population growth**
+
+**Evolution**
+
+These are not "one lesson and forget" topics. They will reappear in different forms.
+
+---
+
+# F. TOPICS WITH THE MOST PROBLEM-SOLVING
+
+The main ones are:
+
+**Scientific method**
+→ interpreting experiments and data
+
+**Genetics**
+→ Mendelian crosses
+→ monohybrid crosses
+→ dihybrid crosses
+→ test crosses
+→ pedigree reasoning
+
+**Enzymes**
+→ enzyme kinetics
+→ interpreting effects of factors on enzyme activity
+
+**Population ecology**
+→ exponential growth
+→ logistic growth
+→ population data interpretation
+
+There are also many Biology questions that look like calculation questions but are actually **conceptual reasoning problems**.
+
+---
+
+# G. MAINLY CONCEPTUAL TOPICS
+
+Examples include:
+
+* characteristics of life
+* classification
+* plant structure
+* human anatomy
+* nervous system
+* endocrine system
+* homeostasis
+* immune system
+* microorganisms
+* evolution
+* biodiversity
+* climate change
+* environmental conservation
+
+For these, understanding **cause → mechanism → result** will be more important than memorizing isolated sentences.
+
+---
+
+# H. HIGH-RISK MISUNDERSTANDING AREAS
+
+These are the areas where our lessons will deliberately slow down:
+
+**Hypothesis vs conclusion**
+
+**Theory vs hypothesis**
+
+**Taxonomy vs nomenclature**
+
+**Prokaryotic vs eukaryotic cells**
+
+**Plant cell vs animal cell**
+
+**Diffusion vs osmosis vs active transport**
+
+**Mitosis vs meiosis**
+
+**Asexual vs sexual reproduction**
+
+**Photosynthesis vs cellular respiration**
+
+**Enzyme vs substrate**
+
+**Gene vs allele vs genotype vs phenotype**
+
+**Dominant vs common**
+
+**Mendelian vs non-Mendelian inheritance**
+
+**Arteries vs veins**
+
+**Hormone vs neurotransmitter**
+
+**CNS vs PNS**
+
+**Population vs community vs ecosystem**
+
+**Food chain vs food web**
+
+**Energy flow vs nutrient cycling**
+
+**Weather/climate vs climate change**
+
+**Natural selection vs an organism deliberately "choosing" to adapt**
+
+**Evolution of populations vs changes in individual organisms**
+
+**Virus vs cellular microorganism**
+
+These will be treated as understanding problems, not merely definitions.
+
+---
+
+# OUR TEACHING ARCHITECTURE
+
+We now have the complete map.
+
+We will **not** study Biology as:
+
+> read page → memorize definition → answer question → forget.
+
+We will study it as:
+
+> **Foundation → mechanism → WHY → HOW → connection → example → exam wording → tricky application → active recall → spaced review → mastery**
+
+And we will move **one topic at a time**, exactly as you specified.
+
+One final source note: the textbooks themselves contain several visible numbering inconsistencies, especially in Grade 10, Grade 11, and Grade 12. I will preserve those discrepancies instead of silently changing the official source structure. The Grade 9 textbook, for example, explicitly lists its six-unit structure in the contents page, while its Unit 4 body uses 4.x headings despite the contents box's numbering error.  
+
+**Phase 1 and Phase 2 are now complete. No Biology lesson has been started yet.**
+FORGE — BIOLOGY MASTER ROADMAP + DAILY QUESTION ENGINE
+
+IMPORTANT:
+The Biology roadmap already exists locally at:
+
+C:\Users\mikiy\Forge\Forge-App\STUDY SUBJECTS\Biology MASTER ROADMAP.txt
+
+DO NOT ask me to upload it again.
+
+Read this file directly from the local filesystem.
+
+==================================================
+1. BIOLOGY SOURCE OF TRUTH
+==================================================
+
+The file:
+
+STUDY SUBJECTS\Biology MASTER ROADMAP.txt
+
+is the OFFICIAL Biology roadmap.
+
+Use the exact topics, chapters, units, subtopics, terminology, and organization from this file.
+
+DO NOT:
+- invent Biology topics
+- replace the roadmap with an online syllabus
+- remove topics
+- rename topics unnecessarily
+- create fake topics
+- silently add outside syllabus content
+
+Outside knowledge may only be used to:
+- explain a topic more clearly
+- create analogies
+- create examples
+- explain why/how
+- improve question wording
+
+The official topic itself must always come from the Biology roadmap file.
+
+==================================================
+2. READ THE WHOLE FILE ONCE
+==================================================
+
+First inspect the entire:
+
+Biology MASTER ROADMAP.txt
+
+Then create a structured internal roadmap:
+
+Grade
+→ Unit
+→ Chapter
+→ Topic
+→ Subtopic
+
+Do this once and cache/store the structured roadmap safely.
+
+Do NOT reread and reprocess the entire file with AI every time I open Biology.
+
+This is important to reduce unnecessary AI/API usage.
+
+==================================================
+3. CONNECT BIOLOGY TO THE EXISTING TODO SYSTEM
+==================================================
+
+Use the EXISTING DailyPlan / PlanTask system.
+
+Do NOT create a second Todo system.
+
+When today's plan contains Biology:
+
+Example:
+
+🧬 BIOLOGY
+
+Unit:
+[real unit from roadmap]
+
+Topic:
+[real topic from roadmap]
+
+Today's subtopics:
+- ...
+- ...
+- ...
+
+Target:
+[X] minutes
+
+[ ] Complete
+
+This must be a REAL task from the Biology roadmap.
+
+==================================================
+4. AFTER I CHECK THE BIOLOGY TASK
+==================================================
+
+When I check:
+
+✅ Biology task completed
+
+DO NOT stop at the checkbox.
+
+Immediately trigger:
+
+🧠 BIOLOGY KNOWLEDGE CHECK
+
+The questions must be based on:
+
+TODAY'S EXACT BIOLOGY TOPIC
+
+and its real subtopics.
+
+Do NOT randomly ask me about another Biology chapter.
+
+==================================================
+5. DAILY QUESTION FLOW
+==================================================
+
+After completing the Biology Todo:
+
+Ask me a small set of questions.
+
+Start with:
+
+Question 1
+
+Then wait for my answer.
+
+Do NOT dump 20 questions at once unless the mode specifically requests a full test.
+
+Use interactive cards.
+
+Example:
+
+🧬 BIOLOGY
+Topic: Cell Structure
+
+QUESTION 1
+
+Which structure controls most activities of a eukaryotic cell?
+
+A. Ribosome
+B. Nucleus
+C. Cell wall
+D. Cytoplasm
+
+[ A ] [ B ] [ C ] [ D ]
+
+Then show:
+
+Question 1 / 5
+
+==================================================
+6. QUESTION TYPES
+==================================================
+
+Use a mixture of:
+
+1. Normal question
+2. Understanding question
+3. WHY question
+4. HOW question
+5. Application question
+6. Multiple choice
+7. True/False
+8. Matching
+9. Short answer
+10. Fill in the blank
+11. Scenario-based question
+12. Trick question
+13. Exam-style question
+
+Do not make every question multiple choice.
+
+==================================================
+7. MAKE ME THINK
+==================================================
+
+For important topics, ask me to explain things in my own words.
+
+Example:
+
+"Explain why mitochondria are important without using the textbook definition."
+
+Then evaluate my understanding.
+
+If my answer is weak:
+
+Do NOT simply say:
+
+❌ Wrong
+
+Instead explain:
+
+What I understood correctly
+What I misunderstood
+What concept I am missing
+A simpler explanation
+A new example
+A retry question
+
+==================================================
+8. QUESTION GENERATION
+==================================================
+
+Use the existing Multi-AI Router.
+
+Use the appropriate AI provider for question generation.
+
+Do NOT create a separate AI system.
+
+The generated question must include internally:
+
+subject:
+Biology
+
+unit:
+[real unit]
+
+topic:
+[real topic]
+
+subtopic:
+[real subtopic]
+
+difficulty:
+Easy / Medium / Hard / Exam
+
+questionType:
+MCQ / Short Answer / etc.
+
+source:
+Biology MASTER ROADMAP
+
+==================================================
+9. RECORD EVERY QUESTION
+==================================================
+
+Every question must be permanently recorded.
+
+Store:
+
+- subject
+- unit
+- topic
+- subtopic
+- question
+- question type
+- difficulty
+- correct answer
+- user's answer
+- correct/incorrect
+- explanation
+- timestamp
+- attempt number
+- response time if available
+
+DO NOT lose question history.
+
+==================================================
+10. REPEATED MEMORY QUESTIONS
+==================================================
+
+IMPORTANT:
+
+When I finish a topic, that topic is NOT forgotten.
+
+Bring important concepts back later.
+
+Ask the same concept using different wording.
+
+Example:
+
+Question 1:
+What is the function of mitochondria?
+
+Later:
+
+Why does a cell need mitochondria?
+
+Later:
+
+A cell has increased energy demands. Which organelle becomes especially important and why?
+
+Later:
+
+Which statement about mitochondria is correct?
+
+Later:
+
+Explain mitochondria to a 10-year-old.
+
+These may test the SAME underlying concept.
+
+The system should track whether I genuinely understand it.
+
+Do NOT simply repeat the identical question every time.
+
+==================================================
+11. WRONG ANSWER → WEAK AREA
+==================================================
+
+Whenever I answer incorrectly:
+
+Record the mistake.
+
+Example:
+
+Topic:
+Photosynthesis
+
+Weak concept:
+Role of chlorophyll
+
+Accuracy:
+40%
+
+Then show:
+
+⚠️ WEAK AREA
+
+Photosynthesis — Chlorophyll
+
+Recommended action:
+Review chlorophyll's role and answer 5 targeted questions.
+
+==================================================
+12. TARGETED RETEST
+==================================================
+
+If I repeatedly miss a concept:
+
+Generate another small practice set specifically targeting that concept.
+
+Example:
+
+3 wrong answers
+→ targeted explanation
+→ 5 targeted questions
+
+If I improve:
+→ return gradually to mixed questions.
+
+If I continue failing:
+→ teach the concept again using a different analogy/explanation.
+
+==================================================
+13. MASTERY
+==================================================
+
+Do NOT mark a Biology topic mastered because I checked a Todo box.
+
+Todo completion means:
+
+"I studied this."
+
+Question performance determines:
+
+"I understand this."
+
+Use mastery states:
+
+NOT_STARTED
+EXPOSED
+LEARNING
+UNDERSTOOD
+PRACTICING
+STRONG
+MASTERED
+
+Mastery should be based on repeated performance across different question forms, not one lucky answer.
+
+==================================================
+14. UNIT COMPLETION
+==================================================
+
+When I finish all Biology topics in a unit:
+
+Automatically create:
+
+🧬 UNIT MASTER TEST
+
+The test should cover the topics from THAT unit.
+
+Include:
+
+- normal questions
+- conceptual questions
+- application questions
+- tricky questions
+- exam-style questions
+
+Do not only test the final topic.
+
+Include earlier topics from the unit too.
+
+==================================================
+15. UNIT REPORT
+==================================================
+
+After the unit test:
+
+Show:
+
+UNIT COMPLETE
+
+Score:
+XX%
+
+Topics strong:
+...
+
+Topics weak:
+...
+
+Questions answered:
+...
+
+Correct:
+...
+
+Incorrect:
+...
+
+Most common mistake:
+...
+
+Recommended revision:
+...
+
+Then save the result.
+
+==================================================
+16. BIOLOGY PROGRESS GRAPH
+==================================================
+
+Connect Biology performance to the EXISTING Progress Dashboard.
+
+Track:
+
+- Biology study days
+- Biology study minutes
+- Biology Todo completion
+- Questions attempted
+- Questions correct
+- Accuracy %
+- Weak topics
+- Strong topics
+- Mastery
+- Unit completion
+- XP earned
+
+Create a Biology-specific graph.
+
+Example:
+
+BIOLOGY MASTERY
+
+Topic A       ██████████ 90%
+Topic B       ██████░░░░ 60%
+Topic C       ████████░░ 80%
+
+Also show accuracy over time.
+
+Example:
+
+Day 1 → 55%
+Day 2 → 63%
+Day 3 → 71%
+Day 4 → 78%
+
+Use REAL recorded attempts.
+
+Never create fake progress.
+
+==================================================
+17. BIOLOGY CONSISTENCY
+==================================================
+
+Track:
+
+Days studied Biology
+/
+Days Biology was scheduled
+
+Example:
+
+Biology consistency:
+18 / 21 days
+85.7%
+
+Also distinguish:
+
+Study consistency
+from
+Knowledge mastery
+
+A student can study every day and still have weak mastery.
+
+Track both separately.
+
+==================================================
+18. DAILY PLAN → QUESTION CONNECTION
+==================================================
+
+This is the most important workflow.
+
+Example:
+
+TODAY'S TODO
+
+🧬 Biology
+Topic:
+Cell Division
+
+Subtopics:
+- Mitosis
+- Stages of mitosis
+- Cytokinesis
+
+[✅ COMPLETE]
+
+↓
+
+Immediately after completion:
+
+🧠 KNOWLEDGE CHECK
+
+Cell Division
+
+Question 1:
+...
+
+↓
+
+Answer
+
+↓
+
+Record result
+
+↓
+
+Question 2
+
+↓
+
+...
+
+↓
+
+Finish
+
+↓
+
+Update:
+Biology mastery
+XP
+Progress
+Weak areas
+Question history
+
+==================================================
+19. QUESTION LIMIT
+==================================================
+
+Do not create huge question sets every day.
+
+Default:
+3–5 questions after a daily Biology task.
+
+Allow:
+10 / 20 / 50 question test modes.
+
+Normal daily learning:
+small focused question set.
+
+==================================================
+20. AI COST CONTROL
+==================================================
+
+IMPORTANT:
+
+Do not call AI unnecessarily.
+
+Cache:
+- Biology roadmap
+- structured topic metadata
+- previously generated questions
+- explanations where appropriate
+
+When the same concept needs review:
+
+reuse an existing question safely when appropriate,
+but also generate new variations to test genuine understanding.
+
+Do not send the entire Biology roadmap to the AI for every question.
+
+Only send the relevant:
+- unit
+- topic
+- subtopics
+- learning context
+
+==================================================
+21. DUOLINGO-STYLE QUESTION UI
+==================================================
+
+Questions must use the existing FORGE visual language.
+
+Make them:
+
+- clean
+- card-based
+- easy to read
+- mobile friendly
+- large answer buttons
+- progress indicator
+- immediate feedback after answering
+
+Example:
+
+🧬 BIOLOGY
+
+Cell Division
+
+Question 3 / 5
+
+[ Question ]
+
+A
+B
+C
+D
+
+After answer:
+
+✅ Correct!
+
+WHY:
+[short explanation]
+
+Then:
+
+NEXT QUESTION →
+
+==================================================
+22. DO NOT EXPOSE RAW JSON
+==================================================
+
+Never display:
+
+{"title":"...","subject":"Biology","topic":"..."}
+
+to the user.
+
+Convert structured objects into readable UI.
+
+==================================================
+23. EXISTING XP SYSTEM
+==================================================
+
+Use the existing FORGE XP engine.
+
+Do NOT create another XP system.
+
+Question performance may award XP according to the existing rules.
+
+Do not allow repeated questions to become an unlimited XP farm.
+
+==================================================
+24. EXISTING PROGRESS SYSTEM
+==================================================
+
+Use the existing Progress Engine.
+
+After question attempts:
+
+update the existing progress system.
+
+Do not create a separate disconnected progress database.
+
+==================================================
+25. EXISTING STUDY DEADLINE
+==================================================
+
+Use the existing study schedule/deadline system.
+
+Biology should show:
+
+Today's topic
+Tomorrow's topic
+Topics remaining
+Progress
+Days remaining
+Required pace
+
+Do not invent a deadline.
+
+Use the deadline already configured for the overall study plan.
+
+==================================================
+26. TESTING
+==================================================
+
+First verify the Biology roadmap file can be read.
+
+Then verify:
+
+1. Full roadmap parsed.
+2. Grade 9–12 structure preserved.
+3. Biology appears in Todo.
+4. Today's exact topic appears.
+5. Checking the Todo triggers questions.
+6. Questions match today's topic.
+7. Answer is recorded.
+8. Wrong answer creates weak-area data.
+9. Correct answer updates mastery.
+10. Different wording can test the same concept.
+11. Completed topic remains reviewable later.
+12. Unit completion generates unit test.
+13. Biology graph updates from real records.
+14. Biology consistency is calculated correctly.
+15. XP uses existing XP engine.
+16. No duplicate question-attempt records.
+17. No raw JSON appears.
+18. Existing Todo system remains intact.
+19. Existing Progress Dashboard remains intact.
+
+Then run:
+
+npx prisma validate
+npx prisma generate
+npm run build
+
+Do NOT claim completion unless the real flow works:
+
+TODO CHECK
+→ BIOLOGY QUESTION
+→ ANSWER
+→ RECORD
+→ ANALYSIS
+→ MASTERY
+→ PROGRESS GRAPH

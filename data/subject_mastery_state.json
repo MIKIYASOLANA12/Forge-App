@@ -1,0 +1,47 @@
+{
+  "subjects": {
+    "CHEMISTRY": {
+      "status": "READY",
+      "startDate": null,
+      "deadline": null,
+      "completedAt": null,
+      "activeUnitId": null,
+      "activeTopicId": null
+    },
+    "BIOLOGY": {
+      "status": "LOCKED",
+      "startDate": null,
+      "deadline": null,
+      "completedAt": null,
+      "activeUnitId": null,
+      "activeTopicId": null
+    },
+    "PHYSICS": {
+      "status": "LOCKED",
+      "startDate": null,
+      "deadline": null,
+      "completedAt": null,
+      "activeUnitId": null,
+      "activeTopicId": null
+    },
+    "ENGLISH": {
+      "status": "LOCKED",
+      "startDate": null,
+      "deadline": null,
+      "completedAt": null,
+      "activeUnitId": null,
+      "activeTopicId": null
+    },
+    "MATHEMATICS": {
+      "status": "LOCKED",
+      "startDate": null,
+      "deadline": null,
+      "completedAt": null,
+      "activeUnitId": null,
+      "activeTopicId": null
+    }
+  },
+  "topics": {},
+  "questionLogs": [],
+  "sessions": []
+}

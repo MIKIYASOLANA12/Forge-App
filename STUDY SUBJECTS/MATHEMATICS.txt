@@ -1,0 +1,1173 @@
+ 
+
+# MASTER SUBJECT MAP — GRADE 9–12 MATHEMATICS
+
+## GRADE 9
+
+### Unit 1′ — Further on Sets
+
+**1′.1 Description of the Concept Set**
+
+* Description of sets
+* Well-defined sets
+* Elements and membership
+
+**1′.2 Notion of Set**
+
+* Set notation
+* Describing sets
+* Membership
+
+**1′.3 Operations on Sets**
+
+* Set operations
+* Venn diagrams
+* Relationships among sets
+
+**1′.4 Application of Operations on Sets**
+
+* Applications of set operations
+* Problem solving using sets
+
+The textbook places this special unit before the numbered Unit 1. 
+
+---
+
+### Unit 1 — The Number System
+
+**1.1 Revision on Natural Numbers and Integers**
+
+**1.2 Rational Numbers**
+
+* Rational-number representation and operations
+
+**1.3 Irrational Numbers**
+
+**1.4 Real Numbers**
+
+* Number-line ideas
+* Intervals
+* Absolute value and related real-number ideas
+
+**1.5 Applications**
+
+
+
+---
+
+### Unit 2 — Solving Equations
+
+**2.1 Revision of Linear Equation in One Variable**
+
+**2.2 Systems of Linear Equations in Two Variables**
+
+**2.3 Solving Non-linear Equations**
+
+**2.4 Some Applications of Solving Equations**
+
+
+
+---
+
+### Unit 3 — Solving Inequalities
+
+**3.1 Revision on Linear Inequalities in One Variable**
+
+**3.2 Systems of Linear Inequalities in Two Variables**
+
+**3.3 Inequalities Involving Absolute Value**
+
+**3.4 Quadratic Inequalities**
+
+**3.5 Applications of Inequalities**
+
+
+
+---
+
+### Unit 4 — Introduction to Trigonometry
+
+**4.1 Revision on Right-angled Triangles**
+
+**4.2 The Trigonometric Ratios**
+
+* Sine
+* Cosine
+* Tangent
+* Basic trigonometric values
+
+
+
+---
+
+### Unit 5 — Regular Polygons
+
+**5.1 Sum of Interior Angles of a Convex Polygon**
+
+**5.2 Sum of Exterior Angles of a Convex Polygon**
+
+**5.3 Measures of Each Interior Angle and Exterior Angle of a Regular Polygon**
+
+**5.4 Properties of Regular Polygons**
+
+* Pentagon
+* Hexagon
+* Octagon
+* Decagon
+
+
+
+---
+
+### Unit 6 — Congruency and Similarity
+
+**6.1 Revision on Congruency of Triangles**
+
+**6.2 Definition of Similar Figures**
+
+**6.3 Theorems on Similar Plane Figures**
+
+**6.4 Ratio of Perimeters of Similar Plane Figures**
+
+**6.5 Ratio of Areas of Similar Plane Figures**
+
+**6.6 Construction of Similar Plane Figures**
+
+**6.7 Applications on Similarities**
+
+
+
+---
+
+### Unit 7 — Vectors in Two Dimensions
+
+**7.1 Scalar and Vector Quantities**
+
+**7.2 Representation of a Vector**
+
+**7.3 Vectors Operations**
+
+**7.4 Position Vector**
+
+**7.5 Applications of Vectors in Two Dimensions**
+
+
+
+---
+
+### Unit 8 — Statistics and Probability
+
+**8.1 Statistical Data**
+
+**8.2 Probability**
+
+
+
+---
+
+# GRADE 10
+
+The Grade 10 textbook organizes the course into seven units: Relations and Functions, Polynomial Functions, Exponential and Logarithmic Functions, Trigonometric Functions, Circles, Solid Figures, and Coordinate Geometry. 
+
+## Unit 1 — Relations and Functions
+
+**1.1 Relations**
+
+**1.2 Functions**
+
+**1.3 Applications of Relations and Functions**
+
+
+
+---
+
+## Unit 2 — Polynomial Functions
+
+**2.1 Definition of Polynomial Function**
+
+**2.2 Operations on Polynomial Functions**
+
+**2.3 Theorem on Polynomial Functions**
+
+**2.4 Zeros of Polynomial Functions**
+
+**2.5 Graphs of Polynomial Functions**
+
+**2.6 Applications**
+
+
+
+---
+
+## Unit 3 — Exponential and Logarithmic Functions
+
+**3.1 Exponents and Logarithms**
+
+**3.2 The Exponential Functions and Their Graphs**
+
+**3.3 The Logarithmic Functions and Their Graphs**
+
+**3.4 Solving Exponential and Logarithmic Equations**
+
+**3.5 Relation between Exponential and Logarithmic Functions**
+
+**3.6 Applications**
+
+
+
+---
+
+## Unit 4 — Trigonometric Functions
+
+**4.1 Radian Measure of Angle**
+
+**4.2 Basic Trigonometric Function**
+
+**4.3 Trigonometric Identities & Equation**
+
+**4.4 Application**
+
+
+
+---
+
+## Unit 5 — Circles
+
+**5.1 Symmetrical Properties of Circles**
+
+**5.2 Angle Properties of Circles**
+
+**5.3 Arc Length, Perimeters and Areas of Segments and Sectors**
+
+**5.4 Theorems on Angles and Arcs Determined by Lines Intersecting Inside, On and Outside a Circle**
+
+
+
+---
+
+## Unit 6 — Solid Figures
+
+**6.1 Revision of Cylinders and Prisms**
+
+**6.2 Pyramids, Cones and Spheres**
+
+**6.3 Frustum of Pyramids and Cones**
+
+**6.4 Surface Areas and Volumes of Composed Solids**
+
+**6.5 Applications**
+
+
+
+---
+
+## Unit 7 — Coordinate Geometry
+
+**7.1 Distance between Two Points**
+
+**7.2 Division of a Line Segment**
+
+**7.3 Equation of a Line**
+
+**7.4 Slopes of Parallel and Perpendicular Lines**
+
+**7.5 Equation of a Circle**
+
+**7.6 Applications**
+
+
+
+---
+
+# GRADE 11
+
+The Grade 11 textbook contains eight units. The official contents pages show the following structure. 
+
+## Unit 1 — Relations and Functions
+
+**1.1 Relations**
+
+**1.2 Inverse of Relations and Their Graphs**
+
+**1.3 Types of Functions**
+
+**1.4 Composition of Functions**
+
+**1.5 Inverse Functions and their Graphs**
+
+**1.6 Applications of Relations and Functions**
+
+---
+
+## Unit 2 — Rational Expressions and Rational Functions
+
+**2.1 Rational Expressions**
+
+**2.2 Rational Equations and Rational Inequalities**
+
+**2.3 Rational Functions and Their Graphs**
+
+**2.4 Applications**
+
+---
+
+## Unit 3 — Matrices
+
+**3.1 The Concepts of a Matrix**
+
+**3.2 Operations on Matrices**
+
+**3.3 Special Types of Matrices**
+
+**3.4 Elementary Row Operations of Matrices**
+
+**3.5 Systems of Linear Equations with Two or Three Variables**
+
+**3.6 Solutions of Systems of Linear Equations**
+
+**3.7 Inverse of a Square Matrix**
+
+**3.8 Applications**
+
+---
+
+## Unit 4 — Determinants and Their Properties
+
+**4.1 Determinants of Matrices of Order 2**
+
+**4.2 Minors and Cofactors of Elements of Matrices**
+
+**4.3 Determinants of Matrices of Order 3**
+
+**4.4 Properties of Determinants**
+
+**4.5 Inverse of a Square Matrix of Order 2 and 3**
+
+**4.6 Solutions of Systems of Linear Equations Using Cramer's Rule**
+
+**4.7 Applications**
+
+---
+
+## Unit 5 — Vectors
+
+**5.1 Revision on Vectors and Scalars**
+
+**5.2 Representation of Vectors**
+
+**5.3 Vector Product**
+
+**5.4 Application of Scalar and Cross Product**
+
+**5.5 Application of Vectors**
+
+**5.6 Applications**
+
+---
+
+## Unit 6 — Transformations of the Plane
+
+**6.1 Introduction**
+
+**6.2 Translation**
+
+**6.3 Reflection**
+
+**6.4 Rotation**
+
+**6.5 Applications**
+
+---
+
+## Unit 7 — Statistics
+
+**7.1 Types of Data**
+
+**7.2 Introduction to Grouped Data**
+
+**7.3 Graphical Representation of Grouped Data**
+
+**7.4 Measures of Central Tendency and Their Interpretation**
+
+**7.5 Real-life Application of Statistics**
+
+---
+
+## Unit 8 — Probability
+
+**8.1 Introduction**
+
+**8.2 Fundamental Principle of Counting**
+
+**8.3 Permutations and Combinations**
+
+**8.4 Binomial Theorem**
+
+**8.5 Random Experiments and Their Outcomes**
+
+**8.6 Events**
+
+**8.7 Probability of an Event**
+
+**8.8 Real-life Application of Probability**
+
+
+
+---
+
+# GRADE 12
+
+The Grade 12 textbook contains five units. 
+
+## Unit 1 — Sequences and Series
+
+**1.1 Sequence**
+
+**1.2 Arithmetic and Geometric Sequences**
+
+**1.3 The Sigma Notation and Partial Sums**
+
+**1.4 Infinite Series**
+
+**1.5 Applications of Sequence and Series in Daily Life**
+
+---
+
+## Unit 2 — Introductions to Calculus
+
+**2.1 Introduction to Derivatives**
+
+**2.2 Application of Derivative**
+
+**2.3 Introduction to Integration**
+
+---
+
+## Unit 3 — Statistics
+
+**3.1 Measures of Absolute Dispersions**
+
+**3.2 Interpretation of Relative Dispersions**
+
+**3.3 Use of Frequency Curves**
+
+**3.4 Sampling Techniques**
+
+---
+
+## Unit 4 — Introduction to Linear Programming
+
+**4.1 Graphical Solutions of Linear Inequalities**
+
+**4.2 Maximum and Minimum Values**
+
+**4.3 Applications**
+
+---
+
+## Unit 5 — Mathematical Applications in Business
+
+**5.1 Basic Mathematical Concepts in Business**
+
+**5.2 Time Value of Money**
+
+**5.3 Saving, Investing and Borrowing**
+
+**5.4 Taxation**
+
+
+
+---
+
+# THE BIG PICTURE
+
+Your complete official roadmap is therefore:
+
+**Grade 9**
+→ Further on Sets
+→ Number System
+→ Solving Equations
+→ Solving Inequalities
+→ Introduction to Trigonometry
+→ Regular Polygons
+→ Congruency and Similarity
+→ Vectors in Two Dimensions
+→ Statistics and Probability
+
+**Grade 10**
+→ Relations and Functions
+→ Polynomial Functions
+→ Exponential and Logarithmic Functions
+→ Trigonometric Functions
+→ Circles
+→ Solid Figures
+→ Coordinate Geometry
+
+**Grade 11**
+→ Relations and Functions
+→ Rational Expressions and Rational Functions
+→ Matrices
+→ Determinants and Their Properties
+→ Vectors
+→ Transformations of the Plane
+→ Statistics
+→ Probability
+
+**Grade 12**
+→ Sequences and Series
+→ Introductions to Calculus
+→ Statistics
+→ Introduction to Linear Programming
+→ Mathematical Applications in Business
+
+---
+
+# PHASE 2 — RECOMMENDED LEARNING ORDER
+
+I am **not replacing the official syllabus order**. This is a study order designed around prerequisites and conceptual dependencies.
+
+## Stage A — Core foundations
+
+### 1. Grade 9 Further on Sets
+
+Sets provide useful mathematical language for membership, collections, relationships, and later functions.
+
+### 2. Grade 9 Number System
+
+This should become extremely secure.
+
+**Dependency chain:**
+
+Number types
+→ operations
+→ real numbers
+→ absolute value/interval ideas
+→ later algebra
+
+### 3. Grade 9 Solving Equations
+
+This is one of the central algebra foundations.
+
+**Dependency chain:**
+
+linear equations
+→ systems
+→ nonlinear equations
+→ later polynomial/exponential/logarithmic work
+
+### 4. Grade 9 Solving Inequalities
+
+Learn this immediately after equations.
+
+**Dependency chain:**
+
+equations
+→ inequalities
+→ systems of inequalities
+→ absolute-value inequalities
+→ quadratic inequalities
+→ later linear programming
+
+---
+
+# Stage B — Geometry and elementary applications
+
+### 5. Grade 9 Introduction to Trigonometry
+
+Right triangles
+→ side relationships
+→ sine/cosine/tangent
+→ solving triangle problems
+
+### 6. Grade 9 Regular Polygons
+
+Angle relationships
+→ polygon formulas
+→ regular-polygon properties
+
+### 7. Grade 9 Congruency and Similarity
+
+This is especially important because similarity gives a powerful way to reason about ratios, scaling, and geometric relationships.
+
+### 8. Grade 9 Vectors in Two Dimensions
+
+Scalar vs vector
+→ vector representation
+→ vector operations
+→ position vectors
+→ applications
+
+### 9. Grade 9 Statistics and Probability
+
+Statistics and probability begin a second major mathematical branch that later reappears repeatedly.
+
+---
+
+# Stage C — Functions become the central language
+
+### 10. Grade 10 Relations and Functions
+
+This should be treated as a major turning point.
+
+Relations
+→ functions
+→ domain/range
+→ different function types
+→ graphs
+→ applications
+
+### 11. Grade 10 Polynomial Functions
+
+Functions
+→ polynomial structure
+→ polynomial operations
+→ zeros
+→ graphs
+→ applications
+
+### 12. Grade 10 Exponential and Logarithmic Functions
+
+Polynomial and algebra foundations
+→ exponents
+→ exponential functions
+→ logarithms
+→ logarithmic/exponential equations
+→ relationships between inverse functions
+→ applications
+
+### 13. Grade 10 Trigonometric Functions
+
+Grade 9 trigonometric ratios
+→ radian measure
+→ trigonometric functions
+→ identities/equations
+→ applications
+
+### 14. Grade 10 Coordinate Geometry
+
+Distance
+→ division of a segment
+→ lines
+→ slope
+→ parallel/perpendicular lines
+→ circle equation
+
+### 15. Grade 10 Circles
+
+Circle geometry
+→ symmetry
+→ angle properties
+→ arcs/sectors/segments
+→ angle/arc theorems
+
+### 16. Grade 10 Solid Figures
+
+Prisms/cylinders
+→ pyramids/cones/spheres
+→ frustums
+→ composite solids
+→ surface area/volume applications
+
+---
+
+# Stage D — Higher algebra and linear methods
+
+### 17. Grade 11 Relations and Functions
+
+This is a significant extension of Grade 10 functions.
+
+Relations
+→ inverse relations
+→ function types
+→ composition
+→ inverse functions
+→ applications
+
+### 18. Grade 11 Rational Expressions and Rational Functions
+
+Polynomial/algebra foundations
+→ rational expressions
+→ rational equations/inequalities
+→ rational functions and graphs
+
+### 19. Grade 11 Matrices
+
+Linear systems from Grade 9
+→ matrix representation
+→ matrix operations
+→ row operations
+→ solving systems
+→ matrix inverse
+
+### 20. Grade 11 Determinants
+
+Matrices
+→ determinants
+→ minors/cofactors
+→ determinant properties
+→ inverses
+→ Cramer's Rule
+
+Matrices and determinants should therefore be studied as a connected block.
+
+### 21. Grade 11 Vectors
+
+Build directly on the Grade 9 vector foundation.
+
+### 22. Grade 11 Transformations of the Plane
+
+Vectors/geometric reasoning
+→ translation
+→ reflection
+→ rotation
+→ applications
+
+---
+
+# Stage E — Data, probability and advanced mathematics
+
+### 23. Grade 11 Statistics
+
+Grade 9 statistics
+→ data types
+→ grouped data
+→ graphical representation
+→ central tendency
+→ interpretation
+→ applications
+
+### 24. Grade 11 Probability
+
+Grade 9 probability
+→ counting
+→ permutations/combinations
+→ binomial theorem
+→ random experiments
+→ events
+→ probability
+
+This should be treated as a major cumulative topic.
+
+---
+
+# Stage F — Grade 12 advanced topics
+
+### 25. Grade 12 Sequences and Series
+
+Sequence
+→ arithmetic/geometric sequences
+→ sigma notation
+→ partial sums
+→ infinite series
+→ applications
+
+This deserves strong algebraic fluency.
+
+### 26. Grade 12 Introductions to Calculus
+
+Functions
+→ change/rate ideas
+→ derivatives
+→ derivative applications
+→ integration
+
+This is one of the most prerequisite-sensitive parts of the entire course.
+
+### 27. Grade 12 Statistics
+
+Grade 9/11 statistics
+→ absolute dispersion
+→ relative dispersion
+→ frequency curves
+→ sampling
+
+### 28. Grade 12 Introduction to Linear Programming
+
+Grade 9 inequalities
+→ systems of inequalities
+→ graphical feasible regions
+→ maximum/minimum values
+→ applications
+
+### 29. Grade 12 Mathematical Applications in Business
+
+Basic mathematical concepts
+→ time value of money
+→ saving/investing/borrowing
+→ taxation
+
+So although Grade 12 has five official units, the study sequence contains **29 major study blocks** when the Grade 9 special Sets unit and the individual units are separated explicitly.
+
+---
+
+# PREREQUISITE MAP
+
+The most important chains are:
+
+**Sets**
+→ mathematical language
+→ relations/functions
+
+**Number System**
+→ algebraic manipulation
+→ equations
+→ inequalities
+→ polynomial/exponential/logarithmic work
+
+**Equations**
+→ inequalities
+→ polynomial equations
+→ exponential/log equations
+→ linear programming
+
+**Grade 9 Trigonometry**
+→ Grade 10 Trigonometric Functions
+
+**Grade 9 Similarity**
+→ stronger geometric reasoning
+→ transformations and applications
+
+**Grade 9 Vectors**
+→ Grade 11 Vectors
+→ Grade 11 Transformations
+
+**Grade 10 Functions**
+→ Grade 11 Relations and Functions
+→ Grade 10 Polynomial Functions
+→ Grade 10 Exponential/Logarithmic Functions
+→ Grade 12 Calculus
+
+**Grade 10 Polynomial Functions**
+→ Grade 11 Rational Functions
+
+**Grade 9 systems of equations**
+→ Grade 11 Matrices
+→ Grade 11 Determinants
+
+**Grade 9/11 Statistics**
+→ Grade 12 Statistics
+
+**Grade 9 Probability**
+→ Grade 11 Probability
+
+**Grade 9 Inequalities**
+→ Grade 12 Linear Programming
+
+**Grade 12 Sequences**
+→ strong preparation for numerical-pattern and series reasoning
+→ supports later business/time-value calculations where applicable
+
+---
+
+# FOUNDATION / INTERMEDIATE / ADVANCED
+
+## Foundation
+
+The topics I would regard as foundational for the rest of the course are:
+
+* Sets
+* Number System
+* Linear Equations
+* Systems of Equations
+* Linear Inequalities
+* Absolute Value
+* Basic Geometry
+* Right-angled Triangles
+* Basic Trigonometric Ratios
+* Basic Vectors
+* Basic Statistics and Probability
+
+A weakness here can cause problems much later.
+
+## Intermediate
+
+* Relations and Functions
+* Polynomial Functions
+* Exponential Functions
+* Logarithmic Functions
+* Trigonometric Functions
+* Circles
+* Coordinate Geometry
+* Solid Figures
+* Rational Expressions/Functions
+* Matrices
+* Determinants
+* Vectors
+* Transformations
+* Statistics
+* Probability
+
+## Advanced
+
+Within this particular Grade 9–12 textbook sequence, the later high-level blocks are:
+
+* Sequences and Series
+* Derivatives
+* Applications of Derivatives
+* Integration
+* Advanced Statistics
+* Linear Programming
+* Mathematical Applications in Business
+
+“Advanced” here means relative to the progression in these textbooks, not a claim about university-level mathematics.
+
+---
+
+# TOPICS THAT SHOULD RECEIVE FREQUENT REVISION
+
+These are the concepts I expect to revisit repeatedly because later material depends on them:
+
+### Very high revision priority
+
+* Real-number operations
+* Equations
+* Inequalities
+* Functions
+* Graphs
+* Polynomial manipulation and zeros
+* Exponents and logarithms
+* Trigonometric ratios/functions
+* Coordinate geometry
+* Matrices and determinants
+* Vectors
+* Statistics
+* Probability
+
+### Especially cumulative
+
+**Functions → Polynomial → Exponential/Logarithmic → Grade 11 Functions → Calculus**
+
+and
+
+**Inequalities → Systems of Inequalities → Linear Programming**
+
+and
+
+**Vectors Grade 9 → Vectors Grade 11 → Transformations**
+
+and
+
+**Statistics Grade 9 → Statistics Grade 11 → Statistics Grade 12**
+
+and
+
+**Probability Grade 9 → Probability Grade 11**
+
+---
+
+# TOPICS LIKELY TO NEED THE MOST CALCULATION PRACTICE
+
+This is a **study-practice estimate**, not an official exam weighting.
+
+### Heavy calculation/problem-solving
+
+* Number System
+* Equations
+* Inequalities
+* Trigonometry
+* Polynomial Functions
+* Exponential/Logarithmic Functions
+* Coordinate Geometry
+* Solid Figures
+* Rational Functions
+* Matrices
+* Determinants
+* Vectors
+* Probability
+* Sequences and Series
+* Calculus
+* Linear Programming
+* Business Mathematics
+
+### More concept/interpretation heavy
+
+* Set concepts
+* Definitions and classification of relations/functions
+* Function types
+* Symmetry concepts
+* Some transformation concepts
+* Interpretation of statistical data
+* Sampling
+* Applications and meaning of mathematical quantities
+
+Most topics actually belong to **both** groups: understanding first, calculation second.
+
+---
+
+# COMMON MISUNDERSTANDING ZONES
+
+These are places where our lessons will deliberately slow down.
+
+### Algebra
+
+* Rational vs irrational numbers
+* Signs with negative numbers
+* Equality vs inequality
+* Reversing an inequality when multiplying/dividing by a negative number
+* Extraneous solutions
+* Treating an equation and an inequality as if they behave identically
+
+### Functions
+
+* Relation vs function
+* Domain vs range
+* Function notation
+* Inverse function vs reciprocal
+* Composition vs multiplication
+* Graph interpretation
+
+### Polynomial / Exponential / Logarithmic
+
+* Zero/root vs coefficient
+* Factor vs zero
+* Exponent laws
+* Logarithm as an exponent
+* Restrictions on logarithmic expressions
+* Confusing exponential growth with logarithmic behavior
+
+### Trigonometry
+
+* Opposite vs adjacent
+* Which angle is being used
+* Degrees vs radians
+* Choosing the correct trigonometric ratio
+* Identity vs equation
+
+### Geometry
+
+* Congruent vs similar
+* Length ratio vs area ratio
+* Interior vs exterior angle
+* Arc vs sector vs segment
+* Radius vs diameter
+
+### Vectors / Matrices
+
+* Scalar vs vector
+* Direction vs magnitude
+* Vector addition
+* Matrix dimensions
+* Matrix multiplication
+* Determinant vs matrix
+* Matrix inverse vs reciprocal
+
+### Statistics / Probability
+
+* Mean, median and mode
+* Population vs sample
+* Data representation
+* Counting vs probability
+* Permutation vs combination
+* Event vs outcome
+
+### Calculus
+
+* Derivative vs derivative value
+* Rate of change vs ordinary algebraic value
+* Derivative vs integral
+* Interpreting what a calculated result actually means
+
+### Linear Programming
+
+* Inequality direction
+* Boundary lines
+* Feasible region
+* Maximum vs minimum
+* Translating a real situation into mathematical constraints
+
+---
+
+# HOW I WILL TREAT THE OFFICIAL PDF
+
+The books themselves establish the lesson structure around **activity → definition/theorem/note → examples → exercises**, and they explicitly emphasize practicing problems rather than merely reading explanations. 
+
+For our course I will therefore preserve three things:
+
+**Official syllabus:** exactly what appears in these books.
+
+**Teaching explanation:** simpler explanations, analogies, derivations, examples, and connections that help you understand the official material.
+
+**Outside information:** only when genuinely useful, and explicitly labeled:
+
+> **Outside the provided PDF — optional explanation.**
+
+I will also treat the numbered section headings as the official topic structure. For example, Grade 10's contents explicitly includes the full progression from **3.1 Exponents and Logarithms through 3.6 Applications**. 
+
+---
+
+# OUR MASTERY SYSTEM
+
+We will **not** race through 29 blocks.
+
+For each major topic, we will move through:
+
+**Understand → Explain → Derive → Solve → Apply → Recognize tricks → Recall later → Re-test**
+
+And I will keep bringing older material back into new lessons.
+
+For example, after learning functions, you may later get an unfamiliar question that secretly tests domain and range. After inequalities, a later linear-programming problem may test the same inequality reasoning in a completely different setting.
+
+That is intentional.
+
+---
+
+# IMPORTANT SOURCE NOTE
+
+I found that the Grade 10 textbook's **Table of Contents and the numbered section headings support the six-part Unit 3 structure**:
+
+**3.1 Exponents and Logarithms**
+**3.2 Exponential Functions and Their Graphs**
+**3.3 Logarithmic Functions and Their Graphs**
+**3.4 Solving Exponential and Logarithmic Equations**
+**3.5 Relation between Exponential and Logarithmic Functions**
+**3.6 Applications**. 
+
+I will use that numbered structure as the authoritative roadmap rather than relying on an isolated extraction artifact.
+
+---
+
+# FINAL MASTER ROADMAP
+
+**GRADE 9**
+
+1. Further on Sets
+2. The Number System
+3. Solving Equations
+4. Solving Inequalities
+5. Introduction to Trigonometry
+6. Regular Polygons
+7. Congruency and Similarity
+8. Vectors in Two Dimensions
+9. Statistics and Probability
+
+**GRADE 10**
+10. Relations and Functions
+11. Polynomial Functions
+12. Exponential and Logarithmic Functions
+13. Trigonometric Functions
+14. Circles
+15. Solid Figures
+16. Coordinate Geometry
+
+**GRADE 11**
+17. Relations and Functions
+18. Rational Expressions and Rational Functions
+19. Matrices
+20. Determinants and Their Properties
+21. Vectors
+22. Transformations of the Plane
+23. Statistics
+24. Probability
+
+**GRADE 12**
+25. Sequences and Series
+26. Introductions to Calculus
+27. Statistics
+28. Introduction to Linear Programming
+29. Mathematical Applications in Business
+
+This is the complete roadmap I will use for your course.
+
+**We are ready for Topic 1: Grade 9 — Further on Sets, 1′.1 Description of the Concept Set.**
+
+ 

@@ -586,3 +586,76 @@ model AccountabilityRoastLog {
 
   @@unique([date, category])
 }
+
+model SubjectProgress {
+  id                String    @id @default(cuid())
+  subject           String    @unique // "CHEMISTRY" | "BIOLOGY" | "PHYSICS" | "ENGLISH" | "MATHEMATICS"
+  status            String    @default("LOCKED") // "NOT_STARTED" | "READY" | "ACTIVE" | "COMPLETED" | "LOCKED"
+  startDate         DateTime?
+  deadline          DateTime?
+  completedAt       DateTime?
+  activeUnitId      String?
+  activeTopicId     String?
+  activeSubtopic    String?
+  totalTopics       Int       @default(0)
+  completedTopics   Int       @default(0)
+  remainingTopics   Int       @default(0)
+  completionPercent Float     @default(0)
+  remainingPercent  Float     @default(100)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+}
+
+model SubjectTopicRecord {
+  id            String    @id @default(cuid())
+  subject       String    // "CHEMISTRY" | "BIOLOGY" etc.
+  unitId        String
+  unitTitle     String
+  topicId       String
+  topicTitle    String
+  subtopicsJson String?   // JSON string array
+  status        String    @default("NOT_STARTED") // "NOT_STARTED" | "IN_PROGRESS" | "STUDIED" | "QUESTIONED" | "WEAK" | "MASTERED"
+  focusMinutes  Int       @default(0)
+  accuracy      Float     @default(0)
+  attemptsCount Int       @default(0)
+  correctCount  Int       @default(0)
+  studiedAt     DateTime?
+  masteredAt    DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@unique([subject, topicId])
+}
+
+model SubjectQuestionLog {
+  id            String   @id @default(cuid())
+  subject       String
+  unitId        String
+  topicId       String
+  subtopic      String?
+  questionType  String   @default("MULTIPLE_CHOICE")
+  difficulty    String   @default("medium")
+  prompt        String
+  optionsJson   String
+  userAnswer    String
+  correctAnswer String
+  explanation   String?
+  isCorrect     Boolean
+  timeTakenSec  Int      @default(0)
+  attemptNumber Int      @default(1)
+  conceptTag    String?
+  createdAt     DateTime @default(now())
+}
+
+model SubjectStudySession {
+  id          String   @id @default(cuid())
+  subject     String
+  unitId      String
+  topicId     String
+  subtopic    String?
+  minutes     Int
+  startedAt   DateTime @default(now())
+  completedAt DateTime @default(now())
+  xpEarned    Int      @default(0)
+}
+

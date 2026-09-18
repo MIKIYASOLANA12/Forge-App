@@ -1,0 +1,928 @@
+ 
+
+# PHYSICS MASTER ROADMAP — GRADES 9–12
+
+## SOURCE SET
+
+**Grade 9:** Physics Student Textbook, Federal Democratic Republic of Ethiopia, Ministry of Education. 
+
+**Grade 10:** Physics Student Textbook, Federal Democratic Republic of Ethiopia, Ministry of Education. 
+
+**Grade 11:** Physics Student Textbook, Federal Democratic Republic of Ethiopia, Ministry of Education / Hawassa University. 
+
+**Grade 12:** Physics Student Textbook, Federal Democratic Republic of Ethiopia, Ministry of Education. 
+
+---
+
+# GRADE 9
+
+The Grade 9 textbook contains **7 units**. 
+
+## Unit 1 — Physics and Human Society
+
+### 1.1 Definition and Nature of Physics
+
+### 1.2 Branches of Physics
+
+### 1.3 Related Fields to Physics
+
+### 1.4 Historical Issues and Contributors
+
+---
+
+## Unit 2 — Physical Quantities
+
+### 2.1 Scales, Standards, Units (prefixes)
+
+### 2.2 Measurement and Safety
+
+### 2.3 Classification of Physical Quantities
+
+### 2.4 Unit conversion
+
+---
+
+## Unit 3 — Motion in a Straight Line
+
+### 3.1 Position, Distance and Displacement
+
+### 3.2 Average Speed and Instantaneous Speed
+
+### 3.3 Average Velocity and Instantaneous Velocity
+
+### 3.4 Acceleration
+
+### 3.5 Uniform Motion
+
+### 3.6 Graphical Representation of Motion
+
+---
+
+## Unit 4 — Force, Work, Energy and Power
+
+### 4.1 The Concept of Force
+
+### 4.2 Newton's Laws of Motion
+
+### 4.3 Forces of Friction
+
+### 4.4 The Concept of Work
+
+### 4.5 Kinetic and Potential Energies
+
+### 4.6 Power
+
+---
+
+## Unit 5 — Simple Machines
+
+### 5.1 Simple Machines and their Purposes
+
+### 5.2 Simple Machines at Home
+
+### 5.3 Simple Machines at Work Place
+
+### 5.4 Classification of Simple Machines
+
+### 5.5 Mechanical Advantage, Velocity Ratio and Efficiency of Simple Machine
+
+### 5.6 Designing Simple Machine
+
+---
+
+## Unit 6 — Mechanical Oscillation and Sound Wave
+
+### 6.1 Common Characteristics of Waves
+
+### 6.2 String, Pendulum and Spring
+
+### 6.3 Propagation of Waves and Energy Transmission
+
+### 6.4 Sound Waves
+
+### 6.5 Superposition of Waves
+
+### 6.6 Characteristics of Sound Waves
+
+---
+
+## Unit 7 — Temperature and Thermometry
+
+### 7.1 Temperature and Our Life
+
+### 7.2 Extreme Temperature Safety
+
+### 7.3 Temperature Change and its Effects
+
+### 7.4 Measuring Temperature with Different Thermometric Scales
+
+### 7.5 Types of Thermometers and Their Use
+
+### 7.6 Conversion between Temperature Scales
+
+### 7.7 Thermal Expansion of Materials
+
+
+
+---
+
+# GRADE 10
+
+The Grade 10 textbook contains **6 units**. 
+
+## Unit 1 — Vector Quantities
+
+### 1.1 Scalars and Vectors
+
+### 1.2 Vector representations
+
+### 1.3 Vector addition and subtraction
+
+### 1.4 Graphical method of vector addition
+
+### 1.5 Vector resolution
+
+---
+
+## Unit 2 — Uniformly Accelerated Motion
+
+### 2.1 Position and Displacement
+
+### 2.2 Average velocity and instantaneous velocity
+
+### 2.3 Acceleration
+
+### 2.4 Equations of motion with constant acceleration
+
+### 2.5 Graphical representation of uniformly accelerated motion
+
+### 2.6 Relative velocity in one dimension
+
+---
+
+## Unit 3 — Elasticity and Static Equilibrium of Rigid Body
+
+### 3.1 Elasticity and plasticity
+
+### 3.2 Density and specific gravity
+
+### 3.3 Stress and Strain
+
+### 3.4 Young's Modulus
+
+### 3.5 Static equilibrium
+
+#### 3.5.1 First condition of equilibrium
+
+#### 3.5.2 Second Condition of Equilibrium
+
+---
+
+## Unit 4 — Static and Current Electricity
+
+### 4.1 Charges in Nature
+
+### 4.2 Methods of Charging a Body
+
+### 4.3 The electroscope
+
+### 4.4 Electrical Discharge
+
+### 4.5 Coulomb's law of electrostatics
+
+### 4.6 The electric field
+
+### 4.7 Electric circuits
+
+### 4.8 Current, Voltage and Ohm's law
+
+### 4.9 Combination of resistors in a circuit
+
+### 4.10 Voltmeter and ammeter connection in a circuit
+
+### 4.11 Electrical safety in general and local context
+
+### 4.12 Electric projects
+
+---
+
+## Unit 5 — Magnetism
+
+### 5.1 Magnet
+
+### 5.2 Magnetic Field
+
+### 5.3 The earth's magnetic field and the compass
+
+### 5.4 Magnetic field of a current carrying conductor
+
+### 5.5 Magnetic force on a moving charge in a uniform magnetic field
+
+### 5.6 Magnetic force on a current carrying conductor
+
+### 5.7 Magnetic force between two parallel current carrying conductors
+
+### 5.8 Applications of magnetism
+
+---
+
+## Unit 6 — Electromagnetic Waves and Geometrical Optics
+
+### 6.1 Electromagnetic (EM) waves
+
+### 6.2 EM Spectrum
+
+### 6.3 Light as a wave
+
+### 6.4 Laws of reflection & refraction
+
+### 6.5 Mirrors and lenses
+
+### 6.6 Human eye and optical instruments
+
+### 6.7 Primary colors of light and human vision
+
+### 6.8 Color addition of light
+
+### 6.9 Color subtraction of light using filters
+
+
+
+---
+
+# GRADE 11
+
+The Grade 11 textbook contains **7 units**.  
+
+## Unit 1 — Physics and Human Society
+
+### 1.1 Importance of Physics to Society
+
+### 1.2 Physics Communities and Their Roles
+
+### 1.3 Making of Physics Knowledge
+
+### 1.4 The Mission of Physics and Career Awareness
+
+### 1.5 Current Status of Physics
+
+---
+
+## Unit 2 — Vectors
+
+### 2.1 Vectors and Types of Vectors
+
+### 2.2 Graphical Method of Addition of Vectors in Two Dimensions (2-D)
+
+### 2.3 Algebraic Method of addition of Vectors in Two Dimensions (2-D)
+
+### 2.4 Product of Vectors
+
+---
+
+## Unit 3 — Motion in One and Two Dimensions
+
+### 3.1 Uniformly Accelerated Motion in 1D
+
+### 3.2 Equations of Uniformly Accelerated Motion in 1D
+
+### 3.3 Graphical Representation of Uniformly accelerated Motion in 1 D
+
+### 3.4 Vertical Motion
+
+### 3.5 Uniform Circular Motion
+
+---
+
+## Unit 4 — Dynamics
+
+### 4.1 The Concept of Force and Newton's Laws of motion
+
+### 4.2 Frictional Force
+
+### 4.3 The First Condition of Equilibrium
+
+### 4.4 Work, Energy and Power
+
+### 4.5 Conservation of mechanical energy
+
+### 4.6 Impulse and Linear Momentum
+
+---
+
+## Unit 5 — Heat Conduction and Calorimetry
+
+### 5.1 The Concept of Heat
+
+### 5.2 Heat transfer mechanisms
+
+### 5.3 Heat Capacity and Specific Heat Capacity
+
+### 5.4 Thermal expansion
+
+### 5.5 Change of phase
+
+### 5.6 Calorimetry
+
+---
+
+## Unit 6 — Electrostatics and Electric Circuit
+
+### 6.1 Coulomb's Law
+
+### 6.2 Electric Fields
+
+### 6.3 Electric Potential
+
+### 6.4 Electric Current, Resistance and ohm's law
+
+**Important:** the official contents go from **6.4 directly to 6.6**.
+
+### 6.6 Capacitors and Capacitance
+
+### 6.7 Electric Circuits in Our Surroundings
+
+There is **no 6.5 listed in the official contents**, so I will not invent one. 
+
+---
+
+## Unit 7 — Nuclear Physics
+
+### 7.1 The nucleus
+
+### 7.2 Radioactivity
+
+### 7.3 Use of nuclear radiation
+
+### 7.4 Nuclear Reaction and Energy Production
+
+### 7.5 Safety Rules Against Hazards of Nuclear Radiation
+
+
+
+---
+
+# GRADE 12
+
+The Grade 12 textbook contains **5 units**.  
+
+## Unit 1 — Application of Physics in Other Fields
+
+### 1.1 Physics and other sciences
+
+### 1.2 Physics and engineering
+
+### 1.3 Medical physics
+
+### 1.4 Physics and defense technology
+
+### 1.5 Physics in communication
+
+---
+
+## Unit 2 — Two-dimensional motion
+
+### 2.1 Projectile motion
+
+### 2.2 Rotational Motion
+
+### 2.3 Rotational Dynamics
+
+### 2.4 Planetary motion and Kepler's laws
+
+### 2.5 Newton's law of universal Gravitation
+
+---
+
+## Unit 3 — Fluid Mechanics
+
+### 3.1 Fluid Statics
+
+### 3.2 Pressure in fluids at rest
+
+### 3.3 Archimedes' principle
+
+### 3.4 Fluid flow
+
+### 3.5 Safety and high pressure
+
+---
+
+## Unit 4 — Electromagnetism
+
+### 4.1 Magnets and Magnetic field
+
+### 4.2 Magnetic field lines
+
+### 4.3 Current and Magnetism
+
+### 4.4 Electromagnetic Induction
+
+### 4.5 Faraday's Law of electromagnetic Induction
+
+### 4.6 Transformers
+
+### 4.7 Application and safety
+
+---
+
+## Unit 5 — Basics of electronics
+
+### 5.1 Semiconductors
+
+### 5.2 Diodes and their Functions
+
+### 5.3 Rectification
+
+### 5.4 Transistors and their application
+
+### 5.5 Integrated Circuits
+
+### 5.6 Logic gates and logic circuits
+
+### 5.7 Application of electronics
+
+
+
+---
+
+# MASTER SUBJECT MAP
+
+Here is the whole progression in one view:
+
+**GRADE 9**
+
+Physics and Human Society
+→ Physical Quantities
+→ Motion in a Straight Line
+→ Force, Work, Energy and Power
+→ Simple Machines
+→ Mechanical Oscillation and Sound Wave
+→ Temperature and Thermometry
+
+↓
+
+**GRADE 10**
+
+Vector Quantities
+→ Uniformly Accelerated Motion
+→ Elasticity and Static Equilibrium of Rigid Body
+→ Static and Current Electricity
+→ Magnetism
+→ Electromagnetic Waves and Geometrical Optics
+
+↓
+
+**GRADE 11**
+
+Physics and Human Society
+→ Vectors
+→ Motion in One and Two Dimensions
+→ Dynamics
+→ Heat Conduction and Calorimetry
+→ Electrostatics and Electric Circuit
+→ Nuclear Physics
+
+↓
+
+**GRADE 12**
+
+Application of Physics in Other Fields
+→ Two-dimensional Motion
+→ Fluid Mechanics
+→ Electromagnetism
+→ Basics of Electronics
+
+---
+
+# RECOMMENDED LEARNING ORDER
+
+I will preserve the official syllabus while reorganizing **where necessary for prerequisites**.
+
+## FOUNDATION BLOCK
+
+### 1. Grade 9 Physical Quantities
+
+→ measurement
+→ units
+→ classification
+→ unit conversion
+
+This provides the language needed for numerical Physics.
+
+### 2. Grade 9 Motion in a Straight Line
+
+→ position
+→ distance/displacement
+→ speed/velocity
+→ acceleration
+→ graphs
+
+### 3. Grade 9 Force, Work, Energy and Power
+
+→ force
+→ Newton's laws
+→ friction
+→ work
+→ energy
+→ power
+
+### 4. Grade 9 Simple Machines
+
+### 5. Grade 9 Mechanical Oscillation and Sound Wave
+
+### 6. Grade 9 Temperature and Thermometry
+
+---
+
+# NEXT MATHEMATICAL/MECHANICS FOUNDATION
+
+### 7. Grade 10 Vector Quantities
+
+This is extremely important because Physics quantities such as displacement, velocity, acceleration and force require directional reasoning.
+
+### 8. Grade 10 Uniformly Accelerated Motion
+
+Builds the mathematical treatment of motion.
+
+### 9. Grade 10 Elasticity and Static Equilibrium
+
+→ density
+→ stress/strain
+→ Young's modulus
+→ equilibrium
+
+---
+
+# ELECTRICITY, MAGNETISM AND LIGHT
+
+### 10. Grade 10 Static and Current Electricity
+
+### 11. Grade 10 Magnetism
+
+### 12. Grade 10 Electromagnetic Waves and Geometrical Optics
+
+---
+
+# GRADE 11 DEEPENING
+
+### 13. Grade 11 Vectors
+
+A deeper treatment of vectors in two dimensions.
+
+### 14. Grade 11 Motion
+
+### 15. Grade 11 Dynamics
+
+These three should form one continuous **mechanics block**.
+
+### 16. Grade 11 Heat Conduction and Calorimetry
+
+### 17. Grade 11 Electrostatics and Electric Circuit
+
+### 18. Grade 11 Nuclear Physics
+
+---
+
+# GRADE 12 ADVANCED APPLICATION
+
+### 19. Grade 12 Two-dimensional Motion
+
+→ projectile motion
+→ rotation
+→ rotational dynamics
+→ planetary motion
+→ gravitation
+
+### 20. Grade 12 Fluid Mechanics
+
+### 21. Grade 12 Electromagnetism
+
+### 22. Grade 12 Electronics
+
+### 23. Grade 12 Application of Physics in Other Fields
+
+This can be used as an application/revision layer throughout the course rather than treated as isolated memorization.
+
+---
+
+# PREREQUISITE MAP
+
+The most important dependency chain is:
+
+**Measurement + Units**
+→ **Motion**
+→ **Vectors**
+→ **Accelerated Motion**
+→ **Newton's Laws**
+→ **Work/Energy**
+→ **Momentum**
+→ **Circular Motion**
+→ **Projectile Motion / Rotation / Gravitation**
+
+For electricity:
+
+**Charge**
+→ **Electric Field**
+→ **Electric Potential**
+→ **Current**
+→ **Resistance**
+→ **Circuits**
+→ **Capacitors**
+
+Then:
+
+**Magnetism**
+→ **Current and Magnetism**
+→ **Electromagnetic Induction**
+→ **Faraday's Law**
+→ **Transformers**
+
+Then:
+
+**Semiconductors**
+→ **Diodes**
+→ **Rectification**
+→ **Transistors**
+→ **Integrated Circuits**
+→ **Logic Gates**
+→ **Electronic Applications**
+
+For thermal Physics:
+
+**Temperature**
+→ **Heat**
+→ **Heat Transfer**
+→ **Heat Capacity**
+→ **Thermal Expansion**
+→ **Phase Change**
+→ **Calorimetry**
+
+For nuclear Physics:
+
+**Atomic/nuclear structure**
+→ **Radioactivity**
+→ **Decay**
+→ **Radiation**
+→ **Nuclear Reactions**
+→ **Nuclear Energy**
+→ **Safety**
+
+---
+
+# WHAT NEEDS THE MOST PRACTICE
+
+This is an **instructional estimate based on the mathematical and multi-step nature of the textbook material**, not an official exam weighting.
+
+## Highest calculation/problem-solving demand
+
+**Grade 9**
+
+* Physical Quantities
+* Motion in a Straight Line
+* Force, Work, Energy and Power
+* Simple Machines
+
+**Grade 10**
+
+* Vectors
+* Uniformly Accelerated Motion
+* Static Equilibrium
+* Current Electricity
+* Combination of resistors
+* Magnetism
+* Mirrors and lenses
+
+**Grade 11**
+
+* Vectors
+* Motion
+* Dynamics
+* Heat and Calorimetry
+* Electrostatics
+* Electric Circuits
+
+**Grade 12**
+
+* Projectile Motion
+* Rotational Motion
+* Rotational Dynamics
+* Gravitation
+* Fluid Mechanics
+* Electromagnetism
+* Electronics circuit reasoning
+
+---
+
+# CONCEPTS THAT SHOULD RECEIVE FREQUENT SPACED REVIEW
+
+These will repeatedly return throughout the course:
+
+**Measurement and units**
+
+→ unit conversion
+→ significant numerical interpretation
+
+**Motion**
+
+→ distance vs displacement
+→ speed vs velocity
+→ acceleration
+→ graphs
+
+**Vectors**
+
+→ magnitude
+→ direction
+→ components
+→ resultant
+
+**Forces**
+
+→ Newton's laws
+→ friction
+→ equilibrium
+
+**Energy**
+
+→ work
+→ kinetic energy
+→ potential energy
+→ conservation
+→ power
+
+**Electricity**
+
+→ charge
+→ field
+→ potential
+→ current
+→ voltage
+→ resistance
+
+**Circuits**
+
+→ series
+→ parallel
+→ Ohm's law
+→ circuit instruments
+
+**Magnetism**
+
+→ magnetic field
+→ magnetic force
+→ current-carrying conductors
+
+**Heat**
+
+→ temperature vs heat
+→ heat transfer
+→ specific heat
+→ expansion
+→ phase change
+
+**Waves**
+
+→ wavelength
+→ frequency
+→ amplitude
+→ propagation
+→ sound
+
+**Optics**
+
+→ reflection
+→ refraction
+→ mirrors
+→ lenses
+→ eye
+
+**Nuclear Physics**
+
+→ nucleus
+→ radiation
+→ half-life/decay ideas
+→ nuclear reactions
+
+**Advanced mechanics**
+
+→ projectile motion
+→ angular motion
+→ torque
+→ gravitation
+
+**Electromagnetism**
+
+→ induction
+→ Faraday's law
+→ transformers
+
+**Electronics**
+
+→ semiconductor
+→ diode
+→ rectifier
+→ transistor
+→ logic gate
+
+---
+
+# MAJOR CONCEPTUAL VS CALCULATION AREAS
+
+| Major area                      | Main training                  |
+| ------------------------------- | ------------------------------ |
+| Physics & Human Society         | Conceptual                     |
+| Physical Quantities             | Concept + numerical            |
+| Motion                          | Numerical + graphs             |
+| Forces                          | Concept + numerical            |
+| Energy                          | Concept + numerical            |
+| Simple Machines                 | Numerical + application        |
+| Waves & Sound                   | Concept + numerical            |
+| Temperature                     | Concept + numerical            |
+| Vectors                         | Numerical + spatial reasoning  |
+| Equilibrium                     | Numerical + diagrams           |
+| Electricity                     | Heavy numerical + conceptual   |
+| Magnetism                       | Concept + numerical            |
+| Optics                          | Concept + diagrams + numerical |
+| Heat & Calorimetry              | Numerical + conceptual         |
+| Nuclear Physics                 | Concept + numerical            |
+| Projectile/Rotation/Gravitation | Heavy numerical + reasoning    |
+| Fluid Mechanics                 | Numerical + conceptual         |
+| Electromagnetism                | Concept + numerical            |
+| Electronics                     | Concept + circuit reasoning    |
+
+---
+
+# IMPORTANT SOURCE RULE GOING FORWARD
+
+The official PDFs do **not provide an exam percentage/weighting for each topic** in the material used for this roadmap.
+
+Therefore:
+
+> **Exam weighting: Not specified in the provided PDFs.**
+
+I will never tell you something like "Chapter X is 30% of the exam" unless such information appears in the official source.
+
+Likewise, I will not silently add chapters from another curriculum.
+
+---
+
+# THE MASTER SEQUENCE WE WILL FOLLOW
+
+**Grade 9**
+
+Physical quantities
+→ Motion
+→ Force
+→ Work/Energy/Power
+→ Machines
+→ Waves/Sound
+→ Temperature
+
+↓
+
+**Grade 10**
+
+Vectors
+→ Accelerated motion
+→ Equilibrium/elasticity
+→ Electricity
+→ Magnetism
+→ EM waves/Optics
+
+↓
+
+**Grade 11**
+
+Vectors
+→ Motion
+→ Dynamics
+→ Heat
+→ Electrostatics/Circuits
+→ Nuclear Physics
+
+↓
+
+**Grade 12**
+
+Projectile/Rotational/Gravitational Physics
+→ Fluids
+→ Electromagnetism
+→ Electronics
+→ Applications
+
+---
+
+## Current status
+
+**Grade 9:** ✅ mapped
+**Grade 10:** ✅ mapped
+**Grade 11:** ✅ mapped
+**Grade 12:** ✅ mapped
+**Official syllabus structure:** ✅ complete
+**Prerequisite map:** ✅ complete
+**Teaching:** **NOT STARTED**
+
+We will now use this as your **master Physics curriculum** throughout the course.
+
+**Confirm that we should begin with Topic 1: Grade 9 → Unit 1 → 1.1 Definition and Nature of Physics.**

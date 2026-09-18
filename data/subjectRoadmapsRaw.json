@@ -1,0 +1,4210 @@
+{
+  "CHEMISTRY": {
+    "key": "CHEMISTRY",
+    "name": "Chemistry",
+    "icon": "🧪",
+    "totalUnits": 16,
+    "totalTopics": 70,
+    "totalSubtopics": 359,
+    "units": [
+      {
+        "id": "chemistry_u1",
+        "grade": "GRADE 9",
+        "title": "Unit 1 — CHEMISTRY AND ITS IMPORTANCE",
+        "topics": [
+          {
+            "id": "chemistry_u1_t1",
+            "title": "1.1 Definition and Scope of Chemistry",
+            "subtopics": [
+              "1.1.1 Definition of Chemistry",
+              "1.1.2 Scope of Chemistry",
+              "Physical chemistry",
+              "Organic chemistry",
+              "Inorganic chemistry",
+              "Analytical chemistry",
+              "Biochemistry"
+            ]
+          },
+          {
+            "id": "chemistry_u1_t2",
+            "title": "1.2 Relationship Between Chemistry and Other Natural Sciences",
+            "subtopics": [
+              "Chemistry and physics",
+              "Chemistry and biology",
+              "Chemistry and geology",
+              "Chemistry and medicine",
+              "Biochemistry",
+              "Geochemistry",
+              "Physical chemistry / chemical physics"
+            ]
+          },
+          {
+            "id": "chemistry_u1_t3",
+            "title": "1.3 The Role Chemistry Plays in Production and in Society",
+            "subtopics": [
+              "Agriculture",
+              "Food production",
+              "Medicine",
+              "Building construction",
+              "Other societal and technological applications"
+            ]
+          },
+          {
+            "id": "chemistry_u1_t4",
+            "title": "1.4 Some Common Chemical Industries in Ethiopia",
+            "subtopics": [
+              "Chemical industries in Ethiopia",
+              "Their products and applications"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "chemistry_u2",
+        "grade": "GRADE 9",
+        "title": "Unit 2 — MEASUREMENTS AND SCIENTIFIC METHODS",
+        "topics": [
+          {
+            "id": "chemistry_u2_t1",
+            "title": "2.1 Measurements and Units in Chemistry",
+            "subtopics": [
+              "2.1.1 SI Units / International System of Units",
+              "2.1.2 Derived Units",
+              "2.1.3 Common Prefixes Used in SI Units",
+              "2.1.4 Uncertainty in Measurements",
+              "2.1.5 Precision and Accuracy",
+              "2.1.6 Significant Figures",
+              "2.1.7 Scientific Notation and Decimal Places",
+              "mass",
+              "volume",
+              "density",
+              "temperature",
+              "time",
+              "SI units and prefixes",
+              "uncertainty"
+            ]
+          },
+          {
+            "id": "chemistry_u2_t2",
+            "title": "2.2 Chemistry as Experimental Science",
+            "subtopics": [
+              "2.2.1 The Scientific Method",
+              "2.2.2 Some Experimental Skills in Chemistry",
+              "2.2.3 Writing a Laboratory Report"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "chemistry_u3",
+        "grade": "GRADE 9",
+        "title": "Unit 3 — STRUCTURE OF THE ATOM",
+        "topics": [
+          {
+            "id": "chemistry_u3_t1",
+            "title": "3.1 Historical Development of the Atomic Theories of Matter",
+            "subtopics": []
+          },
+          {
+            "id": "chemistry_u3_t2",
+            "title": "3.2 Fundamental Laws of Chemical Reactions",
+            "subtopics": [
+              "3.2.1 Law of Conservation of Mass",
+              "3.2.2 Law of Definite Proportions",
+              "3.2.3 Law of Multiple Proportions"
+            ]
+          },
+          {
+            "id": "chemistry_u3_t3",
+            "title": "3.3 Atomic Theory",
+            "subtopics": [
+              "3.3.1 Dalton's Atomic Theory",
+              "3.3.2 Modern Atomic Theory"
+            ]
+          },
+          {
+            "id": "chemistry_u3_t4",
+            "title": "3.4 Discoveries of the Fundamental Subatomic Particles",
+            "subtopics": [
+              "3.4.1 Discovery of the Proton",
+              "3.4.2 Discovery of the Electron",
+              "3.4.3 Discovery of the Nucleus",
+              "3.4.4 Discovery of the Neutron"
+            ]
+          },
+          {
+            "id": "chemistry_u3_t5",
+            "title": "3.5 Composition of an Atom and the Isotopes",
+            "subtopics": [
+              "3.5.1 Electrons, Protons and Neutrons",
+              "3.5.2 Atomic Number and Mass Number",
+              "3.5.3 Atomic Mass and Isotope",
+              "3.5.4 Main Energy Levels",
+              "3.5.5 Electronic Configuration on Main Shells",
+              "3.5.6 Valence Electrons"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "chemistry_u4",
+        "grade": "GRADE 9",
+        "title": "Unit 4 — PERIODIC CLASSIFICATION OF ELEMENTS",
+        "topics": [
+          {
+            "id": "chemistry_u4_t1",
+            "title": "4.1 Historical Development of Periodic Classification of the Elements",
+            "subtopics": [
+              "4.1.1 Döbereiner's Triads",
+              "4.1.2 Newlands' Law of Octaves"
+            ]
+          },
+          {
+            "id": "chemistry_u4_t2",
+            "title": "4.2 Mendeleev's Classification of the Elements",
+            "subtopics": [
+              "4.2.1 Mendeleev's Periodic Law",
+              "4.2.2 Periodicity"
+            ]
+          },
+          {
+            "id": "chemistry_u4_t3",
+            "title": "4.3 The Modern Periodic Table",
+            "subtopics": [
+              "4.3.1 The Periodic Law",
+              "4.3.2 Groups and Periods",
+              "4.3.3 Classification of the Elements",
+              "4.3.4 The Representative Elements"
+            ]
+          },
+          {
+            "id": "chemistry_u4_t4",
+            "title": "4.4 The Major Trends in the Periodic Table",
+            "subtopics": [
+              "4.4.1 Atomic Radius",
+              "4.4.2 Ionization Energy",
+              "4.4.3 Electron Affinity",
+              "4.4.4 Electronegativity"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "chemistry_u5",
+        "grade": "GRADE 9",
+        "title": "Unit 5 — CHEMICAL BONDING",
+        "topics": [
+          {
+            "id": "chemistry_u5_t1",
+            "title": "5.1 Chemical Bonding",
+            "subtopics": []
+          },
+          {
+            "id": "chemistry_u5_t2",
+            "title": "5.2 Ionic Bonding",
+            "subtopics": [
+              "5.2.1 Formation of Ionic Bonding",
+              "5.2.2 Lewis Formulas of Ionic Compounds",
+              "5.2.3 General Properties of Ionic Compounds"
+            ]
+          },
+          {
+            "id": "chemistry_u5_t3",
+            "title": "5.3 Covalent Bonding",
+            "subtopics": [
+              "5.3.1 Formation of Covalent Bond",
+              "5.3.2 Lewis's Formula of Covalent Molecules",
+              "5.3.3 Polarity in Covalent Molecules",
+              "5.3.4 Coordinate Covalent Bond / Dative Bond",
+              "5.3.5 General Properties of Covalent Compounds"
+            ]
+          },
+          {
+            "id": "chemistry_u5_t4",
+            "title": "5.4 Metallic Bonding",
+            "subtopics": [
+              "5.4.1 Formation of Metallic Bond",
+              "5.4.2 Properties of Metallic Bond"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "chemistry_u6",
+        "grade": "GRADE 10",
+        "title": "Unit 1 — CHEMICAL REACTIONS AND STOICHIOMETRY",
+        "topics": [
+          {
+            "id": "chemistry_u6_t1",
+            "title": "1.1 Introduction",
+            "subtopics": [
+              "Physical changes",
+              "Chemical changes",
+              "Chemical reactions"
+            ]
+          },
+          {
+            "id": "chemistry_u6_t2",
+            "title": "1.2 Chemical Equations",
+            "subtopics": [
+              "1.2.1 Writing Chemical Equations",
+              "1.2.2 Balancing Chemical Equations",
+              "Inspection method",
+              "LCM method",
+              "Algebraic method"
+            ]
+          },
+          {
+            "id": "chemistry_u6_t3",
+            "title": "1.3 Types of Chemical Reactions",
+            "subtopics": [
+              "Combination reactions",
+              "Decomposition reactions",
+              "Single displacement reactions",
+              "Double displacement reactions"
+            ]
+          },
+          {
+            "id": "chemistry_u6_t4",
+            "title": "1.4 Oxidation and Reduction Reactions",
+            "subtopics": [
+              "1.4.1 Oxidation Number / Oxidation State",
+              "1.4.2 Oxidizing and Reducing Agents",
+              "1.4.3 Analyzing Redox Reactions",
+              "1.4.4 Balancing Redox Reactions: Oxidation-Number-Change Method"
+            ]
+          },
+          {
+            "id": "chemistry_u6_t5",
+            "title": "1.5 Molecular and Formula Masses, the Mole Concept and Chemical Formulas",
+            "subtopics": [
+              "1.5.1 Molecular Mass and Formula Mass",
+              "1.5.2 The Mole Concept",
+              "1.5.3 Chemical Formulas",
+              "Empirical formulas",
+              "Molecular formulas",
+              "Percentage composition"
+            ]
+          },
+          {
+            "id": "chemistry_u6_t6",
+            "title": "1.6 Stoichiometry",
+            "subtopics": [
+              "1.6.1 Molar Ratios in Balanced Chemical Equations",
+              "1.6.2 Mass-Mass Relationships",
+              "1.6.3 Volume-Volume Relationships",
+              "1.6.4 Mass-Volume Relationships",
+              "1.6.5 Limiting and Excess Reactants",
+              "1.6.6 Theoretical, Actual and Percentage Yields"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "chemistry_u7",
+        "grade": "GRADE 10",
+        "title": "Unit 2 — SOLUTIONS",
+        "topics": [
+          {
+            "id": "chemistry_u7_t1",
+            "title": "2.1 Heterogeneous and Homogeneous Mixtures",
+            "subtopics": [
+              "2.1.1 Suspensions, Solutions, Colloids"
+            ]
+          },
+          {
+            "id": "chemistry_u7_t2",
+            "title": "2.2 The Solution Process",
+            "subtopics": [
+              "2.2.1 Liquid Solutions and Inter-particle Forces of Attraction",
+              "2.2.2 Solutions of Ionic Solids in Water",
+              "2.2.3 Solubility Rules for Ionic Solids",
+              "2.2.4 Solution of Liquids in Liquids",
+              "2.2.5 Rate of Dissolution",
+              "2.2.6 Energy Changes in Solution Process"
+            ]
+          },
+          {
+            "id": "chemistry_u7_t3",
+            "title": "2.3 Solubility as an Equilibrium Process",
+            "subtopics": [
+              "2.3.1 Unsaturated, Saturated and Supersaturated Solutions",
+              "2.3.2 Factors Affecting Solubility of Substances"
+            ]
+          },
+          {
+            "id": "chemistry_u7_t4",
+            "title": "2.4 Ways of Expressing Concentration of Solutions",
+            "subtopics": [
+              "2.4.1 Percent by Mass/Volume",
+              "2.4.2 Mole Fraction",
+              "2.4.3 Molarity",
+              "2.4.4 Molality",
+              "2.4.5 Normality",
+              "2.4.6 Conversion of Concentration Units"
+            ]
+          },
+          {
+            "id": "chemistry_u7_t5",
+            "title": "2.5 Preparation of Solutions",
+            "subtopics": [
+              "2.5.1 Preparation of Stock Solutions from Pure Compound",
+              "2.5.2 Diluting a Solution"
+            ]
+          },
+          {
+            "id": "chemistry_u7_t6",
+            "title": "2.6 Solution Stoichiometry",
+            "subtopics": []
+          },
+          {
+            "id": "chemistry_u7_t7",
+            "title": "2.7 Describing Reactions in Solution",
+            "subtopics": [
+              "Reacting ions",
+              "Spectator ions",
+              "Precipitation",
+              "Solubility",
+              "Net ionic equations"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "chemistry_u8",
+        "grade": "GRADE 10",
+        "title": "Unit 3 — IMPORTANT INORGANIC COMPOUNDS",
+        "topics": [
+          {
+            "id": "chemistry_u8_t1",
+            "title": "3.1 Introduction",
+            "subtopics": []
+          },
+          {
+            "id": "chemistry_u8_t2",
+            "title": "3.2 Oxides",
+            "subtopics": []
+          },
+          {
+            "id": "chemistry_u8_t3",
+            "title": "3.3 Acids",
+            "subtopics": []
+          },
+          {
+            "id": "chemistry_u8_t4",
+            "title": "3.4 Bases",
+            "subtopics": []
+          },
+          {
+            "id": "chemistry_u8_t5",
+            "title": "3.5 Salts",
+            "subtopics": []
+          }
+        ]
+      },
+      {
+        "id": "chemistry_u9",
+        "grade": "GRADE 10",
+        "title": "Unit 4 — ENERGY CHANGES AND ELECTROCHEMISTRY",
+        "topics": [
+          {
+            "id": "chemistry_u9_t1",
+            "title": "4.1 Introduction",
+            "subtopics": [
+              "4.1.1 Exothermic and Endothermic Chemical Reactions",
+              "4.1.2 Importance of Chemical Changes"
+            ]
+          },
+          {
+            "id": "chemistry_u9_t2",
+            "title": "4.2 Energy Changes in Electrochemistry",
+            "subtopics": [
+              "4.2.1 Electrochemistry",
+              "4.2.2 Electrical Conductivity",
+              "Metallic conductivity",
+              "Electrolytic conductivity"
+            ]
+          },
+          {
+            "id": "chemistry_u9_t3",
+            "title": "4.3 Electrochemical Cells",
+            "subtopics": [
+              "4.3.1 Galvanic / Voltaic Cells"
+            ]
+          },
+          {
+            "id": "chemistry_u9_t4",
+            "title": "4.4 Electrolysis",
+            "subtopics": [
+              "4.4.1 Electrolysis of Molten / Fused Electrolytes"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "chemistry_u10",
+        "grade": "GRADE 10",
+        "title": "Unit 5 — METALS AND NONMETALS",
+        "topics": [
+          {
+            "id": "chemistry_u10_t1",
+            "title": "5.1 Introduction",
+            "subtopics": []
+          },
+          {
+            "id": "chemistry_u10_t2",
+            "title": "5.2 General Properties of Metals and Production of Some Metals",
+            "subtopics": [
+              "5.2.1 Properties and Extraction of Metals",
+              "5.2.2 Alloys",
+              "5.2.3 Production of Aluminum, Iron and Copper"
+            ]
+          },
+          {
+            "id": "chemistry_u10_t3",
+            "title": "5.3 Production of Some Important Nonmetals",
+            "subtopics": [
+              "5.3.1 General Properties of Nonmetals and Common Uses of Some Nonmetals",
+              "5.3.2 Production of Nitrogen, Phosphorous, Oxygen, Sulphur and Chlorine"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "chemistry_u11",
+        "grade": "GRADE 10",
+        "title": "Unit 6 — HYDROCARBONS AND THEIR NATURAL SOURCES",
+        "topics": [
+          {
+            "id": "chemistry_u11_t1",
+            "title": "6.1 Introduction",
+            "subtopics": [
+              "6.1.1 History of Organic Chemistry",
+              "6.1.2 Structural Representations of Organic Molecules",
+              "6.1.3 Classes of Organic Compounds"
+            ]
+          },
+          {
+            "id": "chemistry_u11_t2",
+            "title": "6.2 Saturated Hydrocarbons: Alkanes",
+            "subtopics": [
+              "6.2.1 Alkane Homologous Series",
+              "6.2.2 Physical Properties of Alkanes",
+              "6.2.3 Nomenclature of Alkanes",
+              "6.2.4 Isomerism in Alkanes",
+              "6.2.5 Preparation of Alkanes",
+              "6.2.6 Chemical Properties of Alkanes",
+              "6.2.7 Cycloalkanes / Alicyclic Hydrocarbons",
+              "6.2.8 Uses of Alkanes"
+            ]
+          },
+          {
+            "id": "chemistry_u11_t3",
+            "title": "6.3 Unsaturated Hydrocarbons: Alkenes, Alkynes and Aromatic Hydrocarbons",
+            "subtopics": [
+              "6.3.1 Alkenes / Olefins",
+              "6.3.2 Alkynes and Their Physical Properties"
+            ]
+          },
+          {
+            "id": "chemistry_u11_t4",
+            "title": "6.4 Aromatic Hydrocarbons: Benzene",
+            "subtopics": [
+              "6.4.1 Benzene",
+              "6.4.2 Nomenclature of Substituted Benzenes",
+              "6.4.3 Physical Properties of Benzene",
+              "6.4.4 Chemical Properties of Benzene"
+            ]
+          },
+          {
+            "id": "chemistry_u11_t5",
+            "title": "6.5 Natural Sources of Hydrocarbons",
+            "subtopics": []
+          }
+        ]
+      },
+      {
+        "id": "chemistry_u12",
+        "grade": "GRADE 12",
+        "title": "Unit 1 — ACID-BASE EQUILIBRIA",
+        "topics": [
+          {
+            "id": "chemistry_u12_t1",
+            "title": "1.1 Acid-Base Concepts",
+            "subtopics": [
+              "1.1.1 Arrhenius Concept of Acids and Bases",
+              "1.1.2 Brønsted-Lowry Concept of Acids and Bases",
+              "1.1.2.1 Conjugate Acid-Base Pairs",
+              "1.1.2.2 Auto-ionization of Substances",
+              "1.1.2.3 Amphiprotic Species",
+              "1.1.3 Lewis Concept of Acids and Bases"
+            ]
+          },
+          {
+            "id": "chemistry_u12_t2",
+            "title": "1.2 Ionic Equilibria of Weak Acids and Bases",
+            "subtopics": [
+              "1.2.1 Ionization of Water",
+              "1.2.2 Measures of the Strength of Acids and Bases in Aqueous Solution",
+              "1.2.2.1 Concentration of Hydrogen and Hydroxide Ions",
+              "1.2.2.2 pH and pOH",
+              "1.2.2.3 Percent Ionization",
+              "1.2.2.4 Dissociation / Ionization Constants"
+            ]
+          },
+          {
+            "id": "chemistry_u12_t3",
+            "title": "1.3 Common Ion Effect and Buffer Solution",
+            "subtopics": [
+              "1.3.1 Common Ion Effect",
+              "1.3.2 Buffer Solutions"
+            ]
+          },
+          {
+            "id": "chemistry_u12_t4",
+            "title": "1.4 Hydrolysis of Salts",
+            "subtopics": [
+              "1.4.1 Hydrolysis of Salts of Strong Acids and Strong Bases",
+              "1.4.2 Hydrolysis of Salts of Weak Acids and Strong Bases",
+              "1.4.3 Hydrolysis of Salts of Strong Acids and Weak Bases",
+              "1.4.4 Hydrolysis of Salts of Weak Acids and Weak Bases"
+            ]
+          },
+          {
+            "id": "chemistry_u12_t5",
+            "title": "1.5 Acid-Base Indicators and Titrations",
+            "subtopics": [
+              "1.5.1 Acid-Base Indicators",
+              "1.5.2 Equivalents of Acids and Bases",
+              "1.5.3 Acid-Base Titrations"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "chemistry_u13",
+        "grade": "GRADE 12",
+        "title": "Unit 2 — ELECTROCHEMISTRY",
+        "topics": [
+          {
+            "id": "chemistry_u13_t1",
+            "title": "2.1 Oxidation-Reduction Reactions",
+            "subtopics": [
+              "2.1.1 Oxidation",
+              "2.1.2 Reduction",
+              "2.1.3 Balancing Oxidation-Reduction / Redox Reactions"
+            ]
+          },
+          {
+            "id": "chemistry_u13_t2",
+            "title": "2.2 Electrolysis of Aqueous Solutions",
+            "subtopics": [
+              "2.2.1 Electrolytic Cells",
+              "2.2.2 Preferential Discharge",
+              "2.2.3 Electrolysis of Some Selected Aqueous Solutions"
+            ]
+          },
+          {
+            "id": "chemistry_u13_t3",
+            "title": "2.3 Quantitative Aspects of Electrolysis",
+            "subtopics": [
+              "2.3.1 Faraday's First Law of Electrolysis",
+              "2.3.2 Faraday's Second Law of Electrolysis"
+            ]
+          },
+          {
+            "id": "chemistry_u13_t4",
+            "title": "2.4 Industrial Application of Electrolysis",
+            "subtopics": []
+          },
+          {
+            "id": "chemistry_u13_t5",
+            "title": "2.5 Voltaic Cells",
+            "subtopics": []
+          }
+        ]
+      },
+      {
+        "id": "chemistry_u14",
+        "grade": "GRADE 12",
+        "title": "Unit 3 — INDUSTRIAL CHEMISTRY",
+        "topics": [
+          {
+            "id": "chemistry_u14_t1",
+            "title": "3.1 Introduction",
+            "subtopics": []
+          },
+          {
+            "id": "chemistry_u14_t2",
+            "title": "3.2 Natural Resources and Industry",
+            "subtopics": [
+              "3.2.1 Natural Resources / Raw Materials",
+              "3.2.2 Industry"
+            ]
+          },
+          {
+            "id": "chemistry_u14_t3",
+            "title": "3.3 Manufacturing of Valuable Products / Chemicals",
+            "subtopics": [
+              "3.3.1 Ammonia (NH₃)",
+              "3.3.2 Nitric Acid",
+              "3.3.3 Nitrogen-Based Fertilizers",
+              "3.3.4 Sulphuric Acid",
+              "3.3.5 Some Common Pesticides and Herbicides",
+              "3.3.6 Sodium Carbonate",
+              "3.3.7 Sodium Hydroxide (NaOH)"
+            ]
+          },
+          {
+            "id": "chemistry_u14_t4",
+            "title": "3.4 Some Manufacturing Industries in Ethiopia",
+            "subtopics": [
+              "3.4.1 Glass Manufacturing",
+              "3.4.2 Manufacturing of Ceramics",
+              "3.4.3 Cement",
+              "3.4.4 Sugar Manufacturing",
+              "3.4.5 Paper and Pulp",
+              "3.4.6 Tannery",
+              "3.4.7 Food Processing and Preservation",
+              "3.4.8 Manufacturing of Ethanol",
+              "3.4.9 Soap and Detergent"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "chemistry_u15",
+        "grade": "GRADE 12",
+        "title": "Unit 4 — POLYMERS",
+        "topics": [
+          {
+            "id": "chemistry_u15_t1",
+            "title": "4.1 Introduction to Polymers",
+            "subtopics": []
+          },
+          {
+            "id": "chemistry_u15_t2",
+            "title": "4.2 Polymerization Reactions",
+            "subtopics": []
+          },
+          {
+            "id": "chemistry_u15_t3",
+            "title": "4.3 Classification of Polymers",
+            "subtopics": []
+          }
+        ]
+      },
+      {
+        "id": "chemistry_u16",
+        "grade": "GRADE 12",
+        "title": "Unit 5 — INTRODUCTION TO ENVIRONMENTAL CHEMISTRY",
+        "topics": [
+          {
+            "id": "chemistry_u16_t1",
+            "title": "5.1 Introduction",
+            "subtopics": [
+              "5.1.1 Components of the Environment",
+              "5.1.2 Natural Cycles in the Environment",
+              "5.1.3 Concepts Related to Environmental Chemistry"
+            ]
+          },
+          {
+            "id": "chemistry_u16_t2",
+            "title": "5.2 Environmental Pollution",
+            "subtopics": [
+              "5.2.1 Air Pollution",
+              "5.2.2 Water Pollution",
+              "5.2.3 Land Pollution"
+            ]
+          },
+          {
+            "id": "chemistry_u16_t3",
+            "title": "5.3 Global Warming and Climate Change",
+            "subtopics": [
+              "5.3.1 Global Warming and Climate Change",
+              "5.3.2 Chemistry of Greenhouse Gases and Their Effects on Climate Change"
+            ]
+          },
+          {
+            "id": "chemistry_u16_t4",
+            "title": "5.4 Green Chemistry and Cleaner Production",
+            "subtopics": [
+              "5.4.1 Principle of Green Chemistry",
+              "5.4.2 Cleaner Production in Chemistry",
+              "Nature and scope of chemistry",
+              "Matter and substances",
+              "Chemistry's relationship to other sciences",
+              "Applications of chemistry",
+              "SI units",
+              "Derived units",
+              "Density",
+              "Temperature",
+              "Uncertainty",
+              "Precision vs accuracy",
+              "Significant figures",
+              "Scientific notation",
+              "Scientific method",
+              "Laboratory skills",
+              "Atomic theories",
+              "Chemical laws",
+              "Dalton",
+              "Subatomic particles",
+              "Nucleus",
+              "Isotopes",
+              "Atomic number/mass number",
+              "Energy levels",
+              "Electronic configuration",
+              "Valence electrons",
+              "Periodic law",
+              "Groups/periods",
+              "Element classification",
+              "Atomic radius",
+              "Ionization energy",
+              "Electron affinity",
+              "Electronegativity",
+              "Ionic",
+              "Covalent",
+              "Lewis structures",
+              "Polarity",
+              "Coordinate covalent bonding",
+              "Metallic bonding",
+              "Oxides",
+              "Acids",
+              "Bases",
+              "Salts",
+              "Metallic properties",
+              "Extraction",
+              "Alloys",
+              "Aluminum",
+              "Iron",
+              "Copper",
+              "Important nonmetals",
+              "Industrial production of selected nonmetals",
+              "Polymer structure",
+              "Polymerization",
+              "Polymer classification",
+              "Mole concept",
+              "Empirical/molecular formulas",
+              "Stoichiometry",
+              "Limiting/excess reactants",
+              "Percentage yield",
+              "Solution concentration calculations",
+              "Molarity",
+              "Molality",
+              "Normality",
+              "Dilution",
+              "Solution stoichiometry",
+              "Redox balancing",
+              "Electrochemical calculations",
+              "Organic nomenclature/isomerism",
+              "\\(K_a\\), \\(K_b\\)",
+              "pH and pOH",
+              "Weak-acid/weak-base equilibrium",
+              "Percent ionization",
+              "Common-ion effect",
+              "Buffer calculations",
+              "Salt hydrolysis",
+              "Acid-base titration",
+              "Faraday's laws",
+              "Voltaic-cell calculations",
+              "Significant figures",
+              "Atomic number vs mass number",
+              "Isotopes",
+              "Electronic configuration",
+              "Periodic trends",
+              "Electronegativity",
+              "Lewis structures",
+              "Ionic vs covalent bonding",
+              "Oxidation vs reduction",
+              "Oxidizing vs reducing agents",
+              "Saturated vs unsaturated hydrocarbons",
+              "Alkane nomenclature",
+              "Structural isomerism",
+              "Electrochemical terminology",
+              "Nature/scope of chemistry",
+              "Relationship between sciences",
+              "Applications of chemistry",
+              "Scientific method",
+              "Atomic theory history",
+              "Periodic-table history",
+              "General oxide/acid/base/salt concepts",
+              "Industrial chemistry processes",
+              "Polymer classification",
+              "Environmental chemistry",
+              "Historical developments",
+              "Names and characteristics of industrial products/processes",
+              "Selected Ethiopian industries",
+              "Specific chemical uses",
+              "Production sequences",
+              "Environmental terminology",
+              "Some organic nomenclature rules",
+              "Specific chemical facts and examples",
+              "Physical vs chemical change",
+              "Matter vs substance",
+              "Composition vs structure",
+              "Accuracy vs precision",
+              "Significant figures",
+              "Atomic number vs mass number",
+              "Isotope vs element",
+              "Energy level vs electron",
+              "Atomic radius vs ionization energy",
+              "Ionic vs covalent bonding",
+              "Polar bond vs polar molecule",
+              "Coefficients vs subscripts when balancing equations",
+              "Reaction type recognition",
+              "Oxidation vs reduction",
+              "Oxidizing agent vs reducing agent",
+              "Mole vs molecule",
+              "Molar mass vs molecular/formula mass",
+              "Empirical vs molecular formula",
+              "Limiting vs excess reactant",
+              "Molarity vs molality",
+              "Solute vs solvent vs solution",
+              "Solubility vs rate of dissolution",
+              "Electrolyte vs nonelectrolyte",
+              "Anode/cathode terminology",
+              "Alkane vs alkene vs alkyne",
+              "Structural formula vs condensed formula vs bond-line representation",
+              "Arrhenius vs Brønsted-Lowry vs Lewis definitions",
+              "Acid vs conjugate acid",
+              "Base vs conjugate base",
+              "Strong vs concentrated",
+              "Weak vs dilute",
+              "\\(K_a\\) vs acid concentration",
+              "pH vs pOH",
+              "Common-ion effect vs buffer action",
+              "Salt hydrolysis",
+              "Equivalence vs concentration",
+              "Oxidation vs reduction at electrodes",
+              "Electrolytic vs voltaic cells",
+              "First vs second Faraday law"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "BIOLOGY": {
+    "key": "BIOLOGY",
+    "name": "Biology",
+    "icon": "🧬",
+    "totalUnits": 24,
+    "totalTopics": 145,
+    "totalSubtopics": 298,
+    "units": [
+      {
+        "id": "biology_u1",
+        "grade": "General",
+        "title": "Unit 1 — Introduction to Biology — p.1",
+        "topics": [
+          {
+            "id": "biology_u1_t1",
+            "title": "1.1 Definition of Biology",
+            "subtopics": []
+          },
+          {
+            "id": "biology_u1_t2",
+            "title": "1.2 Why do we study Biology?",
+            "subtopics": []
+          },
+          {
+            "id": "biology_u1_t3",
+            "title": "1.3 The scientific method",
+            "subtopics": []
+          },
+          {
+            "id": "biology_u1_t4",
+            "title": "1.4 Tools of a Biologist",
+            "subtopics": [
+              "1.4.1 Laboratory tools",
+              "1.4.2 Field tools"
+            ]
+          },
+          {
+            "id": "biology_u1_t5",
+            "title": "1.5 Handling and using of light Microscope",
+            "subtopics": [
+              "1.5.1 Parts and function of light microscope",
+              "1.5.2 Handling and using microscope"
+            ]
+          },
+          {
+            "id": "biology_u1_t6",
+            "title": "1.6 General Laboratory Safety Rules",
+            "subtopics": []
+          }
+        ]
+      },
+      {
+        "id": "biology_u2",
+        "grade": "General",
+        "title": "Unit 2 — Characteristics and Classification of Organisms — p.19",
+        "topics": [
+          {
+            "id": "biology_u2_t1",
+            "title": "2.1 Characteristics of living things",
+            "subtopics": []
+          },
+          {
+            "id": "biology_u2_t2",
+            "title": "2.2 Taxonomy of living things",
+            "subtopics": [
+              "2.2.1 Principles of classification",
+              "2.2.2 Taxonomic hierarchies in biological classification"
+            ]
+          },
+          {
+            "id": "biology_u2_t3",
+            "title": "2.3 Relevance of classification",
+            "subtopics": []
+          },
+          {
+            "id": "biology_u2_t4",
+            "title": "2.4 Linnaean system of nomenclature",
+            "subtopics": []
+          },
+          {
+            "id": "biology_u2_t5",
+            "title": "2.5 Common Ethiopian animals and plants",
+            "subtopics": []
+          },
+          {
+            "id": "biology_u2_t6",
+            "title": "2.6 The five-kingdom system of classification",
+            "subtopics": []
+          },
+          {
+            "id": "biology_u2_t7",
+            "title": "2.7 Renowned taxonomists in Ethiopia",
+            "subtopics": []
+          }
+        ]
+      },
+      {
+        "id": "biology_u3",
+        "grade": "General",
+        "title": "Unit 3 — Cells — p.44",
+        "topics": [
+          {
+            "id": "biology_u3_t1",
+            "title": "3.1 What is a cell?",
+            "subtopics": []
+          },
+          {
+            "id": "biology_u3_t2",
+            "title": "3.2 Cell theory",
+            "subtopics": []
+          },
+          {
+            "id": "biology_u3_t3",
+            "title": "3.3 Cell structure and function",
+            "subtopics": []
+          },
+          {
+            "id": "biology_u3_t4",
+            "title": "3.4 Types of cells",
+            "subtopics": []
+          },
+          {
+            "id": "biology_u3_t5",
+            "title": "3.5 Animal and plant cells",
+            "subtopics": []
+          },
+          {
+            "id": "biology_u3_t6",
+            "title": "3.6 Observing cells under a microscope",
+            "subtopics": []
+          },
+          {
+            "id": "biology_u3_t7",
+            "title": "3.7 The cell and its environment",
+            "subtopics": [
+              "3.7.1 Passive transport",
+              "3.7.2 Active transport"
+            ]
+          },
+          {
+            "id": "biology_u3_t8",
+            "title": "3.8 Levels of Biological Organization",
+            "subtopics": []
+          }
+        ]
+      },
+      {
+        "id": "biology_u4",
+        "grade": "General",
+        "title": "Unit 4 — Reproduction — p.74",
+        "topics": [
+          {
+            "id": "biology_u4_t1",
+            "title": "4.1 Introduction to reproduction",
+            "subtopics": []
+          },
+          {
+            "id": "biology_u4_t2",
+            "title": "4.2 Asexual reproduction",
+            "subtopics": []
+          },
+          {
+            "id": "biology_u4_t3",
+            "title": "4.3 Types of asexual reproduction",
+            "subtopics": [
+              "4.3.1 Fission",
+              "4.3.2 Fragmentation",
+              "4.3.3 Budding",
+              "4.3.4 Vegetative reproduction",
+              "4.3.5 Parthenogenesis"
+            ]
+          },
+          {
+            "id": "biology_u4_t4",
+            "title": "4.4 Sexual reproduction",
+            "subtopics": []
+          },
+          {
+            "id": "biology_u4_t5",
+            "title": "4.5 Primary and secondary sexual characteristics",
+            "subtopics": []
+          },
+          {
+            "id": "biology_u4_t6",
+            "title": "4.6 Male reproductive structures",
+            "subtopics": []
+          },
+          {
+            "id": "biology_u4_t7",
+            "title": "4.7 Female reproductive structures",
+            "subtopics": []
+          },
+          {
+            "id": "biology_u4_t8",
+            "title": "4.8 The Menstrual cycle",
+            "subtopics": []
+          },
+          {
+            "id": "biology_u4_t9",
+            "title": "4.9 Fertilization and pregnancy",
+            "subtopics": []
+          },
+          {
+            "id": "biology_u4_t10",
+            "title": "4.10 Methods of birth control",
+            "subtopics": []
+          },
+          {
+            "id": "biology_u4_t11",
+            "title": "4.11 Sexually transmitted infection: transmission and prevention",
+            "subtopics": []
+          }
+        ]
+      },
+      {
+        "id": "biology_u5",
+        "grade": "General",
+        "title": "Unit 5 — Human Health, Nutrition, and Disease — p.103",
+        "topics": [
+          {
+            "id": "biology_u5_t1",
+            "title": "5.1 What is food?",
+            "subtopics": []
+          },
+          {
+            "id": "biology_u5_t2",
+            "title": "5.2 Nutrition",
+            "subtopics": []
+          },
+          {
+            "id": "biology_u5_t3",
+            "title": "5.3 Nutrients",
+            "subtopics": []
+          },
+          {
+            "id": "biology_u5_t4",
+            "title": "5.4 Balanced diet",
+            "subtopics": []
+          },
+          {
+            "id": "biology_u5_t5",
+            "title": "5.5 Deficiency diseases",
+            "subtopics": []
+          },
+          {
+            "id": "biology_u5_t6",
+            "title": "5.6 Malnutrition",
+            "subtopics": []
+          },
+          {
+            "id": "biology_u5_t7",
+            "title": "5.7 Substance abuse",
+            "subtopics": []
+          },
+          {
+            "id": "biology_u5_t8",
+            "title": "5.8 Types of diseases",
+            "subtopics": [
+              "5.8.1 Infectious diseases",
+              "5.8.2 Non-infectious diseases"
+            ]
+          },
+          {
+            "id": "biology_u5_t9",
+            "title": "5.9 Renowned Nutritionists in Ethiopia",
+            "subtopics": []
+          }
+        ]
+      },
+      {
+        "id": "biology_u6",
+        "grade": "General",
+        "title": "Unit 6 — Ecology — p.137",
+        "topics": [
+          {
+            "id": "biology_u6_t1",
+            "title": "6.1 Ecology",
+            "subtopics": [
+              "6.1.1 Definition of ecology",
+              "6.1.2 Biotic and abiotic components",
+              "6.1.3 Ecological levels",
+              "6.1.4 Ecosystems",
+              "6.1.5 Biomes",
+              "6.1.6 Ecological succession"
+            ]
+          },
+          {
+            "id": "biology_u6_t2",
+            "title": "6.2 Ecological relationships",
+            "subtopics": []
+          }
+        ]
+      },
+      {
+        "id": "biology_u7",
+        "grade": "General",
+        "title": "Unit 1 — Sub-fields of Biology — p.1",
+        "topics": [
+          {
+            "id": "biology_u7_t1",
+            "title": "1.1 Sub-fields of Biology",
+            "subtopics": []
+          },
+          {
+            "id": "biology_u7_t2",
+            "title": "1.2 Pure and applied fields of biology",
+            "subtopics": []
+          },
+          {
+            "id": "biology_u7_t3",
+            "title": "1.3 Major discoveries in Biology",
+            "subtopics": []
+          },
+          {
+            "id": "biology_u7_t4",
+            "title": "1.4 The contributions of biological discoveries to society and the environment",
+            "subtopics": [
+              "examples in the textbook include microscope, penicillin, inheritance, etc."
+            ]
+          },
+          {
+            "id": "biology_u7_t5",
+            "title": "1.5 Major discoveries by Ethiopian Biologists",
+            "subtopics": [
+              "examples include Aklilu Lemma",
+              "Gabissa Ejeta"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "biology_u8",
+        "grade": "General",
+        "title": "Unit 2 — Plants — p.17",
+        "topics": [
+          {
+            "id": "biology_u8_t1",
+            "title": "2.1 Characteristics of plants",
+            "subtopics": []
+          },
+          {
+            "id": "biology_u8_t2",
+            "title": "2.2 Flowering and non-flowering plants",
+            "subtopics": []
+          },
+          {
+            "id": "biology_u8_t3",
+            "title": "2.3 Structure and function of plant parts",
+            "subtopics": [
+              "2.3.1 The internal structure of a leaf",
+              "2.3.2 The internal structure of a stem",
+              "2.3.3 The internal structure of a root"
+            ]
+          },
+          {
+            "id": "biology_u8_t4",
+            "title": "2.4 Reproduction in plants",
+            "subtopics": [
+              "2.4.2 Reproductive structure and life cycle of flowering plants",
+              "2.4.3 Pollination"
+            ]
+          },
+          {
+            "id": "biology_u8_t5",
+            "title": "2.5 Seeds",
+            "subtopics": []
+          },
+          {
+            "id": "biology_u8_t6",
+            "title": "2.6 Seed dispersal and germination",
+            "subtopics": [
+              "2.6.1 Seed dispersal",
+              "2.6.2 Germination of seed"
+            ]
+          },
+          {
+            "id": "biology_u8_t7",
+            "title": "2.7 Photosynthesis",
+            "subtopics": [
+              "2.7.1 The photosynthetic apparatus",
+              "2.7.2 The light absorbing system in chloroplast",
+              "2.7.3 Mechanism of photosynthesis",
+              "2.7.4 Testing a leaf for starch"
+            ]
+          },
+          {
+            "id": "biology_u8_t8",
+            "title": "2.8 Transport in plant",
+            "subtopics": [
+              "2.8.1 Transporting systems in plants",
+              "2.8.2 Mechanism of transport in plant"
+            ]
+          },
+          {
+            "id": "biology_u8_t9",
+            "title": "2.9 Response in plants",
+            "subtopics": []
+          },
+          {
+            "id": "biology_u8_t10",
+            "title": "2.10 Medicinal plants",
+            "subtopics": []
+          },
+          {
+            "id": "biology_u8_t11",
+            "title": "2.11 Renowned Ethiopian Botanist",
+            "subtopics": []
+          }
+        ]
+      },
+      {
+        "id": "biology_u9",
+        "grade": "General",
+        "title": "Unit 3 — Biochemical Molecules — p.50",
+        "topics": [
+          {
+            "id": "biology_u9_t1",
+            "title": "3.1 Biochemical Molecules",
+            "subtopics": [
+              "3.1.1 Inorganic molecule: Water",
+              "3.1.2 Inorganic ions",
+              "3.1.3 Organic molecules"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "biology_u10",
+        "grade": "General",
+        "title": "Unit 4 — Cell Reproduction — p.81",
+        "topics": [
+          {
+            "id": "biology_u10_t1",
+            "title": "4.1 Cell cycle",
+            "subtopics": []
+          },
+          {
+            "id": "biology_u10_t2",
+            "title": "4.2 The Cell division",
+            "subtopics": [
+              "4.2.1 Mitosis",
+              "4.2.2 Meiosis"
+            ]
+          },
+          {
+            "id": "biology_u10_t3",
+            "title": "4.3 Renowned Ethiopian Geneticist",
+            "subtopics": []
+          }
+        ]
+      },
+      {
+        "id": "biology_u11",
+        "grade": "General",
+        "title": "Unit 5 — Human Biology — p.94",
+        "topics": [
+          {
+            "id": "biology_u11_t1",
+            "title": "5.1 The Digestive System",
+            "subtopics": []
+          },
+          {
+            "id": "biology_u11_t2",
+            "title": "5.2 The circulatory and lymphatic system",
+            "subtopics": [
+              "5.2.1 Blood Donation",
+              "5.2.2 Diseases of the circulatory and lymphatic systems"
+            ]
+          },
+          {
+            "id": "biology_u11_t3",
+            "title": "5.3 The breathing system",
+            "subtopics": []
+          },
+          {
+            "id": "biology_u11_t4",
+            "title": "5.4 The Human Urinary system",
+            "subtopics": []
+          },
+          {
+            "id": "biology_u11_t5",
+            "title": "5.5 The immune system",
+            "subtopics": []
+          },
+          {
+            "id": "biology_u11_t6",
+            "title": "5.6 Renowned Physicians in Ethiopia",
+            "subtopics": []
+          }
+        ]
+      },
+      {
+        "id": "biology_u12",
+        "grade": "General",
+        "title": "Unit 6 — Ecological Interaction — p.153",
+        "topics": [
+          {
+            "id": "biology_u12_t1",
+            "title": "6.1 Trophic Levels",
+            "subtopics": [
+              "6.1.1 Food chain and food web",
+              "6.1.2 Flow of energy and matter through ecosystem"
+            ]
+          },
+          {
+            "id": "biology_u12_t2",
+            "title": "6.2 Cycling of Materials in an Ecosystem",
+            "subtopics": [
+              "6.2.2 Carbon cycle",
+              "6.2.3 Nitrogen cycle",
+              "6.2.4 Phosphorus cycle"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "biology_u13",
+        "grade": "General",
+        "title": "Unit 1 — Biology and Technology — p.7",
+        "topics": [
+          {
+            "id": "biology_u13_t1",
+            "title": "1.1 Learning from nature",
+            "subtopics": []
+          },
+          {
+            "id": "biology_u13_t2",
+            "title": "1.2 Biology and technology",
+            "subtopics": [
+              "1.2.1 The benefits of biology to technology",
+              "1.2.2 Uses of technology in biology"
+            ]
+          },
+          {
+            "id": "biology_u13_t3",
+            "title": "1.3 Impacts of biology and technology on society and the natural world",
+            "subtopics": [
+              "1.3.1 Impacts of biology on the society and the natural world",
+              "1.3.2 Impacts of technology on the society and the natural world"
+            ]
+          },
+          {
+            "id": "biology_u13_t4",
+            "title": "1.4 Ethical issues in biology",
+            "subtopics": [
+              "1.4.1 Ethical treatment of plants and animals during biological studies"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "biology_u14",
+        "grade": "General",
+        "title": "Unit 2 — Animals — p.26",
+        "topics": [
+          {
+            "id": "biology_u14_t1",
+            "title": "2.1 Characteristics of animals",
+            "subtopics": []
+          },
+          {
+            "id": "biology_u14_t2",
+            "title": "2.2 Invertebrates and Vertebrates",
+            "subtopics": [
+              "2.2.1 Invertebrate Animals",
+              "2.2.2 Vertebrate Animals"
+            ]
+          },
+          {
+            "id": "biology_u14_t3",
+            "title": "2.3 Reproduction in Animals",
+            "subtopics": [
+              "2.3.1 Asexual reproduction in animals",
+              "2.3.2 Sexual reproduction in animals",
+              "2.3.3 Reproduction in insects (complete and incomplete metamorphosis)",
+              "2.3.4 Reproduction in Frog",
+              "2.3.5 Reproduction in Crocodiles",
+              "2.3.6 Reproduction in Birds",
+              "2.3.7 Reproduction in rat"
+            ]
+          },
+          {
+            "id": "biology_u14_t4",
+            "title": "2.4 The economic importance of animals (insects)",
+            "subtopics": [
+              "2.4.1 Beneficial aspects of insects",
+              "2.4.2 Harmful aspects of insects"
+            ]
+          },
+          {
+            "id": "biology_u14_t5",
+            "title": "2.5 Animal Behavior",
+            "subtopics": [
+              "2.5.1 Types of Animal Behavior",
+              "2.5.2 Patterns of Behavior"
+            ]
+          },
+          {
+            "id": "biology_u14_t6",
+            "title": "2.6 Homeostasis in animals",
+            "subtopics": [
+              "2.6.1 Thermoregulation",
+              "2.6.2 Osmoregulation",
+              "2.6.3 Blood Sugar Regulation",
+              "2.6.4 Control of homeostasis"
+            ]
+          },
+          {
+            "id": "biology_u14_t7",
+            "title": "2.7 Renowned zoologists in Ethiopia",
+            "subtopics": []
+          }
+        ]
+      },
+      {
+        "id": "biology_u15",
+        "grade": "General",
+        "title": "Unit 3 — Enzymes — p.79",
+        "topics": [
+          {
+            "id": "biology_u15_t1",
+            "title": "3.1 What are enzymes?",
+            "subtopics": []
+          },
+          {
+            "id": "biology_u15_t2",
+            "title": "3.2 Properties and functions of enzymes",
+            "subtopics": [
+              "3.2.1 General properties of an enzyme",
+              "3.2.2 The function of enzymes"
+            ]
+          },
+          {
+            "id": "biology_u15_t3",
+            "title": "3.3 Protein structures",
+            "subtopics": []
+          },
+          {
+            "id": "biology_u15_t4",
+            "title": "3.4 Enzyme substrate models",
+            "subtopics": [
+              "3.4.1 Enzyme-substrate binding models",
+              "3.4.2 Enzymatic transition state"
+            ]
+          },
+          {
+            "id": "biology_u15_t5",
+            "title": "3.5 Enzyme regulation",
+            "subtopics": []
+          },
+          {
+            "id": "biology_u15_t6",
+            "title": "3.6 Types of enzymes",
+            "subtopics": [
+              "3.6.1 Enzyme structural classification",
+              "3.6.2 Basic classification of enzymes"
+            ]
+          },
+          {
+            "id": "biology_u15_t7",
+            "title": "3.7 Factors affecting enzyme action",
+            "subtopics": [
+              "3.7.1 Description on factors affecting enzymatic actions"
+            ]
+          },
+          {
+            "id": "biology_u15_t8",
+            "title": "3.8 Enzyme kinetics",
+            "subtopics": []
+          },
+          {
+            "id": "biology_u15_t9",
+            "title": "3.9 Application of enzymes in industries and their benefits",
+            "subtopics": [
+              "3.9.1 Uses of enzyme application"
+            ]
+          },
+          {
+            "id": "biology_u15_t10",
+            "title": "3.10 Malting in Ethiopian tradition",
+            "subtopics": [
+              "3.10.1 Steps of modern malting",
+              "3.10.2 Why is malting for?",
+              "3.10.3 Traditional malting for local alcohol production"
+            ]
+          },
+          {
+            "id": "biology_u15_t11",
+            "title": "3.11 Renowned Biochemists in Ethiopia",
+            "subtopics": []
+          }
+        ]
+      },
+      {
+        "id": "biology_u16",
+        "grade": "General",
+        "title": "Unit 4 — Genetics — p.113",
+        "topics": [
+          {
+            "id": "biology_u16_t1",
+            "title": "4.1 The genetic materials",
+            "subtopics": []
+          },
+          {
+            "id": "biology_u16_t2",
+            "title": "4.2 The structure and function of DNA and RNA",
+            "subtopics": [
+              "4.2.1 The Structure and function of DNA",
+              "4.2.3 DNA replication",
+              "4.2.2 The structure and function of RNA"
+            ]
+          },
+          {
+            "id": "biology_u16_t3",
+            "title": "4.3 The process of cell division",
+            "subtopics": [
+              "4.3.1 Cell Division"
+            ]
+          },
+          {
+            "id": "biology_u16_t4",
+            "title": "4.4 Protein synthesis",
+            "subtopics": []
+          },
+          {
+            "id": "biology_u16_t5",
+            "title": "4.5 Mendelian inheritance",
+            "subtopics": [
+              "4.5.1 Mendelian crosses",
+              "4.5.2 Monohybrid cross",
+              "4.5.3 Dihybrid Cross",
+              "4.5.4 Test Crosses"
+            ]
+          },
+          {
+            "id": "biology_u16_t6",
+            "title": "4.6 Sex determination",
+            "subtopics": []
+          },
+          {
+            "id": "biology_u16_t7",
+            "title": "4.7 Non-Mendelian inheritance",
+            "subtopics": [
+              "4.7.1 Co-dominance, Incomplete dominance and Multiple alleles",
+              "4.7.2 Rh factor inheritance in humans and its medical importance",
+              "4.7.3 Sex-linked inheritance in humans",
+              "4.7.4 Environmental effects on phenotype"
+            ]
+          },
+          {
+            "id": "biology_u16_t8",
+            "title": "4.8 Human pedigree analysis and its importance",
+            "subtopics": []
+          },
+          {
+            "id": "biology_u16_t9",
+            "title": "4.9 Genetic disorders",
+            "subtopics": []
+          },
+          {
+            "id": "biology_u16_t10",
+            "title": "4.10 Genetic testing and counseling",
+            "subtopics": []
+          },
+          {
+            "id": "biology_u16_t11",
+            "title": "4.11 Gene therapy",
+            "subtopics": []
+          },
+          {
+            "id": "biology_u16_t12",
+            "title": "4.12 Breeding",
+            "subtopics": [
+              "4.12.1 Indigenous knowledge of Ethiopian farmers"
+            ]
+          },
+          {
+            "id": "biology_u16_t13",
+            "title": "4.13 Bioinformatics introduction",
+            "subtopics": []
+          }
+        ]
+      },
+      {
+        "id": "biology_u17",
+        "grade": "General",
+        "title": "Unit 5 — The Human Body Systems — p.180",
+        "topics": [
+          {
+            "id": "biology_u17_t1",
+            "title": "5.1 Human Musculoskeletal Systems",
+            "subtopics": [
+              "5.1.1 Types of muscles",
+              "5.1.2 Mechanism of actions of skeletal muscles",
+              "5.1.3 The human axial and appendicular skeletons",
+              "5.1.4 Joints"
+            ]
+          },
+          {
+            "id": "biology_u17_t2",
+            "title": "5.2 The reproductive system",
+            "subtopics": [
+              "5.2.1 Human reproductive system (Male and Female)",
+              "5.2.2 Gametogenesis",
+              "5.2.2 Positive and negative feedbacks to control the menstrual cycle",
+              "5.2.3 Fertilization and pregnancy",
+              "5.2.4 Mechanism of action of contraceptives",
+              "5.2.5 Causes of infertility in humans",
+              "5.2.6 The major sexually transmitted infections (STIs) in Ethiopia",
+              "5.2.8 Epidemiology of STIs in Ethiopia"
+            ]
+          },
+          {
+            "id": "biology_u17_t3",
+            "title": "5.3 Harmful traditional practices",
+            "subtopics": [
+              "5.3.1 Harmful traditional practices"
+            ]
+          },
+          {
+            "id": "biology_u17_t4",
+            "title": "5.4 Family planning",
+            "subtopics": [
+              "5.4.1 Risks related to the lack of family planning",
+              "5.4.2 Family planning actions",
+              "5.4.3 Family planning services"
+            ]
+          },
+          {
+            "id": "biology_u17_t5",
+            "title": "5.5 Effects of alcohol use, chewing Khat, cannabis and other drug uses on STIs transmission and unwanted pregnancy",
+            "subtopics": [
+              "5.5.1 The effects of alcohol uses",
+              "5.5.2 Effects of chewing Khat",
+              "5.5.3 Effects of drug uses"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "biology_u18",
+        "grade": "General",
+        "title": "Unit 6 — Population and Natural Resources — p.236",
+        "topics": [
+          {
+            "id": "biology_u18_t1",
+            "title": "6.1 Population ecology",
+            "subtopics": [
+              "6.1.1 Population size, density and dispersal",
+              "6.1.2 Exponential and logistic growth in populations",
+              "6.1.3 Demographic structure",
+              "6.1.4 Population regulation"
+            ]
+          },
+          {
+            "id": "biology_u18_t2",
+            "title": "6.2 Natural resources",
+            "subtopics": [
+              "6.2.1 Renewable",
+              "6.2.2 Non-renewable"
+            ]
+          },
+          {
+            "id": "biology_u18_t3",
+            "title": "6.3 Conservation of natural resources in Ethiopia",
+            "subtopics": []
+          },
+          {
+            "id": "biology_u18_t4",
+            "title": "6.4 Impact of traffic accident on wild and domestic animals",
+            "subtopics": []
+          },
+          {
+            "id": "biology_u18_t5",
+            "title": "6.5 Impact of human activities on the environment",
+            "subtopics": [
+              "6.5.1 Environmental pollution",
+              "6.5.2 Climate change",
+              "6.5.3 Global warming",
+              "6.5.4 Ozone layer depletion",
+              "6.5.5 Acid rain",
+              "6.5.6 Loss of Biodiversity",
+              "6.5.7 Toxic bioaccumulation",
+              "6.5.8 Resource depletion"
+            ]
+          },
+          {
+            "id": "biology_u18_t6",
+            "title": "6.6 Indigenous conservation practices in Ethiopia",
+            "subtopics": []
+          }
+        ]
+      },
+      {
+        "id": "biology_u19",
+        "grade": "General",
+        "title": "Unit 1 — Application of Biology — p.6",
+        "topics": [
+          {
+            "id": "biology_u19_t1",
+            "title": "1.1 Application in conservation of natural resources",
+            "subtopics": []
+          },
+          {
+            "id": "biology_u19_t2",
+            "title": "1.2 Food and nutrition security",
+            "subtopics": []
+          },
+          {
+            "id": "biology_u19_t3",
+            "title": "1.3 Creating conscious citizens and ensuring sustainable development",
+            "subtopics": []
+          },
+          {
+            "id": "biology_u19_t4",
+            "title": "1.4 Applications in biotechnology",
+            "subtopics": []
+          }
+        ]
+      },
+      {
+        "id": "biology_u20",
+        "grade": "General",
+        "title": "Unit 2 — Microorganisms — p.40",
+        "topics": [
+          {
+            "id": "biology_u20_t1",
+            "title": "2.1 Eubacteria",
+            "subtopics": [
+              "2.1.1 Structure of Bacterial Cell",
+              "2.1.2 Bacterial Shapes",
+              "2.1.3 Nutritional types of bacteria",
+              "2.1.4 Reproduction of bacteria",
+              "2.1.4.1 A sexual reproduction",
+              "2.1.4.2 Sexual reproduction in bacteria"
+            ]
+          },
+          {
+            "id": "biology_u20_t2",
+            "title": "2.2 Archaea",
+            "subtopics": [
+              "2.2.1 Beneficial aspects of Archaea",
+              "2.2.2 Physical factors that affecting microbial growths"
+            ]
+          },
+          {
+            "id": "biology_u20_t3",
+            "title": "2.3 Fungi",
+            "subtopics": [
+              "2.3.1 General Characteristics of True Fungi",
+              "2.3.2 Ecology of Fungi",
+              "2.3.3 Classification of Fungi",
+              "2.3.4 Reproduction in fungi",
+              "2.3.5 Economic importance of fungi"
+            ]
+          },
+          {
+            "id": "biology_u20_t4",
+            "title": "2.4 Protozoa",
+            "subtopics": [
+              "2.4.1 Common diseases caused by protozoa"
+            ]
+          },
+          {
+            "id": "biology_u20_t5",
+            "title": "2.5 Viruses",
+            "subtopics": [
+              "2.5.1 Characteristics of virus",
+              "2.5.2 Viral symmetry",
+              "2.5.3 Classification of Viruses"
+            ]
+          },
+          {
+            "id": "biology_u20_t6",
+            "title": "2.6 Normal microbiota",
+            "subtopics": []
+          },
+          {
+            "id": "biology_u20_t7",
+            "title": "2.7 Modes of disease transmission and ways of prevention",
+            "subtopics": []
+          },
+          {
+            "id": "biology_u20_t8",
+            "title": "2.8 Uses of microorganisms",
+            "subtopics": []
+          },
+          {
+            "id": "biology_u20_t9",
+            "title": "2.9 Controlling microorganisms",
+            "subtopics": []
+          },
+          {
+            "id": "biology_u20_t10",
+            "title": "2.11 Renowned Microbiologists in Ethiopia",
+            "subtopics": []
+          }
+        ]
+      },
+      {
+        "id": "biology_u21",
+        "grade": "General",
+        "title": "Unit 3 — Energy Transformation — p.114",
+        "topics": [
+          {
+            "id": "biology_u21_t1",
+            "title": "3.1 Cellular metabolism",
+            "subtopics": []
+          },
+          {
+            "id": "biology_u21_t2",
+            "title": "3.2 Photosynthesis",
+            "subtopics": [
+              "3.2.1 Photosynthetic pigments",
+              "3.2.5 Light-Independent Reactions (Calvin cycle)"
+            ]
+          },
+          {
+            "id": "biology_u21_t3",
+            "title": "3.3 Contributions of photosynthesis for the continuity of life, for O₂ and CO₂ balance and global warming",
+            "subtopics": []
+          },
+          {
+            "id": "biology_u21_t4",
+            "title": "3.4 Cellular respiration",
+            "subtopics": [
+              "3.4.1 **title not printed in the contents page**",
+              "3.4.2 **title not printed in the contents page**",
+              "3.4.3 The site of cellular respiration"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "biology_u22",
+        "grade": "General",
+        "title": "Unit 4 — Evolution — p.161",
+        "topics": [
+          {
+            "id": "biology_u22_t1",
+            "title": "4.1 Evolution",
+            "subtopics": [
+              "4.1.1 Definition",
+              "4.1.2 Theories of evolution",
+              "4.1.3 The evidence for evolution",
+              "4.1.4 Natural selection: Definition, Types & Examples",
+              "4.1.5 Human evolution",
+              "4.1.6 Mutation",
+              "4.1.7 Genetic Drift",
+              "4.1.8 Gene flow (immigration and emigration)",
+              "4.1.9 Causes of species extinction"
+            ]
+          },
+          {
+            "id": "biology_u22_t2",
+            "title": "4.2 Renowned anthropologists in Ethiopia",
+            "subtopics": []
+          },
+          {
+            "id": "biology_u22_t3",
+            "title": "4.3 Renowned Evolutionists in Ethiopia",
+            "subtopics": []
+          }
+        ]
+      },
+      {
+        "id": "biology_u23",
+        "grade": "General",
+        "title": "Unit 5 — Human Body System — p.236",
+        "topics": [
+          {
+            "id": "biology_u23_t1",
+            "title": "5.1 The Nervous system",
+            "subtopics": [
+              "5.1.1 Neurons and their functions",
+              "5.1.2 The Nerve Impulse and transmission",
+              "5.1.3 Neurotransmitters",
+              "5.1.4 Types of the nervous system",
+              "5.1.6 Reflex action",
+              "5.1.7 Drug abuse"
+            ]
+          },
+          {
+            "id": "biology_u23_t2",
+            "title": "5.2 Sense organs",
+            "subtopics": [
+              "5.2.1 Skin",
+              "5.2.2 The Tongue",
+              "5.2.3 The Nose",
+              "5.2.4 The Eye",
+              "5.2.5 The Ear",
+              "5.2.6 The endocrine system",
+              "The endocrine glands"
+            ]
+          },
+          {
+            "id": "biology_u23_t3",
+            "title": "5.3 Homeostasis in the human body",
+            "subtopics": [
+              "5.3.1 The structure and function of the human kidney"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "biology_u24",
+        "grade": "General",
+        "title": "Unit 6 — Climate Change — p.333",
+        "topics": [
+          {
+            "id": "biology_u24_t1",
+            "title": "6.1 Climate change: causes and effects",
+            "subtopics": [
+              "6.1.1 Definition of Climate Change",
+              "6.1.2 Causes of climate change"
+            ]
+          },
+          {
+            "id": "biology_u24_t2",
+            "title": "6.2 Effects of climate change",
+            "subtopics": [
+              "6.2.1 Effects of climate change on biodiversity",
+              "6.2.2 Effects of climate change on Agriculture",
+              "6.2.3 Effect of climate change on forest productivity",
+              "6.2.4 Climate change and natural disasters"
+            ]
+          },
+          {
+            "id": "biology_u24_t3",
+            "title": "6.3 International conventions",
+            "subtopics": [
+              "6.3.1 The United Nations Framework Convention",
+              "6.3.2 Kyoto Protocol on Climate Change",
+              "6.3.3 International and national practices of Implementation of conventions",
+              "Definition of Biology",
+              "characteristics of life",
+              "scientific method",
+              "classification",
+              "cells",
+              "cell structure",
+              "transport",
+              "biological organization",
+              "biochemical molecules",
+              "plant structure",
+              "photosynthesis",
+              "cell cycle",
+              "plant transport and reproduction",
+              "human biology",
+              "animal biology",
+              "reproduction",
+              "ecology",
+              "biochemical processes",
+              "enzymes",
+              "population biology",
+              "body systems",
+              "enzyme kinetics",
+              "DNA replication",
+              "protein synthesis",
+              "Mendelian and non-Mendelian genetics",
+              "pedigree analysis",
+              "genetic disorders",
+              "gene therapy",
+              "bioinformatics",
+              "cellular metabolism",
+              "cellular respiration",
+              "evolution",
+              "natural selection",
+              "genetic drift",
+              "gene flow",
+              "population growth/regulation",
+              "nervous-system coordination",
+              "endocrine regulation",
+              "homeostasis",
+              "microorganisms and disease",
+              "climate change",
+              "characteristics of life",
+              "classification",
+              "plant structure",
+              "human anatomy",
+              "nervous system",
+              "endocrine system",
+              "homeostasis",
+              "immune system",
+              "microorganisms",
+              "evolution",
+              "biodiversity",
+              "climate change",
+              "environmental conservation",
+              "invent Biology topics",
+              "replace the roadmap with an online syllabus",
+              "remove topics",
+              "rename topics unnecessarily",
+              "create fake topics",
+              "silently add outside syllabus content",
+              "explain a topic more clearly",
+              "create analogies",
+              "create examples",
+              "explain why/how",
+              "improve question wording",
+              "...",
+              "...",
+              "...",
+              "subject",
+              "unit",
+              "topic",
+              "subtopic",
+              "question",
+              "question type",
+              "difficulty",
+              "correct answer",
+              "user's answer",
+              "correct/incorrect",
+              "explanation",
+              "timestamp",
+              "attempt number",
+              "response time if available",
+              "normal questions",
+              "conceptual questions",
+              "application questions",
+              "tricky questions",
+              "exam-style questions",
+              "Biology study days",
+              "Biology study minutes",
+              "Biology Todo completion",
+              "Questions attempted",
+              "Questions correct",
+              "Accuracy %",
+              "Weak topics",
+              "Strong topics",
+              "Mastery",
+              "Unit completion",
+              "XP earned"
+            ]
+          },
+          {
+            "id": "biology_u24_t4",
+            "title": "85.7%",
+            "subtopics": [
+              "Mitosis",
+              "Stages of mitosis",
+              "Cytokinesis",
+              "Biology roadmap",
+              "structured topic metadata",
+              "previously generated questions",
+              "explanations where appropriate",
+              "unit",
+              "topic",
+              "subtopics",
+              "learning context",
+              "clean",
+              "card-based",
+              "easy to read",
+              "mobile friendly",
+              "large answer buttons",
+              "progress indicator",
+              "immediate feedback after answering"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "PHYSICS": {
+    "key": "PHYSICS",
+    "name": "Physics",
+    "icon": "⚛️",
+    "totalUnits": 25,
+    "totalTopics": 150,
+    "totalSubtopics": 24,
+    "units": [
+      {
+        "id": "physics_u1",
+        "grade": "GRADE 9",
+        "title": "Unit 1 — Physics and Human Society",
+        "topics": [
+          {
+            "id": "physics_u1_t1",
+            "title": "1.1 Definition and Nature of Physics",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u1_t2",
+            "title": "1.2 Branches of Physics",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u1_t3",
+            "title": "1.3 Related Fields to Physics",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u1_t4",
+            "title": "1.4 Historical Issues and Contributors",
+            "subtopics": []
+          }
+        ]
+      },
+      {
+        "id": "physics_u2",
+        "grade": "GRADE 9",
+        "title": "Unit 2 — Physical Quantities",
+        "topics": [
+          {
+            "id": "physics_u2_t1",
+            "title": "2.1 Scales, Standards, Units (prefixes)",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u2_t2",
+            "title": "2.2 Measurement and Safety",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u2_t3",
+            "title": "2.3 Classification of Physical Quantities",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u2_t4",
+            "title": "2.4 Unit conversion",
+            "subtopics": []
+          }
+        ]
+      },
+      {
+        "id": "physics_u3",
+        "grade": "GRADE 9",
+        "title": "Unit 3 — Motion in a Straight Line",
+        "topics": [
+          {
+            "id": "physics_u3_t1",
+            "title": "3.1 Position, Distance and Displacement",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u3_t2",
+            "title": "3.2 Average Speed and Instantaneous Speed",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u3_t3",
+            "title": "3.3 Average Velocity and Instantaneous Velocity",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u3_t4",
+            "title": "3.4 Acceleration",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u3_t5",
+            "title": "3.5 Uniform Motion",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u3_t6",
+            "title": "3.6 Graphical Representation of Motion",
+            "subtopics": []
+          }
+        ]
+      },
+      {
+        "id": "physics_u4",
+        "grade": "GRADE 9",
+        "title": "Unit 4 — Force, Work, Energy and Power",
+        "topics": [
+          {
+            "id": "physics_u4_t1",
+            "title": "4.1 The Concept of Force",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u4_t2",
+            "title": "4.2 Newton's Laws of Motion",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u4_t3",
+            "title": "4.3 Forces of Friction",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u4_t4",
+            "title": "4.4 The Concept of Work",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u4_t5",
+            "title": "4.5 Kinetic and Potential Energies",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u4_t6",
+            "title": "4.6 Power",
+            "subtopics": []
+          }
+        ]
+      },
+      {
+        "id": "physics_u5",
+        "grade": "GRADE 9",
+        "title": "Unit 5 — Simple Machines",
+        "topics": [
+          {
+            "id": "physics_u5_t1",
+            "title": "5.1 Simple Machines and their Purposes",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u5_t2",
+            "title": "5.2 Simple Machines at Home",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u5_t3",
+            "title": "5.3 Simple Machines at Work Place",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u5_t4",
+            "title": "5.4 Classification of Simple Machines",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u5_t5",
+            "title": "5.5 Mechanical Advantage, Velocity Ratio and Efficiency of Simple Machine",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u5_t6",
+            "title": "5.6 Designing Simple Machine",
+            "subtopics": []
+          }
+        ]
+      },
+      {
+        "id": "physics_u6",
+        "grade": "GRADE 9",
+        "title": "Unit 6 — Mechanical Oscillation and Sound Wave",
+        "topics": [
+          {
+            "id": "physics_u6_t1",
+            "title": "6.1 Common Characteristics of Waves",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u6_t2",
+            "title": "6.2 String, Pendulum and Spring",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u6_t3",
+            "title": "6.3 Propagation of Waves and Energy Transmission",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u6_t4",
+            "title": "6.4 Sound Waves",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u6_t5",
+            "title": "6.5 Superposition of Waves",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u6_t6",
+            "title": "6.6 Characteristics of Sound Waves",
+            "subtopics": []
+          }
+        ]
+      },
+      {
+        "id": "physics_u7",
+        "grade": "GRADE 9",
+        "title": "Unit 7 — Temperature and Thermometry",
+        "topics": [
+          {
+            "id": "physics_u7_t1",
+            "title": "7.1 Temperature and Our Life",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u7_t2",
+            "title": "7.2 Extreme Temperature Safety",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u7_t3",
+            "title": "7.3 Temperature Change and its Effects",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u7_t4",
+            "title": "7.4 Measuring Temperature with Different Thermometric Scales",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u7_t5",
+            "title": "7.5 Types of Thermometers and Their Use",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u7_t6",
+            "title": "7.6 Conversion between Temperature Scales",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u7_t7",
+            "title": "7.7 Thermal Expansion of Materials",
+            "subtopics": []
+          }
+        ]
+      },
+      {
+        "id": "physics_u8",
+        "grade": "GRADE 10",
+        "title": "Unit 1 — Vector Quantities",
+        "topics": [
+          {
+            "id": "physics_u8_t1",
+            "title": "1.1 Scalars and Vectors",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u8_t2",
+            "title": "1.2 Vector representations",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u8_t3",
+            "title": "1.3 Vector addition and subtraction",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u8_t4",
+            "title": "1.4 Graphical method of vector addition",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u8_t5",
+            "title": "1.5 Vector resolution",
+            "subtopics": []
+          }
+        ]
+      },
+      {
+        "id": "physics_u9",
+        "grade": "GRADE 10",
+        "title": "Unit 2 — Uniformly Accelerated Motion",
+        "topics": [
+          {
+            "id": "physics_u9_t1",
+            "title": "2.1 Position and Displacement",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u9_t2",
+            "title": "2.2 Average velocity and instantaneous velocity",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u9_t3",
+            "title": "2.3 Acceleration",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u9_t4",
+            "title": "2.4 Equations of motion with constant acceleration",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u9_t5",
+            "title": "2.5 Graphical representation of uniformly accelerated motion",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u9_t6",
+            "title": "2.6 Relative velocity in one dimension",
+            "subtopics": []
+          }
+        ]
+      },
+      {
+        "id": "physics_u10",
+        "grade": "GRADE 10",
+        "title": "Unit 3 — Elasticity and Static Equilibrium of Rigid Body",
+        "topics": [
+          {
+            "id": "physics_u10_t1",
+            "title": "3.1 Elasticity and plasticity",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u10_t2",
+            "title": "3.2 Density and specific gravity",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u10_t3",
+            "title": "3.3 Stress and Strain",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u10_t4",
+            "title": "3.4 Young's Modulus",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u10_t5",
+            "title": "3.5 Static equilibrium",
+            "subtopics": []
+          }
+        ]
+      },
+      {
+        "id": "physics_u11",
+        "grade": "GRADE 10",
+        "title": "Unit 4 — Static and Current Electricity",
+        "topics": [
+          {
+            "id": "physics_u11_t1",
+            "title": "4.1 Charges in Nature",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u11_t2",
+            "title": "4.2 Methods of Charging a Body",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u11_t3",
+            "title": "4.3 The electroscope",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u11_t4",
+            "title": "4.4 Electrical Discharge",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u11_t5",
+            "title": "4.5 Coulomb's law of electrostatics",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u11_t6",
+            "title": "4.6 The electric field",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u11_t7",
+            "title": "4.7 Electric circuits",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u11_t8",
+            "title": "4.8 Current, Voltage and Ohm's law",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u11_t9",
+            "title": "4.9 Combination of resistors in a circuit",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u11_t10",
+            "title": "4.10 Voltmeter and ammeter connection in a circuit",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u11_t11",
+            "title": "4.11 Electrical safety in general and local context",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u11_t12",
+            "title": "4.12 Electric projects",
+            "subtopics": []
+          }
+        ]
+      },
+      {
+        "id": "physics_u12",
+        "grade": "GRADE 10",
+        "title": "Unit 5 — Magnetism",
+        "topics": [
+          {
+            "id": "physics_u12_t1",
+            "title": "5.1 Magnet",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u12_t2",
+            "title": "5.2 Magnetic Field",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u12_t3",
+            "title": "5.3 The earth's magnetic field and the compass",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u12_t4",
+            "title": "5.4 Magnetic field of a current carrying conductor",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u12_t5",
+            "title": "5.5 Magnetic force on a moving charge in a uniform magnetic field",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u12_t6",
+            "title": "5.6 Magnetic force on a current carrying conductor",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u12_t7",
+            "title": "5.7 Magnetic force between two parallel current carrying conductors",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u12_t8",
+            "title": "5.8 Applications of magnetism",
+            "subtopics": []
+          }
+        ]
+      },
+      {
+        "id": "physics_u13",
+        "grade": "GRADE 10",
+        "title": "Unit 6 — Electromagnetic Waves and Geometrical Optics",
+        "topics": [
+          {
+            "id": "physics_u13_t1",
+            "title": "6.1 Electromagnetic (EM) waves",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u13_t2",
+            "title": "6.2 EM Spectrum",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u13_t3",
+            "title": "6.3 Light as a wave",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u13_t4",
+            "title": "6.4 Laws of reflection & refraction",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u13_t5",
+            "title": "6.5 Mirrors and lenses",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u13_t6",
+            "title": "6.6 Human eye and optical instruments",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u13_t7",
+            "title": "6.7 Primary colors of light and human vision",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u13_t8",
+            "title": "6.8 Color addition of light",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u13_t9",
+            "title": "6.9 Color subtraction of light using filters",
+            "subtopics": []
+          }
+        ]
+      },
+      {
+        "id": "physics_u14",
+        "grade": "GRADE 11",
+        "title": "Unit 1 — Physics and Human Society",
+        "topics": [
+          {
+            "id": "physics_u14_t1",
+            "title": "1.1 Importance of Physics to Society",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u14_t2",
+            "title": "1.2 Physics Communities and Their Roles",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u14_t3",
+            "title": "1.3 Making of Physics Knowledge",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u14_t4",
+            "title": "1.4 The Mission of Physics and Career Awareness",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u14_t5",
+            "title": "1.5 Current Status of Physics",
+            "subtopics": []
+          }
+        ]
+      },
+      {
+        "id": "physics_u15",
+        "grade": "GRADE 11",
+        "title": "Unit 2 — Vectors",
+        "topics": [
+          {
+            "id": "physics_u15_t1",
+            "title": "2.1 Vectors and Types of Vectors",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u15_t2",
+            "title": "2.2 Graphical Method of Addition of Vectors in Two Dimensions (2-D)",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u15_t3",
+            "title": "2.3 Algebraic Method of addition of Vectors in Two Dimensions (2-D)",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u15_t4",
+            "title": "2.4 Product of Vectors",
+            "subtopics": []
+          }
+        ]
+      },
+      {
+        "id": "physics_u16",
+        "grade": "GRADE 11",
+        "title": "Unit 3 — Motion in One and Two Dimensions",
+        "topics": [
+          {
+            "id": "physics_u16_t1",
+            "title": "3.1 Uniformly Accelerated Motion in 1D",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u16_t2",
+            "title": "3.2 Equations of Uniformly Accelerated Motion in 1D",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u16_t3",
+            "title": "3.3 Graphical Representation of Uniformly accelerated Motion in 1 D",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u16_t4",
+            "title": "3.4 Vertical Motion",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u16_t5",
+            "title": "3.5 Uniform Circular Motion",
+            "subtopics": []
+          }
+        ]
+      },
+      {
+        "id": "physics_u17",
+        "grade": "GRADE 11",
+        "title": "Unit 4 — Dynamics",
+        "topics": [
+          {
+            "id": "physics_u17_t1",
+            "title": "4.1 The Concept of Force and Newton's Laws of motion",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u17_t2",
+            "title": "4.2 Frictional Force",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u17_t3",
+            "title": "4.3 The First Condition of Equilibrium",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u17_t4",
+            "title": "4.4 Work, Energy and Power",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u17_t5",
+            "title": "4.5 Conservation of mechanical energy",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u17_t6",
+            "title": "4.6 Impulse and Linear Momentum",
+            "subtopics": []
+          }
+        ]
+      },
+      {
+        "id": "physics_u18",
+        "grade": "GRADE 11",
+        "title": "Unit 5 — Heat Conduction and Calorimetry",
+        "topics": [
+          {
+            "id": "physics_u18_t1",
+            "title": "5.1 The Concept of Heat",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u18_t2",
+            "title": "5.2 Heat transfer mechanisms",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u18_t3",
+            "title": "5.3 Heat Capacity and Specific Heat Capacity",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u18_t4",
+            "title": "5.4 Thermal expansion",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u18_t5",
+            "title": "5.5 Change of phase",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u18_t6",
+            "title": "5.6 Calorimetry",
+            "subtopics": []
+          }
+        ]
+      },
+      {
+        "id": "physics_u19",
+        "grade": "GRADE 11",
+        "title": "Unit 6 — Electrostatics and Electric Circuit",
+        "topics": [
+          {
+            "id": "physics_u19_t1",
+            "title": "6.1 Coulomb's Law",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u19_t2",
+            "title": "6.2 Electric Fields",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u19_t3",
+            "title": "6.3 Electric Potential",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u19_t4",
+            "title": "6.4 Electric Current, Resistance and ohm's law",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u19_t5",
+            "title": "6.6 Capacitors and Capacitance",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u19_t6",
+            "title": "6.7 Electric Circuits in Our Surroundings",
+            "subtopics": []
+          }
+        ]
+      },
+      {
+        "id": "physics_u20",
+        "grade": "GRADE 11",
+        "title": "Unit 7 — Nuclear Physics",
+        "topics": [
+          {
+            "id": "physics_u20_t1",
+            "title": "7.1 The nucleus",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u20_t2",
+            "title": "7.2 Radioactivity",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u20_t3",
+            "title": "7.3 Use of nuclear radiation",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u20_t4",
+            "title": "7.4 Nuclear Reaction and Energy Production",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u20_t5",
+            "title": "7.5 Safety Rules Against Hazards of Nuclear Radiation",
+            "subtopics": []
+          }
+        ]
+      },
+      {
+        "id": "physics_u21",
+        "grade": "GRADE 12",
+        "title": "Unit 1 — Application of Physics in Other Fields",
+        "topics": [
+          {
+            "id": "physics_u21_t1",
+            "title": "1.1 Physics and other sciences",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u21_t2",
+            "title": "1.2 Physics and engineering",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u21_t3",
+            "title": "1.3 Medical physics",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u21_t4",
+            "title": "1.4 Physics and defense technology",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u21_t5",
+            "title": "1.5 Physics in communication",
+            "subtopics": []
+          }
+        ]
+      },
+      {
+        "id": "physics_u22",
+        "grade": "GRADE 12",
+        "title": "Unit 2 — Two-dimensional motion",
+        "topics": [
+          {
+            "id": "physics_u22_t1",
+            "title": "2.1 Projectile motion",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u22_t2",
+            "title": "2.2 Rotational Motion",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u22_t3",
+            "title": "2.3 Rotational Dynamics",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u22_t4",
+            "title": "2.4 Planetary motion and Kepler's laws",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u22_t5",
+            "title": "2.5 Newton's law of universal Gravitation",
+            "subtopics": []
+          }
+        ]
+      },
+      {
+        "id": "physics_u23",
+        "grade": "GRADE 12",
+        "title": "Unit 3 — Fluid Mechanics",
+        "topics": [
+          {
+            "id": "physics_u23_t1",
+            "title": "3.1 Fluid Statics",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u23_t2",
+            "title": "3.2 Pressure in fluids at rest",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u23_t3",
+            "title": "3.3 Archimedes' principle",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u23_t4",
+            "title": "3.4 Fluid flow",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u23_t5",
+            "title": "3.5 Safety and high pressure",
+            "subtopics": []
+          }
+        ]
+      },
+      {
+        "id": "physics_u24",
+        "grade": "GRADE 12",
+        "title": "Unit 4 — Electromagnetism",
+        "topics": [
+          {
+            "id": "physics_u24_t1",
+            "title": "4.1 Magnets and Magnetic field",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u24_t2",
+            "title": "4.2 Magnetic field lines",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u24_t3",
+            "title": "4.3 Current and Magnetism",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u24_t4",
+            "title": "4.4 Electromagnetic Induction",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u24_t5",
+            "title": "4.5 Faraday's Law of electromagnetic Induction",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u24_t6",
+            "title": "4.6 Transformers",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u24_t7",
+            "title": "4.7 Application and safety",
+            "subtopics": []
+          }
+        ]
+      },
+      {
+        "id": "physics_u25",
+        "grade": "GRADE 12",
+        "title": "Unit 5 — Basics of electronics",
+        "topics": [
+          {
+            "id": "physics_u25_t1",
+            "title": "5.1 Semiconductors",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u25_t2",
+            "title": "5.2 Diodes and their Functions",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u25_t3",
+            "title": "5.3 Rectification",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u25_t4",
+            "title": "5.4 Transistors and their application",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u25_t5",
+            "title": "5.5 Integrated Circuits",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u25_t6",
+            "title": "5.6 Logic gates and logic circuits",
+            "subtopics": []
+          },
+          {
+            "id": "physics_u25_t7",
+            "title": "5.7 Application of electronics",
+            "subtopics": [
+              "Physical Quantities",
+              "Motion in a Straight Line",
+              "Force, Work, Energy and Power",
+              "Simple Machines",
+              "Vectors",
+              "Uniformly Accelerated Motion",
+              "Static Equilibrium",
+              "Current Electricity",
+              "Combination of resistors",
+              "Magnetism",
+              "Mirrors and lenses",
+              "Vectors",
+              "Motion",
+              "Dynamics",
+              "Heat and Calorimetry",
+              "Electrostatics",
+              "Electric Circuits",
+              "Projectile Motion",
+              "Rotational Motion",
+              "Rotational Dynamics",
+              "Gravitation",
+              "Fluid Mechanics",
+              "Electromagnetism",
+              "Electronics circuit reasoning"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "ENGLISH": {
+    "key": "ENGLISH",
+    "name": "English",
+    "icon": "🇬🇧",
+    "totalUnits": 0,
+    "totalTopics": 0,
+    "totalSubtopics": 0,
+    "isPendingUpload": true,
+    "units": []
+  },
+  "MATHEMATICS": {
+    "key": "MATHEMATICS",
+    "name": "Mathematics",
+    "icon": "📐",
+    "totalUnits": 29,
+    "totalTopics": 145,
+    "totalSubtopics": 144,
+    "units": [
+      {
+        "id": "mathematics_u1",
+        "grade": "GRADE 9",
+        "title": "Unit 1′ — Further on Sets",
+        "topics": [
+          {
+            "id": "mathematics_u1_t1",
+            "title": "1′.1 Description of the Concept Set",
+            "subtopics": [
+              "Description of sets",
+              "Well-defined sets",
+              "Elements and membership"
+            ]
+          },
+          {
+            "id": "mathematics_u1_t2",
+            "title": "1′.2 Notion of Set",
+            "subtopics": [
+              "Set notation",
+              "Describing sets",
+              "Membership"
+            ]
+          },
+          {
+            "id": "mathematics_u1_t3",
+            "title": "1′.3 Operations on Sets",
+            "subtopics": [
+              "Set operations",
+              "Venn diagrams",
+              "Relationships among sets"
+            ]
+          },
+          {
+            "id": "mathematics_u1_t4",
+            "title": "1′.4 Application of Operations on Sets",
+            "subtopics": [
+              "Applications of set operations",
+              "Problem solving using sets"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "mathematics_u2",
+        "grade": "GRADE 9",
+        "title": "Unit 1 — The Number System",
+        "topics": [
+          {
+            "id": "mathematics_u2_t1",
+            "title": "1.1 Revision on Natural Numbers and Integers",
+            "subtopics": []
+          },
+          {
+            "id": "mathematics_u2_t2",
+            "title": "1.2 Rational Numbers",
+            "subtopics": [
+              "Rational-number representation and operations"
+            ]
+          },
+          {
+            "id": "mathematics_u2_t3",
+            "title": "1.3 Irrational Numbers",
+            "subtopics": []
+          },
+          {
+            "id": "mathematics_u2_t4",
+            "title": "1.4 Real Numbers",
+            "subtopics": [
+              "Number-line ideas",
+              "Intervals",
+              "Absolute value and related real-number ideas"
+            ]
+          },
+          {
+            "id": "mathematics_u2_t5",
+            "title": "1.5 Applications",
+            "subtopics": []
+          }
+        ]
+      },
+      {
+        "id": "mathematics_u3",
+        "grade": "GRADE 9",
+        "title": "Unit 2 — Solving Equations",
+        "topics": [
+          {
+            "id": "mathematics_u3_t1",
+            "title": "2.1 Revision of Linear Equation in One Variable",
+            "subtopics": []
+          },
+          {
+            "id": "mathematics_u3_t2",
+            "title": "2.2 Systems of Linear Equations in Two Variables",
+            "subtopics": []
+          },
+          {
+            "id": "mathematics_u3_t3",
+            "title": "2.3 Solving Non-linear Equations",
+            "subtopics": []
+          },
+          {
+            "id": "mathematics_u3_t4",
+            "title": "2.4 Some Applications of Solving Equations",
+            "subtopics": []
+          }
+        ]
+      },
+      {
+        "id": "mathematics_u4",
+        "grade": "GRADE 9",
+        "title": "Unit 3 — Solving Inequalities",
+        "topics": [
+          {
+            "id": "mathematics_u4_t1",
+            "title": "3.1 Revision on Linear Inequalities in One Variable",
+            "subtopics": []
+          },
+          {
+            "id": "mathematics_u4_t2",
+            "title": "3.2 Systems of Linear Inequalities in Two Variables",
+            "subtopics": []
+          },
+          {
+            "id": "mathematics_u4_t3",
+            "title": "3.3 Inequalities Involving Absolute Value",
+            "subtopics": []
+          },
+          {
+            "id": "mathematics_u4_t4",
+            "title": "3.4 Quadratic Inequalities",
+            "subtopics": []
+          },
+          {
+            "id": "mathematics_u4_t5",
+            "title": "3.5 Applications of Inequalities",
+            "subtopics": []
+          }
+        ]
+      },
+      {
+        "id": "mathematics_u5",
+        "grade": "GRADE 9",
+        "title": "Unit 4 — Introduction to Trigonometry",
+        "topics": [
+          {
+            "id": "mathematics_u5_t1",
+            "title": "4.1 Revision on Right-angled Triangles",
+            "subtopics": []
+          },
+          {
+            "id": "mathematics_u5_t2",
+            "title": "4.2 The Trigonometric Ratios",
+            "subtopics": [
+              "Sine",
+              "Cosine",
+              "Tangent",
+              "Basic trigonometric values"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "mathematics_u6",
+        "grade": "GRADE 9",
+        "title": "Unit 5 — Regular Polygons",
+        "topics": [
+          {
+            "id": "mathematics_u6_t1",
+            "title": "5.1 Sum of Interior Angles of a Convex Polygon",
+            "subtopics": []
+          },
+          {
+            "id": "mathematics_u6_t2",
+            "title": "5.2 Sum of Exterior Angles of a Convex Polygon",
+            "subtopics": []
+          },
+          {
+            "id": "mathematics_u6_t3",
+            "title": "5.3 Measures of Each Interior Angle and Exterior Angle of a Regular Polygon",
+            "subtopics": []
+          },
+          {
+            "id": "mathematics_u6_t4",
+            "title": "5.4 Properties of Regular Polygons",
+            "subtopics": [
+              "Pentagon",
+              "Hexagon",
+              "Octagon",
+              "Decagon"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "mathematics_u7",
+        "grade": "GRADE 9",
+        "title": "Unit 6 — Congruency and Similarity",
+        "topics": [
+          {
+            "id": "mathematics_u7_t1",
+            "title": "6.1 Revision on Congruency of Triangles",
+            "subtopics": []
+          },
+          {
+            "id": "mathematics_u7_t2",
+            "title": "6.2 Definition of Similar Figures",
+            "subtopics": []
+          },
+          {
+            "id": "mathematics_u7_t3",
+            "title": "6.3 Theorems on Similar Plane Figures",
+            "subtopics": []
+          },
+          {
+            "id": "mathematics_u7_t4",
+            "title": "6.4 Ratio of Perimeters of Similar Plane Figures",
+            "subtopics": []
+          },
+          {
+            "id": "mathematics_u7_t5",
+            "title": "6.5 Ratio of Areas of Similar Plane Figures",
+            "subtopics": []
+          },
+          {
+            "id": "mathematics_u7_t6",
+            "title": "6.6 Construction of Similar Plane Figures",
+            "subtopics": []
+          },
+          {
+            "id": "mathematics_u7_t7",
+            "title": "6.7 Applications on Similarities",
+            "subtopics": []
+          }
+        ]
+      },
+      {
+        "id": "mathematics_u8",
+        "grade": "GRADE 9",
+        "title": "Unit 7 — Vectors in Two Dimensions",
+        "topics": [
+          {
+            "id": "mathematics_u8_t1",
+            "title": "7.1 Scalar and Vector Quantities",
+            "subtopics": []
+          },
+          {
+            "id": "mathematics_u8_t2",
+            "title": "7.2 Representation of a Vector",
+            "subtopics": []
+          },
+          {
+            "id": "mathematics_u8_t3",
+            "title": "7.3 Vectors Operations",
+            "subtopics": []
+          },
+          {
+            "id": "mathematics_u8_t4",
+            "title": "7.4 Position Vector",
+            "subtopics": []
+          },
+          {
+            "id": "mathematics_u8_t5",
+            "title": "7.5 Applications of Vectors in Two Dimensions",
+            "subtopics": []
+          }
+        ]
+      },
+      {
+        "id": "mathematics_u9",
+        "grade": "GRADE 9",
+        "title": "Unit 8 — Statistics and Probability",
+        "topics": [
+          {
+            "id": "mathematics_u9_t1",
+            "title": "8.1 Statistical Data",
+            "subtopics": []
+          },
+          {
+            "id": "mathematics_u9_t2",
+            "title": "8.2 Probability",
+            "subtopics": []
+          }
+        ]
+      },
+      {
+        "id": "mathematics_u10",
+        "grade": "GRADE 10",
+        "title": "Unit 1 — Relations and Functions",
+        "topics": [
+          {
+            "id": "mathematics_u10_t1",
+            "title": "1.1 Relations",
+            "subtopics": []
+          },
+          {
+            "id": "mathematics_u10_t2",
+            "title": "1.2 Functions",
+            "subtopics": []
+          },
+          {
+            "id": "mathematics_u10_t3",
+            "title": "1.3 Applications of Relations and Functions",
+            "subtopics": []
+          }
+        ]
+      },
+      {
+        "id": "mathematics_u11",
+        "grade": "GRADE 10",
+        "title": "Unit 2 — Polynomial Functions",
+        "topics": [
+          {
+            "id": "mathematics_u11_t1",
+            "title": "2.1 Definition of Polynomial Function",
+            "subtopics": []
+          },
+          {
+            "id": "mathematics_u11_t2",
+            "title": "2.2 Operations on Polynomial Functions",
+            "subtopics": []
+          },
+          {
+            "id": "mathematics_u11_t3",
+            "title": "2.3 Theorem on Polynomial Functions",
+            "subtopics": []
+          },
+          {
+            "id": "mathematics_u11_t4",
+            "title": "2.4 Zeros of Polynomial Functions",
+            "subtopics": []
+          },
+          {
+            "id": "mathematics_u11_t5",
+            "title": "2.5 Graphs of Polynomial Functions",
+            "subtopics": []
+          },
+          {
+            "id": "mathematics_u11_t6",
+            "title": "2.6 Applications",
+            "subtopics": []
+          }
+        ]
+      },
+      {
+        "id": "mathematics_u12",
+        "grade": "GRADE 10",
+        "title": "Unit 3 — Exponential and Logarithmic Functions",
+        "topics": [
+          {
+            "id": "mathematics_u12_t1",
+            "title": "3.1 Exponents and Logarithms",
+            "subtopics": []
+          },
+          {
+            "id": "mathematics_u12_t2",
+            "title": "3.2 The Exponential Functions and Their Graphs",
+            "subtopics": []
+          },
+          {
+            "id": "mathematics_u12_t3",
+            "title": "3.3 The Logarithmic Functions and Their Graphs",
+            "subtopics": []
+          },
+          {
+            "id": "mathematics_u12_t4",
+            "title": "3.4 Solving Exponential and Logarithmic Equations",
+            "subtopics": []
+          },
+          {
+            "id": "mathematics_u12_t5",
+            "title": "3.5 Relation between Exponential and Logarithmic Functions",
+            "subtopics": []
+          },
+          {
+            "id": "mathematics_u12_t6",
+            "title": "3.6 Applications",
+            "subtopics": []
+          }
+        ]
+      },
+      {
+        "id": "mathematics_u13",
+        "grade": "GRADE 10",
+        "title": "Unit 4 — Trigonometric Functions",
+        "topics": [
+          {
+            "id": "mathematics_u13_t1",
+            "title": "4.1 Radian Measure of Angle",
+            "subtopics": []
+          },
+          {
+            "id": "mathematics_u13_t2",
+            "title": "4.2 Basic Trigonometric Function",
+            "subtopics": []
+          },
+          {
+            "id": "mathematics_u13_t3",
+            "title": "4.3 Trigonometric Identities & Equation",
+            "subtopics": []
+          },
+          {
+            "id": "mathematics_u13_t4",
+            "title": "4.4 Application",
+            "subtopics": []
+          }
+        ]
+      },
+      {
+        "id": "mathematics_u14",
+        "grade": "GRADE 10",
+        "title": "Unit 5 — Circles",
+        "topics": [
+          {
+            "id": "mathematics_u14_t1",
+            "title": "5.1 Symmetrical Properties of Circles",
+            "subtopics": []
+          },
+          {
+            "id": "mathematics_u14_t2",
+            "title": "5.2 Angle Properties of Circles",
+            "subtopics": []
+          },
+          {
+            "id": "mathematics_u14_t3",
+            "title": "5.3 Arc Length, Perimeters and Areas of Segments and Sectors",
+            "subtopics": []
+          },
+          {
+            "id": "mathematics_u14_t4",
+            "title": "5.4 Theorems on Angles and Arcs Determined by Lines Intersecting Inside, On and Outside a Circle",
+            "subtopics": []
+          }
+        ]
+      },
+      {
+        "id": "mathematics_u15",
+        "grade": "GRADE 10",
+        "title": "Unit 6 — Solid Figures",
+        "topics": [
+          {
+            "id": "mathematics_u15_t1",
+            "title": "6.1 Revision of Cylinders and Prisms",
+            "subtopics": []
+          },
+          {
+            "id": "mathematics_u15_t2",
+            "title": "6.2 Pyramids, Cones and Spheres",
+            "subtopics": []
+          },
+          {
+            "id": "mathematics_u15_t3",
+            "title": "6.3 Frustum of Pyramids and Cones",
+            "subtopics": []
+          },
+          {
+            "id": "mathematics_u15_t4",
+            "title": "6.4 Surface Areas and Volumes of Composed Solids",
+            "subtopics": []
+          },
+          {
+            "id": "mathematics_u15_t5",
+            "title": "6.5 Applications",
+            "subtopics": []
+          }
+        ]
+      },
+      {
+        "id": "mathematics_u16",
+        "grade": "GRADE 10",
+        "title": "Unit 7 — Coordinate Geometry",
+        "topics": [
+          {
+            "id": "mathematics_u16_t1",
+            "title": "7.1 Distance between Two Points",
+            "subtopics": []
+          },
+          {
+            "id": "mathematics_u16_t2",
+            "title": "7.2 Division of a Line Segment",
+            "subtopics": []
+          },
+          {
+            "id": "mathematics_u16_t3",
+            "title": "7.3 Equation of a Line",
+            "subtopics": []
+          },
+          {
+            "id": "mathematics_u16_t4",
+            "title": "7.4 Slopes of Parallel and Perpendicular Lines",
+            "subtopics": []
+          },
+          {
+            "id": "mathematics_u16_t5",
+            "title": "7.5 Equation of a Circle",
+            "subtopics": []
+          },
+          {
+            "id": "mathematics_u16_t6",
+            "title": "7.6 Applications",
+            "subtopics": []
+          }
+        ]
+      },
+      {
+        "id": "mathematics_u17",
+        "grade": "GRADE 11",
+        "title": "Unit 1 — Relations and Functions",
+        "topics": [
+          {
+            "id": "mathematics_u17_t1",
+            "title": "1.1 Relations",
+            "subtopics": []
+          },
+          {
+            "id": "mathematics_u17_t2",
+            "title": "1.2 Inverse of Relations and Their Graphs",
+            "subtopics": []
+          },
+          {
+            "id": "mathematics_u17_t3",
+            "title": "1.3 Types of Functions",
+            "subtopics": []
+          },
+          {
+            "id": "mathematics_u17_t4",
+            "title": "1.4 Composition of Functions",
+            "subtopics": []
+          },
+          {
+            "id": "mathematics_u17_t5",
+            "title": "1.5 Inverse Functions and their Graphs",
+            "subtopics": []
+          },
+          {
+            "id": "mathematics_u17_t6",
+            "title": "1.6 Applications of Relations and Functions",
+            "subtopics": []
+          }
+        ]
+      },
+      {
+        "id": "mathematics_u18",
+        "grade": "GRADE 11",
+        "title": "Unit 2 — Rational Expressions and Rational Functions",
+        "topics": [
+          {
+            "id": "mathematics_u18_t1",
+            "title": "2.1 Rational Expressions",
+            "subtopics": []
+          },
+          {
+            "id": "mathematics_u18_t2",
+            "title": "2.2 Rational Equations and Rational Inequalities",
+            "subtopics": []
+          },
+          {
+            "id": "mathematics_u18_t3",
+            "title": "2.3 Rational Functions and Their Graphs",
+            "subtopics": []
+          },
+          {
+            "id": "mathematics_u18_t4",
+            "title": "2.4 Applications",
+            "subtopics": []
+          }
+        ]
+      },
+      {
+        "id": "mathematics_u19",
+        "grade": "GRADE 11",
+        "title": "Unit 3 — Matrices",
+        "topics": [
+          {
+            "id": "mathematics_u19_t1",
+            "title": "3.1 The Concepts of a Matrix",
+            "subtopics": []
+          },
+          {
+            "id": "mathematics_u19_t2",
+            "title": "3.2 Operations on Matrices",
+            "subtopics": []
+          },
+          {
+            "id": "mathematics_u19_t3",
+            "title": "3.3 Special Types of Matrices",
+            "subtopics": []
+          },
+          {
+            "id": "mathematics_u19_t4",
+            "title": "3.4 Elementary Row Operations of Matrices",
+            "subtopics": []
+          },
+          {
+            "id": "mathematics_u19_t5",
+            "title": "3.5 Systems of Linear Equations with Two or Three Variables",
+            "subtopics": []
+          },
+          {
+            "id": "mathematics_u19_t6",
+            "title": "3.6 Solutions of Systems of Linear Equations",
+            "subtopics": []
+          },
+          {
+            "id": "mathematics_u19_t7",
+            "title": "3.7 Inverse of a Square Matrix",
+            "subtopics": []
+          },
+          {
+            "id": "mathematics_u19_t8",
+            "title": "3.8 Applications",
+            "subtopics": []
+          }
+        ]
+      },
+      {
+        "id": "mathematics_u20",
+        "grade": "GRADE 11",
+        "title": "Unit 4 — Determinants and Their Properties",
+        "topics": [
+          {
+            "id": "mathematics_u20_t1",
+            "title": "4.1 Determinants of Matrices of Order 2",
+            "subtopics": []
+          },
+          {
+            "id": "mathematics_u20_t2",
+            "title": "4.2 Minors and Cofactors of Elements of Matrices",
+            "subtopics": []
+          },
+          {
+            "id": "mathematics_u20_t3",
+            "title": "4.3 Determinants of Matrices of Order 3",
+            "subtopics": []
+          },
+          {
+            "id": "mathematics_u20_t4",
+            "title": "4.4 Properties of Determinants",
+            "subtopics": []
+          },
+          {
+            "id": "mathematics_u20_t5",
+            "title": "4.5 Inverse of a Square Matrix of Order 2 and 3",
+            "subtopics": []
+          },
+          {
+            "id": "mathematics_u20_t6",
+            "title": "4.6 Solutions of Systems of Linear Equations Using Cramer's Rule",
+            "subtopics": []
+          },
+          {
+            "id": "mathematics_u20_t7",
+            "title": "4.7 Applications",
+            "subtopics": []
+          }
+        ]
+      },
+      {
+        "id": "mathematics_u21",
+        "grade": "GRADE 11",
+        "title": "Unit 5 — Vectors",
+        "topics": [
+          {
+            "id": "mathematics_u21_t1",
+            "title": "5.1 Revision on Vectors and Scalars",
+            "subtopics": []
+          },
+          {
+            "id": "mathematics_u21_t2",
+            "title": "5.2 Representation of Vectors",
+            "subtopics": []
+          },
+          {
+            "id": "mathematics_u21_t3",
+            "title": "5.3 Vector Product",
+            "subtopics": []
+          },
+          {
+            "id": "mathematics_u21_t4",
+            "title": "5.4 Application of Scalar and Cross Product",
+            "subtopics": []
+          },
+          {
+            "id": "mathematics_u21_t5",
+            "title": "5.5 Application of Vectors",
+            "subtopics": []
+          },
+          {
+            "id": "mathematics_u21_t6",
+            "title": "5.6 Applications",
+            "subtopics": []
+          }
+        ]
+      },
+      {
+        "id": "mathematics_u22",
+        "grade": "GRADE 11",
+        "title": "Unit 6 — Transformations of the Plane",
+        "topics": [
+          {
+            "id": "mathematics_u22_t1",
+            "title": "6.1 Introduction",
+            "subtopics": []
+          },
+          {
+            "id": "mathematics_u22_t2",
+            "title": "6.2 Translation",
+            "subtopics": []
+          },
+          {
+            "id": "mathematics_u22_t3",
+            "title": "6.3 Reflection",
+            "subtopics": []
+          },
+          {
+            "id": "mathematics_u22_t4",
+            "title": "6.4 Rotation",
+            "subtopics": []
+          },
+          {
+            "id": "mathematics_u22_t5",
+            "title": "6.5 Applications",
+            "subtopics": []
+          }
+        ]
+      },
+      {
+        "id": "mathematics_u23",
+        "grade": "GRADE 11",
+        "title": "Unit 7 — Statistics",
+        "topics": [
+          {
+            "id": "mathematics_u23_t1",
+            "title": "7.1 Types of Data",
+            "subtopics": []
+          },
+          {
+            "id": "mathematics_u23_t2",
+            "title": "7.2 Introduction to Grouped Data",
+            "subtopics": []
+          },
+          {
+            "id": "mathematics_u23_t3",
+            "title": "7.3 Graphical Representation of Grouped Data",
+            "subtopics": []
+          },
+          {
+            "id": "mathematics_u23_t4",
+            "title": "7.4 Measures of Central Tendency and Their Interpretation",
+            "subtopics": []
+          },
+          {
+            "id": "mathematics_u23_t5",
+            "title": "7.5 Real-life Application of Statistics",
+            "subtopics": []
+          }
+        ]
+      },
+      {
+        "id": "mathematics_u24",
+        "grade": "GRADE 11",
+        "title": "Unit 8 — Probability",
+        "topics": [
+          {
+            "id": "mathematics_u24_t1",
+            "title": "8.1 Introduction",
+            "subtopics": []
+          },
+          {
+            "id": "mathematics_u24_t2",
+            "title": "8.2 Fundamental Principle of Counting",
+            "subtopics": []
+          },
+          {
+            "id": "mathematics_u24_t3",
+            "title": "8.3 Permutations and Combinations",
+            "subtopics": []
+          },
+          {
+            "id": "mathematics_u24_t4",
+            "title": "8.4 Binomial Theorem",
+            "subtopics": []
+          },
+          {
+            "id": "mathematics_u24_t5",
+            "title": "8.5 Random Experiments and Their Outcomes",
+            "subtopics": []
+          },
+          {
+            "id": "mathematics_u24_t6",
+            "title": "8.6 Events",
+            "subtopics": []
+          },
+          {
+            "id": "mathematics_u24_t7",
+            "title": "8.7 Probability of an Event",
+            "subtopics": []
+          },
+          {
+            "id": "mathematics_u24_t8",
+            "title": "8.8 Real-life Application of Probability",
+            "subtopics": []
+          }
+        ]
+      },
+      {
+        "id": "mathematics_u25",
+        "grade": "GRADE 12",
+        "title": "Unit 1 — Sequences and Series",
+        "topics": [
+          {
+            "id": "mathematics_u25_t1",
+            "title": "1.1 Sequence",
+            "subtopics": []
+          },
+          {
+            "id": "mathematics_u25_t2",
+            "title": "1.2 Arithmetic and Geometric Sequences",
+            "subtopics": []
+          },
+          {
+            "id": "mathematics_u25_t3",
+            "title": "1.3 The Sigma Notation and Partial Sums",
+            "subtopics": []
+          },
+          {
+            "id": "mathematics_u25_t4",
+            "title": "1.4 Infinite Series",
+            "subtopics": []
+          },
+          {
+            "id": "mathematics_u25_t5",
+            "title": "1.5 Applications of Sequence and Series in Daily Life",
+            "subtopics": []
+          }
+        ]
+      },
+      {
+        "id": "mathematics_u26",
+        "grade": "GRADE 12",
+        "title": "Unit 2 — Introductions to Calculus",
+        "topics": [
+          {
+            "id": "mathematics_u26_t1",
+            "title": "2.1 Introduction to Derivatives",
+            "subtopics": []
+          },
+          {
+            "id": "mathematics_u26_t2",
+            "title": "2.2 Application of Derivative",
+            "subtopics": []
+          },
+          {
+            "id": "mathematics_u26_t3",
+            "title": "2.3 Introduction to Integration",
+            "subtopics": []
+          }
+        ]
+      },
+      {
+        "id": "mathematics_u27",
+        "grade": "GRADE 12",
+        "title": "Unit 3 — Statistics",
+        "topics": [
+          {
+            "id": "mathematics_u27_t1",
+            "title": "3.1 Measures of Absolute Dispersions",
+            "subtopics": []
+          },
+          {
+            "id": "mathematics_u27_t2",
+            "title": "3.2 Interpretation of Relative Dispersions",
+            "subtopics": []
+          },
+          {
+            "id": "mathematics_u27_t3",
+            "title": "3.3 Use of Frequency Curves",
+            "subtopics": []
+          },
+          {
+            "id": "mathematics_u27_t4",
+            "title": "3.4 Sampling Techniques",
+            "subtopics": []
+          }
+        ]
+      },
+      {
+        "id": "mathematics_u28",
+        "grade": "GRADE 12",
+        "title": "Unit 4 — Introduction to Linear Programming",
+        "topics": [
+          {
+            "id": "mathematics_u28_t1",
+            "title": "4.1 Graphical Solutions of Linear Inequalities",
+            "subtopics": []
+          },
+          {
+            "id": "mathematics_u28_t2",
+            "title": "4.2 Maximum and Minimum Values",
+            "subtopics": []
+          },
+          {
+            "id": "mathematics_u28_t3",
+            "title": "4.3 Applications",
+            "subtopics": []
+          }
+        ]
+      },
+      {
+        "id": "mathematics_u29",
+        "grade": "GRADE 12",
+        "title": "Unit 5 — Mathematical Applications in Business",
+        "topics": [
+          {
+            "id": "mathematics_u29_t1",
+            "title": "5.1 Basic Mathematical Concepts in Business",
+            "subtopics": []
+          },
+          {
+            "id": "mathematics_u29_t2",
+            "title": "5.2 Time Value of Money",
+            "subtopics": []
+          },
+          {
+            "id": "mathematics_u29_t3",
+            "title": "5.3 Saving, Investing and Borrowing",
+            "subtopics": []
+          },
+          {
+            "id": "mathematics_u29_t4",
+            "title": "5.4 Taxation",
+            "subtopics": [
+              "Sets",
+              "Number System",
+              "Linear Equations",
+              "Systems of Equations",
+              "Linear Inequalities",
+              "Absolute Value",
+              "Basic Geometry",
+              "Right-angled Triangles",
+              "Basic Trigonometric Ratios",
+              "Basic Vectors",
+              "Basic Statistics and Probability",
+              "Relations and Functions",
+              "Polynomial Functions",
+              "Exponential Functions",
+              "Logarithmic Functions",
+              "Trigonometric Functions",
+              "Circles",
+              "Coordinate Geometry",
+              "Solid Figures",
+              "Rational Expressions/Functions",
+              "Matrices",
+              "Determinants",
+              "Vectors",
+              "Transformations",
+              "Statistics",
+              "Probability",
+              "Sequences and Series",
+              "Derivatives",
+              "Applications of Derivatives",
+              "Integration",
+              "Advanced Statistics",
+              "Linear Programming",
+              "Mathematical Applications in Business",
+              "Real-number operations",
+              "Equations",
+              "Inequalities",
+              "Functions",
+              "Graphs",
+              "Polynomial manipulation and zeros",
+              "Exponents and logarithms",
+              "Trigonometric ratios/functions",
+              "Coordinate geometry",
+              "Matrices and determinants",
+              "Vectors",
+              "Statistics",
+              "Probability",
+              "Number System",
+              "Equations",
+              "Inequalities",
+              "Trigonometry",
+              "Polynomial Functions",
+              "Exponential/Logarithmic Functions",
+              "Coordinate Geometry",
+              "Solid Figures",
+              "Rational Functions",
+              "Matrices",
+              "Determinants",
+              "Vectors",
+              "Probability",
+              "Sequences and Series",
+              "Calculus",
+              "Linear Programming",
+              "Business Mathematics",
+              "Set concepts",
+              "Definitions and classification of relations/functions",
+              "Function types",
+              "Symmetry concepts",
+              "Some transformation concepts",
+              "Interpretation of statistical data",
+              "Sampling",
+              "Applications and meaning of mathematical quantities",
+              "Rational vs irrational numbers",
+              "Signs with negative numbers",
+              "Equality vs inequality",
+              "Reversing an inequality when multiplying/dividing by a negative number",
+              "Extraneous solutions",
+              "Treating an equation and an inequality as if they behave identically",
+              "Relation vs function",
+              "Domain vs range",
+              "Function notation",
+              "Inverse function vs reciprocal",
+              "Composition vs multiplication",
+              "Graph interpretation",
+              "Zero/root vs coefficient",
+              "Factor vs zero",
+              "Exponent laws",
+              "Logarithm as an exponent",
+              "Restrictions on logarithmic expressions",
+              "Confusing exponential growth with logarithmic behavior",
+              "Opposite vs adjacent",
+              "Which angle is being used",
+              "Degrees vs radians",
+              "Choosing the correct trigonometric ratio",
+              "Identity vs equation",
+              "Congruent vs similar",
+              "Length ratio vs area ratio",
+              "Interior vs exterior angle",
+              "Arc vs sector vs segment",
+              "Radius vs diameter",
+              "Scalar vs vector",
+              "Direction vs magnitude",
+              "Vector addition",
+              "Matrix dimensions",
+              "Matrix multiplication",
+              "Determinant vs matrix",
+              "Matrix inverse vs reciprocal",
+              "Mean, median and mode",
+              "Population vs sample",
+              "Data representation",
+              "Counting vs probability",
+              "Permutation vs combination",
+              "Event vs outcome",
+              "Derivative vs derivative value",
+              "Rate of change vs ordinary algebraic value",
+              "Derivative vs integral",
+              "Interpreting what a calculated result actually means",
+              "Inequality direction",
+              "Boundary lines",
+              "Feasible region",
+              "Maximum vs minimum",
+              "Translating a real situation into mathematical constraints"
+            ]
+          },
+          {
+            "id": "mathematics_u29_t5",
+            "title": "3.1 Exponents and Logarithms",
+            "subtopics": []
+          },
+          {
+            "id": "mathematics_u29_t6",
+            "title": "3.2 Exponential Functions and Their Graphs",
+            "subtopics": []
+          },
+          {
+            "id": "mathematics_u29_t7",
+            "title": "3.3 Logarithmic Functions and Their Graphs",
+            "subtopics": []
+          },
+          {
+            "id": "mathematics_u29_t8",
+            "title": "3.4 Solving Exponential and Logarithmic Equations",
+            "subtopics": []
+          },
+          {
+            "id": "mathematics_u29_t9",
+            "title": "3.5 Relation between Exponential and Logarithmic Functions",
+            "subtopics": []
+          }
+        ]
+      }
+    ]
+  }
+}

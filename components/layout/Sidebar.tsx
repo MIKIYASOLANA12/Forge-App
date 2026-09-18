@@ -12,6 +12,7 @@ import { clsx } from "clsx";
 
 const NAV_ITEMS = [
   { href: "/", label: "Today", icon: Home },
+  { href: "/subjects", label: "Subjects Mastery", icon: BookOpen },
   { href: "/todo", label: "Daily Todo", icon: CheckSquare },
   { href: "/workout", label: "Workout", icon: Dumbbell },
   { href: "/physique", label: "Physique", icon: Camera },
@@ -20,7 +21,7 @@ const NAV_ITEMS = [
   { href: "/progress", label: "Progress", icon: TrendingUp },
   { href: "/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/habits", label: "Habits", icon: Target },
-  { href: "/learn", label: "Learn", icon: BookOpen },
+  { href: "/learn", label: "Learn", icon: Zap },
   { href: "/meals", label: "Nutrition", icon: UtensilsCrossed },
   { href: "/reading", label: "Reading & Life", icon: Library },
   { href: "/faith", label: "Faith", icon: Heart },

@@ -11,7 +11,7 @@ export const AI_CONFIG = {
       return process.env.GEMINI_API_KEY || ''
     },
     get defaultModel(): string {
-      return process.env.GEMINI_DEFAULT_MODEL || 'gemini-2.0-flash'
+      return process.env.GEMINI_DEFAULT_MODEL || 'gemini-3.6-flash'
     },
     isConfigured: () => Boolean(process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY.trim().length > 0),
     supportedTasks: [

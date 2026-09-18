@@ -13,7 +13,8 @@
     "db:studio": "prisma studio",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
-    "telegram:webhook": "ts-node --project tsconfig.seed.json scripts/telegram-webhook.ts"
+    "telegram:webhook": "ts-node --project tsconfig.seed.json scripts/telegram-webhook.ts",
+    "ai:test": "ts-node --project tsconfig.seed.json scripts/test-ai-providers.ts"
   },
   "prisma": {
     "seed": "ts-node --project tsconfig.seed.json prisma/seed.ts"

@@ -1,12 +1,12 @@
 {
   "subjects": {
     "CHEMISTRY": {
-      "status": "READY",
-      "startDate": null,
-      "deadline": null,
+      "status": "ACTIVE",
+      "startDate": "2026-09-18T20:58:55.399Z",
+      "deadline": "2026-10-18T20:58:55.399Z",
       "completedAt": null,
-      "activeUnitId": null,
-      "activeTopicId": null
+      "activeUnitId": "chemistry_u1",
+      "activeTopicId": "chemistry_u1_t1"
     },
     "BIOLOGY": {
       "status": "LOCKED",

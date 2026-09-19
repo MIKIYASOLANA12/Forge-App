@@ -21,6 +21,10 @@ export interface PlanMetadata {
   headerTitle: string; // e.g. "💻 5 MILLION CODERS — JAVASCRIPT", "🧪 CHEMISTRY", "🏋️ WORKOUT", "📚 READING"
   displayTitle: string; // Human-readable one-line summary
   subject?: string;
+  unitId?: string;
+  unitTitle?: string;
+  topicId?: string;
+  topicTitle?: string;
   module?: string;
   mainTopic?: string;
   topic?: string;
@@ -302,7 +306,11 @@ export function parsePlanMetadata(rawInput: any, fallbackTask?: any): PlanMetada
       category: 'CHEMISTRY',
       headerTitle: '🧪 CHEMISTRY',
       displayTitle,
-      subject: 'Chemistry',
+      subject: 'CHEMISTRY',
+      unitId: obj.unitId || fallbackTask?.unitId || 'chemistry_u1',
+      unitTitle: obj.unitTitle || fallbackTask?.unitTitle || 'Unit 1 — CHEMISTRY AND ITS IMPORTANCE',
+      topicId: obj.topicId || fallbackTask?.topicId || 'chemistry_u1_t1',
+      topicTitle: obj.topicTitle || topic,
       topic,
       mainTopic: topic,
       subtopics,
@@ -432,6 +440,10 @@ export function parsePlanMetadata(rawInput: any, fallbackTask?: any): PlanMetada
     headerTitle: header,
     displayTitle: cleanTitle,
     subject: subjectStr || undefined,
+    unitId: obj.unitId || fallbackTask?.unitId,
+    unitTitle: obj.unitTitle || fallbackTask?.unitTitle,
+    topicId: obj.topicId || fallbackTask?.topicId,
+    topicTitle: obj.topicTitle || obj.topic || cleanTitle,
     topic: obj.topic || cleanTitle,
     mainTopic: obj.mainTopic || cleanTitle,
     subtopics,

@@ -659,3 +659,69 @@ model SubjectStudySession {
   xpEarned    Int      @default(0)
 }
 
+model StudyAssessmentSession {
+  id                 String    @id @default(cuid())
+  userId             String    @default("singleton")
+  subject            String    // "CHEMISTRY" | "BIOLOGY" | "PHYSICS" | "MATHEMATICS" | "ENGLISH" | "JavaScript"
+  unitId             String
+  unitTitle          String
+  topicId            String
+  topicTitle         String
+  subtopicsJson      String?   // JSON array of subtopics
+  questionCount      Int       @default(40)
+  currentIndex       Int       @default(0)
+  status             String    @default("IN_PROGRESS") // "IN_PROGRESS" | "COMPLETED" | "ABANDONED"
+  questionsJson      String    // JSON array of question definitions
+  answersJson        String    @default("[]") // JSON array of user submitted answers and results
+  weakConceptsJson   String?   // JSON array of concept tags marked weak
+  strongConceptsJson String?   // JSON array of concept tags marked strong
+  score              Int       @default(0)
+  accuracy           Float     @default(0)
+  xpEarned           Int       @default(0)
+  startedAt          DateTime  @default(now())
+  completedAt        DateTime?
+  updatedAt          DateTime  @updatedAt
+}
+
+model ExamPaperDocument {
+  id             String              @id @default(cuid())
+  title          String
+  subject        String              // "CHEMISTRY" | "BIOLOGY" | "PHYSICS" | "MATHEMATICS" | "ENGLISH"
+  year           Int?
+  examType       String?             // "National Entrance Exam" | "Model Exam" | "Regional" etc.
+  language       String              @default("en")
+  sourceFile     String?
+  pageCount      Int                 @default(1)
+  status         String              @default("PROCESSED") // "PROCESSING" | "PROCESSED" | "ERROR"
+  rawText        String?
+  questionsCount Int                 @default(0)
+  createdAt      DateTime            @default(now())
+  questions      ExamPaperQuestion[]
+}
+
+model ExamPaperQuestion {
+  id               String            @id @default(cuid())
+  documentId       String
+  document         ExamPaperDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  questionNumber   Int?
+  pageNumber       Int?
+  subject          String
+  unitId           String?
+  unitTitle        String?
+  topicId          String?
+  topicTitle       String?
+  subtopic         String?
+  questionType     String            @default("MULTIPLE_CHOICE")
+  originalLanguage String            @default("en")
+  originalText     String
+  translatedText   String?
+  optionsJson      String?           // JSON array of options
+  officialAnswer   String?
+  aiProposedAnswer String?
+  isAnswerVerified Boolean           @default(false)
+  explanation      String?
+  conceptTag       String?
+  difficulty       String            @default("entrance")
+  createdAt        DateTime          @default(now())
+}
+

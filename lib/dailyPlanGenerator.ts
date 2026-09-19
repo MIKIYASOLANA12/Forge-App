@@ -3,6 +3,7 @@ import { getAddisNow, workoutWindowForAddisDate, getWorkoutLocationForAddisDate 
 import { calculateChemistryOneMonthPlan, calculateJavaScriptPacing } from './studyRoadmaps';
 import { getReadingSystemStatus } from './readingEngine';
 import { parsePlanMetadata } from './planParser';
+import { getSubjectRoadmap, getNextTopicInRoadmap } from './subjectRoadmapsData';
 
 const ORDER = ['Push', 'Pull', 'LegsCore'];
 
@@ -179,22 +180,38 @@ export async function ensureTodayDailyPlan(): Promise<EnrichedDailyPlan> {
       const isGym = getWorkoutLocationForAddisDate(windowInfo.startAddis) === 'GYM';
       const locationTag = isGym ? 'GYM' : 'HOME';
 
+      // Authoritative Chemistry Master Roadmap Lookup
+      const chemRoadmap = getSubjectRoadmap('CHEMISTRY');
+      let activeChemTopic = chemRoadmap.units[0]?.topics[0];
+      let activeChemUnit = chemRoadmap.units[0];
+
+      // If user has mastered topics, find next topic in sequence
+      const nextChemInfo = getNextTopicInRoadmap('CHEMISTRY', masteredTopicIds[masteredTopicIds.length - 1]);
+      if (nextChemInfo) {
+        activeChemUnit = nextChemInfo.unit;
+        activeChemTopic = nextChemInfo.topic;
+      }
+
       const tasksToCreate = [
         {
           domainId: domainByName.get('study') || defaultDomainId,
           description: JSON.stringify({
-            title: `Chemistry — ${chemPacing.currentTopic.name}`,
-            subject: 'Chemistry',
-            topic: chemPacing.currentTopic.name,
-            subtopics: chemPacing.currentTopic.subtopics,
+            title: `Chemistry — ${activeChemTopic?.title || chemPacing.currentTopic.name}`,
+            subject: 'CHEMISTRY',
+            unitId: activeChemUnit?.id || 'chemistry_u1',
+            unitTitle: activeChemUnit?.title || 'Unit 1 — CHEMISTRY AND ITS IMPORTANCE',
+            topicId: activeChemTopic?.id || 'chemistry_u1_t1',
+            topicTitle: activeChemTopic?.title || chemPacing.currentTopic.name,
+            subtopics: activeChemTopic?.subtopics || chemPacing.currentTopic.subtopics,
             practiceTarget: chemPacing.currentTopic.practiceTarget,
             reviewTarget: chemPacing.currentTopic.reviewTarget,
             isEntrancePriority: chemPacing.currentTopic.isEntrancePriority,
             sessionBreakdown: chemPacing.currentTopic.sessionBreakdown,
+            isStudy: true,
           }),
           minutesTarget: chemPacing.minutesPerDay || 75,
-          subject: 'Chemistry',
-          topic: chemPacing.currentTopic.name,
+          subject: 'CHEMISTRY',
+          topic: activeChemTopic?.title || chemPacing.currentTopic.name,
           priority: chemPacing.currentTopic.isEntrancePriority ? 'HIGH' : 'MEDIUM',
           plannedStartTime: '06:00',
           plannedEndTime: '07:30',

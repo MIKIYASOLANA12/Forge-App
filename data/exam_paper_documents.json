@@ -1,0 +1,120 @@
+{
+  "doc_1789822415314_qfaz4": {
+    "id": "doc_1789822415314_qfaz4",
+    "title": "2023 National Chemistry Entrance Exam",
+    "subject": "CHEMISTRY",
+    "year": 2023,
+    "examType": "National Entrance Exam",
+    "language": "en",
+    "sourceFile": "/uploads/past-papers/doc_1789822415314_qfaz4_chem_entrance_2023.pdf",
+    "pageCount": 1,
+    "status": "PROCESSED",
+    "rawText": "",
+    "questionsCount": 0,
+    "createdAt": "2026-09-19T12:53:37.214Z",
+    "questions": []
+  },
+  "doc_1789822472874_r2ncn": {
+    "id": "doc_1789822472874_r2ncn",
+    "title": "2023 National Chemistry Entrance Exam",
+    "subject": "CHEMISTRY",
+    "year": 2023,
+    "examType": "National Entrance Exam",
+    "language": "en",
+    "sourceFile": "/uploads/past-papers/doc_1789822472874_r2ncn_chem_entrance_2023.pdf",
+    "pageCount": 1,
+    "status": "PROCESSED",
+    "rawText": "",
+    "questionsCount": 0,
+    "createdAt": "2026-09-19T12:54:34.447Z",
+    "questions": []
+  },
+  "doc_1789822532248_u7lq4": {
+    "id": "doc_1789822532248_u7lq4",
+    "title": "2023 National Chemistry Entrance Exam",
+    "subject": "CHEMISTRY",
+    "year": 2023,
+    "examType": "National Entrance Exam",
+    "language": "en",
+    "sourceFile": "/uploads/past-papers/doc_1789822532248_u7lq4_chem_entrance_2023.pdf",
+    "pageCount": 1,
+    "status": "PROCESSED",
+    "rawText": "NATIONAL ENTRANCE EXAMINATION - GRADE 12 CHEMISTRY\n1. What mass of anhydrous sodium carbonate (Na2CO3) is required to prepare 500 mL of a 0.20 M solution? (Molar mass Na2CO3 = 106 g/mol)\nA) 10.6 g\nB) 5.3 g\nC) 21.2 g\nD) 53.0 g\n2. Which of the following oxides is amphoteric in nature?\nA) Na2O\nB) Al2O3\nC) SO3\nD) CaO",
+    "questionsCount": 3,
+    "createdAt": "2026-09-19T12:55:32.963Z",
+    "questions": [
+      {
+        "questionNumber": 1,
+        "pageNumber": 1,
+        "subject": "CHEMISTRY",
+        "unitId": "chemistry_u1",
+        "unitTitle": "Unit 1 — CHEMISTRY AND ITS IMPORTANCE",
+        "topicId": "chemistry_u1_t1",
+        "topicTitle": "1.1 Definition and Scope of Chemistry",
+        "subtopic": "Past Exam Question",
+        "questionType": "CALCULATION",
+        "originalLanguage": "en",
+        "originalText": "NATIONAL ENTRANCE EXAMINATION - GRADE 12 CHEMISTRY",
+        "options": [
+          "Option A",
+          "Option B",
+          "Option C",
+          "Option D"
+        ],
+        "aiProposedAnswer": "A",
+        "isAnswerVerified": false,
+        "explanation": "Extracted from imported past examination paper.",
+        "conceptTag": "chemistry-past-exam",
+        "difficulty": "entrance"
+      },
+      {
+        "questionNumber": 2,
+        "pageNumber": 1,
+        "subject": "CHEMISTRY",
+        "unitId": "chemistry_u1",
+        "unitTitle": "Unit 1 — CHEMISTRY AND ITS IMPORTANCE",
+        "topicId": "chemistry_u1_t1",
+        "topicTitle": "1.1 Definition and Scope of Chemistry",
+        "subtopic": "Past Exam Question",
+        "questionType": "MULTIPLE_CHOICE",
+        "originalLanguage": "en",
+        "originalText": "1. What mass of anhydrous sodium carbonate (Na2CO3) is required to prepare 500 mL of a 0.20 M solution? (Molar mass Na2CO3 = 106 g/mol)",
+        "options": [
+          "10.6 g",
+          "5.3 g",
+          "21.2 g",
+          "53.0 g"
+        ],
+        "aiProposedAnswer": "10.6 g",
+        "isAnswerVerified": false,
+        "explanation": "Extracted from imported past examination paper.",
+        "conceptTag": "chemistry-past-exam",
+        "difficulty": "entrance"
+      },
+      {
+        "questionNumber": 3,
+        "pageNumber": 1,
+        "subject": "CHEMISTRY",
+        "unitId": "chemistry_u1",
+        "unitTitle": "Unit 1 — CHEMISTRY AND ITS IMPORTANCE",
+        "topicId": "chemistry_u1_t1",
+        "topicTitle": "1.1 Definition and Scope of Chemistry",
+        "subtopic": "Past Exam Question",
+        "questionType": "MULTIPLE_CHOICE",
+        "originalLanguage": "en",
+        "originalText": "2. Which of the following oxides is amphoteric in nature?",
+        "options": [
+          "Na2O",
+          "Al2O3",
+          "SO3",
+          "CaO"
+        ],
+        "aiProposedAnswer": "Na2O",
+        "isAnswerVerified": false,
+        "explanation": "Extracted from imported past examination paper.",
+        "conceptTag": "chemistry-past-exam",
+        "difficulty": "entrance"
+      }
+    ]
+  }
+}

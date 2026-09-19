@@ -41,6 +41,7 @@ import StudyFocusModal, {
   saveStoredFocusSession,
 } from "@/components/tasks/StudyFocusModal";
 import FocusStatsBanner from "@/components/tasks/FocusStatsBanner";
+import { TopicAssessmentModal } from "@/components/study/TopicAssessmentModal";
 
 type TaskItem = {
   id: string;
@@ -268,6 +269,11 @@ export default function TodoPage() {
   const [activeFocusPayload, setActiveFocusPayload] = useState<ActiveFocusPayload | null>(null);
   const [focusRefreshTrigger, setFocusRefreshTrigger] = useState(0);
 
+  // Exact Topic Assessment Session state
+  const [assessmentModalOpen, setAssessmentModalOpen] = useState(false);
+  const [activeAssessmentSession, setActiveAssessmentSession] = useState<any>(null);
+  const [assessmentTopicInfo, setAssessmentTopicInfo] = useState<{ subject: string; topicId: string } | null>(null);
+
   // Check stored active session on mount
   useEffect(() => {
     const stored = getStoredFocusSession();
@@ -373,6 +379,7 @@ export default function TodoPage() {
       });
 
       if (res.ok) {
+        const resData = await res.json();
         setTodayData((prev) => {
           if (!prev) return prev;
           return {
@@ -380,6 +387,16 @@ export default function TodoPage() {
             tasks: prev.tasks.map((t) => (t.id === task.id ? { ...t, completed: true, status: "COMPLETED" } : t)),
           };
         });
+
+        // Automatically launch topic assessment modal for study tasks
+        if (resData.launchAssessment && resData.assessmentSession) {
+          setActiveAssessmentSession(resData.assessmentSession);
+          setAssessmentTopicInfo({
+            subject: resData.assessmentSession.subject,
+            topicId: resData.assessmentSession.topicId,
+          });
+          setAssessmentModalOpen(true);
+        }
       } else {
         const errJson = await res.json();
         setActionError(errJson.error || "Failed to complete task");
@@ -1236,6 +1253,19 @@ export default function TodoPage() {
         sessionPayload={activeFocusPayload}
         onSessionComplete={() => {
           loadData();
+          setFocusRefreshTrigger((n) => n + 1);
+        }}
+      />
+
+      {/* ── 40-QUESTION TOPIC STUDY ASSESSMENT MODAL ── */}
+      <TopicAssessmentModal
+        isOpen={assessmentModalOpen}
+        onClose={() => setAssessmentModalOpen(false)}
+        initialSession={activeAssessmentSession}
+        subjectKey={assessmentTopicInfo?.subject}
+        topicId={assessmentTopicInfo?.topicId}
+        onAssessmentCompleted={() => {
+          void loadData();
           setFocusRefreshTrigger((n) => n + 1);
         }}
       />

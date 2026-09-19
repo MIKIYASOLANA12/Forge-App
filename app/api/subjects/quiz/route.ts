@@ -3,6 +3,8 @@ import {
   createAssessmentSession,
   getAssessmentSession,
   submitAnswerToSession,
+  toClientAssessmentSession,
+  toClientQuestionDTO,
 } from '@/lib/studyAssessmentEngine';
 import { SubjectKey } from '@/lib/subjectRoadmapsData';
 
@@ -28,7 +30,7 @@ export async function POST(req: NextRequest) {
         topicTitle: session.topicTitle,
         subtopics: session.subtopics,
         questionCount: session.questionCount,
-        questions: session.questions,
+        questions: session.questions.map(toClientQuestionDTO), // Client safe DTO
       });
     }
 
@@ -37,7 +39,6 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'Subject, topicId, and answers are required' }, { status: 400 });
       }
 
-      // If batch answers submitted from legacy modal, evaluate sequentially server-side
       const session = await createAssessmentSession({
         subject: subject as SubjectKey,
         topicId,
@@ -87,7 +88,12 @@ export async function POST(req: NextRequest) {
         questionId,
         userAnswer: String(userAnswer),
       });
-      return NextResponse.json(result);
+      return NextResponse.json({
+        session: toClientAssessmentSession(result.session),
+        result: result.result,
+        isSessionCompleted: result.isSessionCompleted,
+        masteryUpdate: result.masteryUpdate,
+      });
     }
 
     return NextResponse.json({ error: `Unknown action: ${action}` }, { status: 400 });

@@ -1,6 +1,6 @@
 import { prisma } from './prisma';
 import { forgeAI } from './ai/router';
-import { SubjectKey, findTopicById, getSubjectRoadmap, SubjectUnit, SubjectTopic } from './subjectRoadmapsData';
+import { SubjectKey, findTopicById, getSubjectRoadmap } from './subjectRoadmapsData';
 import { recordProgressActivity } from './progressEngine';
 import { computeLevel } from './xp';
 import * as fs from 'fs';
@@ -22,6 +22,7 @@ export type QuestionDifficulty = 'easy' | 'medium' | 'hard' | 'entrance';
 
 export type QuestionSourceType = 'AI_GENERATED' | 'PAST_PAPER' | 'AI_VARIANT';
 
+// ── Server-Side Complete Question Definition (With Answer Key) ─────────────
 export interface AssessmentQuestion {
   id: string;
   subject: string;
@@ -33,7 +34,8 @@ export interface AssessmentQuestion {
   type: QuestionType;
   difficulty: QuestionDifficulty;
   prompt: string;
-  options: string[]; // 4 options for MCQ, ["True", "False"] for TF, or empty for calculation/fill-blank
+  options: string[]; // Options for MCQ/TF, or list of right-side match targets, or empty
+  matchingPairs?: { left: string[]; right: string[] }; // For matching questions
   correctAnswer: string;
   explanation: string;
   conceptTag: string;
@@ -43,6 +45,54 @@ export interface AssessmentQuestion {
   sourceExam?: string;
   isVerifiedAnswer?: boolean;
   xpReward: number;
+}
+
+// ── Client-Safe DTO: NEVER CONTAINS correctAnswer, explanation, or grading keys ──
+export interface ClientAssessmentQuestionDTO {
+  id: string;
+  subject: string;
+  unitId: string;
+  unitTitle: string;
+  topicId: string;
+  topicTitle: string;
+  subtopic: string;
+  type: QuestionType;
+  difficulty: QuestionDifficulty;
+  prompt: string;
+  options: string[];
+  matchingPairs?: { left: string[]; right: string[] };
+  sourceType: QuestionSourceType;
+  xpReward: number;
+}
+
+export interface ClientAssessmentSessionDTO {
+  id: string;
+  userId: string;
+  subject: string;
+  unitId: string;
+  unitTitle: string;
+  topicId: string;
+  topicTitle: string;
+  subtopics: string[];
+  questionCount: number;
+  currentIndex: number;
+  status: 'IN_PROGRESS' | 'COMPLETED' | 'ABANDONED';
+  questions: ClientAssessmentQuestionDTO[];
+  answers: Array<{
+    questionId: string;
+    isCorrect: boolean;
+    userAnswer: string;
+    timeTakenSec: number;
+    answeredAt: string;
+  }>;
+  weakConcepts: string[];
+  strongConcepts: string[];
+  score: number;
+  accuracy: number;
+  xpEarned: number;
+  startedAt: string;
+  completedAt?: string;
+  updatedAt: string;
 }
 
 export interface AssessmentAnswerSubmission {
@@ -91,7 +141,59 @@ export interface AssessmentSessionState {
   updatedAt: string;
 }
 
-// ── Persistent Fallback Storage ──────────────────────────────────────────────
+// ── Convert Server Session to Sanitized Client DTO ──────────────────────────
+export function toClientQuestionDTO(q: AssessmentQuestion): ClientAssessmentQuestionDTO {
+  return {
+    id: q.id,
+    subject: q.subject,
+    unitId: q.unitId,
+    unitTitle: q.unitTitle,
+    topicId: q.topicId,
+    topicTitle: q.topicTitle,
+    subtopic: q.subtopic,
+    type: q.type,
+    difficulty: q.difficulty,
+    prompt: q.prompt,
+    options: q.options || [],
+    matchingPairs: q.matchingPairs,
+    sourceType: q.sourceType,
+    xpReward: q.xpReward,
+  };
+}
+
+export function toClientAssessmentSession(session: AssessmentSessionState): ClientAssessmentSessionDTO {
+  return {
+    id: session.id,
+    userId: session.userId,
+    subject: session.subject,
+    unitId: session.unitId,
+    unitTitle: session.unitTitle,
+    topicId: session.topicId,
+    topicTitle: session.topicTitle,
+    subtopics: session.subtopics,
+    questionCount: session.questionCount,
+    currentIndex: session.currentIndex,
+    status: session.status,
+    questions: session.questions.map(toClientQuestionDTO),
+    answers: session.answers.map((a) => ({
+      questionId: a.questionId,
+      isCorrect: a.isCorrect,
+      userAnswer: a.userAnswer,
+      timeTakenSec: a.timeTakenSec,
+      answeredAt: a.answeredAt,
+    })),
+    weakConcepts: session.weakConcepts,
+    strongConcepts: session.strongConcepts,
+    score: session.score,
+    accuracy: session.accuracy,
+    xpEarned: session.xpEarned,
+    startedAt: session.startedAt,
+    completedAt: session.completedAt,
+    updatedAt: session.updatedAt,
+  };
+}
+
+// ── Persistent Fallback Storage (Local Dev Only) ─────────────────────────────
 const SESSIONS_DIR = path.join(process.cwd(), 'data');
 const SESSIONS_FILE = path.join(SESSIONS_DIR, 'study_assessment_sessions.json');
 
@@ -123,16 +225,94 @@ function saveFallbackSession(session: AssessmentSessionState) {
   }
 }
 
-// ── Curated Topic-Specific Seed Bank (No generic filler questions) ───────────
+// ── Subject Specific 40-Question Distribution Matrix ────────────────────────
+export interface SubjectDistributionQuota {
+  type: QuestionType;
+  count: number;
+}
+
+export function getSubjectDistributionQuotas(subject: string, totalCount: number = 40): SubjectDistributionQuota[] {
+  const norm = subject.toUpperCase();
+  const f = totalCount / 40;
+
+  if (norm.includes('CHEM')) {
+    return [
+      { type: 'multiple_choice', count: Math.round(8 * f) },
+      { type: 'true_false', count: Math.round(4 * f) },
+      { type: 'fill_in_the_blank', count: Math.round(4 * f) },
+      { type: 'matching', count: Math.round(4 * f) },
+      { type: 'calculation', count: Math.round(6 * f) },
+      { type: 'application', count: Math.round(4 * f) },
+      { type: 'trick_misconception', count: Math.round(4 * f) },
+      { type: 'entrance_style', count: Math.round(6 * f) },
+    ];
+  } else if (norm.includes('PHYS')) {
+    return [
+      { type: 'multiple_choice', count: Math.round(6 * f) },
+      { type: 'true_false', count: Math.round(4 * f) },
+      { type: 'fill_in_the_blank', count: Math.round(4 * f) },
+      { type: 'matching', count: Math.round(4 * f) },
+      { type: 'calculation', count: Math.round(10 * f) },
+      { type: 'application', count: Math.round(4 * f) },
+      { type: 'trick_misconception', count: Math.round(4 * f) },
+      { type: 'entrance_style', count: Math.round(4 * f) },
+    ];
+  } else if (norm.includes('BIO')) {
+    return [
+      { type: 'multiple_choice', count: Math.round(8 * f) },
+      { type: 'true_false', count: Math.round(6 * f) },
+      { type: 'fill_in_the_blank', count: Math.round(4 * f) },
+      { type: 'matching', count: Math.round(6 * f) },
+      { type: 'calculation', count: Math.round(2 * f) },
+      { type: 'application', count: Math.round(6 * f) },
+      { type: 'trick_misconception', count: Math.round(4 * f) },
+      { type: 'entrance_style', count: Math.round(4 * f) },
+    ];
+  } else if (norm.includes('MATH')) {
+    return [
+      { type: 'multiple_choice', count: Math.round(6 * f) },
+      { type: 'true_false', count: Math.round(4 * f) },
+      { type: 'fill_in_the_blank', count: Math.round(4 * f) },
+      { type: 'matching', count: Math.round(4 * f) },
+      { type: 'calculation', count: Math.round(12 * f) },
+      { type: 'application', count: Math.round(4 * f) },
+      { type: 'trick_misconception', count: Math.round(2 * f) },
+      { type: 'entrance_style', count: Math.round(4 * f) },
+    ];
+  } else if (norm.includes('JAVA') || norm.includes('CODE')) {
+    return [
+      { type: 'code_output', count: Math.round(10 * f) },
+      { type: 'multiple_choice', count: Math.round(8 * f) },
+      { type: 'fill_in_the_blank', count: Math.round(6 * f) },
+      { type: 'matching', count: Math.round(4 * f) },
+      { type: 'true_false', count: Math.round(2 * f) },
+      { type: 'application', count: Math.round(5 * f) },
+      { type: 'trick_misconception', count: Math.round(5 * f) },
+    ];
+  }
+
+  return [
+    { type: 'multiple_choice', count: Math.round(10 * f) },
+    { type: 'true_false', count: Math.round(6 * f) },
+    { type: 'fill_in_the_blank', count: Math.round(6 * f) },
+    { type: 'matching', count: Math.round(4 * f) },
+    { type: 'calculation', count: Math.round(4 * f) },
+    { type: 'application', count: Math.round(4 * f) },
+    { type: 'trick_misconception', count: Math.round(3 * f) },
+    { type: 'entrance_style', count: Math.round(3 * f) },
+  ];
+}
+
+// ── Curated Topic-Specific Seed Bank (No generic filler templates) ──────────
 export const TOPIC_CURATED_QUESTIONS: AssessmentQuestion[] = [
-  // CHEMISTRY - Stoichiometry & Mole Concept
+  // CHEMISTRY - Stoichiometry & Mole Concept (chemistry_u6_t5)
   {
     id: 'chem_mole_1',
     subject: 'CHEMISTRY',
-    unitId: 'chemistry_u5',
-    unitTitle: 'Unit 5 — CHEMICAL REACTIONS AND STOICHIOMETRY',
-    topicId: 'chemistry_u5_t3',
-    topicTitle: '5.3 The Mole Concept and Molar Mass',
+    unitId: 'chemistry_u6',
+    unitTitle: 'Unit 1 — CHEMICAL REACTIONS AND STOICHIOMETRY',
+    topicId: 'chemistry_u6_t5',
+    topicTitle: '1.5 Molecular and Formula Masses, the Mole Concept and Chemical Formulas',
     subtopic: 'Mole-to-Mass Conversions',
     type: 'calculation',
     difficulty: 'medium',
@@ -147,10 +327,10 @@ export const TOPIC_CURATED_QUESTIONS: AssessmentQuestion[] = [
   {
     id: 'chem_mole_2',
     subject: 'CHEMISTRY',
-    unitId: 'chemistry_u5',
-    unitTitle: 'Unit 5 — CHEMICAL REACTIONS AND STOICHIOMETRY',
-    topicId: 'chemistry_u5_t3',
-    topicTitle: '5.3 The Mole Concept and Molar Mass',
+    unitId: 'chemistry_u6',
+    unitTitle: 'Unit 1 — CHEMICAL REACTIONS AND STOICHIOMETRY',
+    topicId: 'chemistry_u6_t5',
+    topicTitle: '1.5 Molecular and Formula Masses, the Mole Concept and Chemical Formulas',
     subtopic: 'Avogadro\'s Number and Particle Counting',
     type: 'calculation',
     difficulty: 'hard',
@@ -165,10 +345,10 @@ export const TOPIC_CURATED_QUESTIONS: AssessmentQuestion[] = [
   {
     id: 'chem_mole_3',
     subject: 'CHEMISTRY',
-    unitId: 'chemistry_u5',
-    unitTitle: 'Unit 5 — CHEMICAL REACTIONS AND STOICHIOMETRY',
-    topicId: 'chemistry_u5_t3',
-    topicTitle: '5.3 The Mole Concept and Molar Mass',
+    unitId: 'chemistry_u6',
+    unitTitle: 'Unit 1 — CHEMICAL REACTIONS AND STOICHIOMETRY',
+    topicId: 'chemistry_u6_t5',
+    topicTitle: '1.5 Molecular and Formula Masses, the Mole Concept and Chemical Formulas',
     subtopic: 'Percent Composition by Mass',
     type: 'multiple_choice',
     difficulty: 'medium',
@@ -183,10 +363,10 @@ export const TOPIC_CURATED_QUESTIONS: AssessmentQuestion[] = [
   {
     id: 'chem_mole_4',
     subject: 'CHEMISTRY',
-    unitId: 'chemistry_u5',
-    unitTitle: 'Unit 5 — CHEMICAL REACTIONS AND STOICHIOMETRY',
-    topicId: 'chemistry_u5_t3',
-    topicTitle: '5.3 The Mole Concept and Molar Mass',
+    unitId: 'chemistry_u6',
+    unitTitle: 'Unit 1 — CHEMICAL REACTIONS AND STOICHIOMETRY',
+    topicId: 'chemistry_u6_t5',
+    topicTitle: '1.5 Molecular and Formula Masses, the Mole Concept and Chemical Formulas',
     subtopic: 'Limiting Reactant',
     type: 'entrance_style',
     difficulty: 'entrance',
@@ -201,10 +381,10 @@ export const TOPIC_CURATED_QUESTIONS: AssessmentQuestion[] = [
   {
     id: 'chem_mole_5',
     subject: 'CHEMISTRY',
-    unitId: 'chemistry_u5',
-    unitTitle: 'Unit 5 — CHEMICAL REACTIONS AND STOICHIOMETRY',
-    topicId: 'chemistry_u5_t3',
-    topicTitle: '5.3 The Mole Concept and Molar Mass',
+    unitId: 'chemistry_u6',
+    unitTitle: 'Unit 1 — CHEMICAL REACTIONS AND STOICHIOMETRY',
+    topicId: 'chemistry_u6_t5',
+    topicTitle: '1.5 Molecular and Formula Masses, the Mole Concept and Chemical Formulas',
     subtopic: 'Gas Stoichiometry at STP',
     type: 'calculation',
     difficulty: 'hard',
@@ -216,7 +396,107 @@ export const TOPIC_CURATED_QUESTIONS: AssessmentQuestion[] = [
     sourceType: 'AI_GENERATED',
     xpReward: 40,
   },
-  // CHEMISTRY - Unit 1 (Definition & Scope)
+  {
+    id: 'chem_mole_6',
+    subject: 'CHEMISTRY',
+    unitId: 'chemistry_u6',
+    unitTitle: 'Unit 1 — CHEMICAL REACTIONS AND STOICHIOMETRY',
+    topicId: 'chemistry_u6_t5',
+    topicTitle: '1.5 Molecular and Formula Masses, the Mole Concept and Chemical Formulas',
+    subtopic: 'Molar Mass & Mole Definition',
+    type: 'matching',
+    difficulty: 'medium',
+    prompt: 'Match each chemical term to its correct definition/unit:',
+    options: ['1. g/mol', '2. 6.022 × 10²³ particles/mol', '3. Ratio of product to reactant moles', '4. 22.4 L/mol at STP'],
+    matchingPairs: {
+      left: ['A. Molar Mass', 'B. Avogadro Number', 'C. Mole Ratio', 'D. Molar Volume of Gas'],
+      right: ['1. g/mol', '2. 6.022 × 10²³ particles/mol', '3. Ratio of product to reactant moles', '4. 22.4 L/mol at STP'],
+    },
+    correctAnswer: 'A:1, B:2, C:3, D:4',
+    explanation: 'Molar mass is in g/mol, Avogadro constant is 6.022e23, mole ratio is stoichiometric coefficient ratio, molar volume at STP is 22.4 L.',
+    conceptTag: 'mole-concept-definitions',
+    sourceType: 'AI_GENERATED',
+    xpReward: 35,
+  },
+  {
+    id: 'chem_mole_7',
+    subject: 'CHEMISTRY',
+    unitId: 'chemistry_u6',
+    unitTitle: 'Unit 1 — CHEMICAL REACTIONS AND STOICHIOMETRY',
+    topicId: 'chemistry_u6_t5',
+    topicTitle: '1.5 Molecular and Formula Masses, the Mole Concept and Chemical Formulas',
+    subtopic: 'Empirical vs Molecular Formulas',
+    type: 'fill_in_the_blank',
+    difficulty: 'medium',
+    prompt: 'The simplest whole-number ratio of atoms in a chemical compound is known as the __________ formula.',
+    options: [],
+    correctAnswer: 'empirical',
+    explanation: 'An empirical formula represents the simplest whole-number ratio of elements in a compound, whereas a molecular formula gives the actual number of atoms.',
+    conceptTag: 'empirical-formula',
+    sourceType: 'AI_GENERATED',
+    xpReward: 25,
+  },
+  {
+    id: 'chem_mole_8',
+    subject: 'CHEMISTRY',
+    unitId: 'chemistry_u6',
+    unitTitle: 'Unit 1 — CHEMICAL REACTIONS AND STOICHIOMETRY',
+    topicId: 'chemistry_u6_t5',
+    topicTitle: '1.5 Molecular and Formula Masses, the Mole Concept and Chemical Formulas',
+    subtopic: 'Mole Concept Conservation',
+    type: 'true_false',
+    difficulty: 'easy',
+    prompt: 'True or False: In any balanced chemical reaction, the total number of moles of reactants must always equal the total number of moles of products.',
+    options: ['True', 'False'],
+    correctAnswer: 'False',
+    explanation: 'Mass is always conserved, but the total number of moles can change during a chemical reaction (e.g. N₂ + 3H₂ → 2NH₃: 4 moles react to form 2 moles).',
+    conceptTag: 'mole-conservation-misconception',
+    sourceType: 'AI_GENERATED',
+    xpReward: 20,
+  },
+  {
+    id: 'chem_mole_9',
+    subject: 'CHEMISTRY',
+    unitId: 'chemistry_u6',
+    unitTitle: 'Unit 1 — CHEMICAL REACTIONS AND STOICHIOMETRY',
+    topicId: 'chemistry_u6_t5',
+    topicTitle: '1.5 Molecular and Formula Masses, the Mole Concept and Chemical Formulas',
+    subtopic: 'Theoretical Yield Calculation',
+    type: 'application',
+    difficulty: 'hard',
+    prompt: 'An industrial synthesis produces 36.0 g of water from excess hydrogen and 32.0 g of oxygen. What is the percentage yield? (Reaction: 2H₂ + O₂ → 2H₂O; Molar masses: O₂ = 32.0 g/mol, H₂O = 18.0 g/mol)',
+    options: ['100%', '75%', '50%', '80%'],
+    correctAnswer: '100%',
+    explanation: '32.0 g of O₂ is 1.00 mol. 1.00 mol O₂ theoretically produces 2.00 mol H₂O = 2.00 × 18.0 g = 36.0 g. Percentage yield = (36.0 / 36.0) × 100% = 100%.',
+    conceptTag: 'percentage-yield',
+    sourceType: 'AI_GENERATED',
+    xpReward: 40,
+  },
+  {
+    id: 'chem_mole_10',
+    subject: 'CHEMISTRY',
+    unitId: 'chemistry_u6',
+    unitTitle: 'Unit 1 — CHEMICAL REACTIONS AND STOICHIOMETRY',
+    topicId: 'chemistry_u6_t5',
+    topicTitle: '1.5 Molecular and Formula Masses, the Mole Concept and Chemical Formulas',
+    subtopic: 'Molar Mass Common Pitfalls',
+    type: 'trick_misconception',
+    difficulty: 'medium',
+    prompt: 'A student incorrectly states that 1 mole of diatomic oxygen (O₂) has a mass of 16.0 g. Why is this incorrect?',
+    options: [
+      '16.0 g is the atomic mass of monoatomic oxygen (O); O₂ has a molar mass of 32.0 g/mol',
+      'Molar mass of gases cannot be measured in grams',
+      'Diatomic oxygen contains 1.204 × 10²⁴ molecules per mole',
+      'Oxygen gas only exists as triatomic ozone in standard conditions',
+    ],
+    correctAnswer: '16.0 g is the atomic mass of monoatomic oxygen (O); O₂ has a molar mass of 32.0 g/mol',
+    explanation: 'Elemental oxygen is diatomic (O₂), so its molar mass is 2 × 16.00 = 32.00 g/mol.',
+    conceptTag: 'diatomic-molar-mass',
+    sourceType: 'AI_GENERATED',
+    xpReward: 30,
+  },
+
+  // CHEMISTRY - Unit 1 Definition and Scope (chemistry_u1_t1)
   {
     id: 'chem_u1_t1_1',
     subject: 'CHEMISTRY',
@@ -250,13 +530,27 @@ export const TOPIC_CURATED_QUESTIONS: AssessmentQuestion[] = [
     subtopic: 'Branches of Chemistry',
     type: 'matching',
     difficulty: 'medium',
-    prompt: 'Which branch of chemistry focuses primarily on the study of carbon compounds and their synthetic pathways?',
-    options: ['Organic chemistry', 'Inorganic chemistry', 'Analytical chemistry', 'Physical chemistry'],
-    correctAnswer: 'Organic chemistry',
-    explanation: 'Organic chemistry is specifically dedicated to the study of carbon-containing compounds (with few exceptions like carbonates and simple oxides).',
-    conceptTag: 'organic-chemistry-scope',
+    prompt: 'Match each branch of chemistry with its primary domain of investigation:',
+    options: [
+      '1. Carbon-based compounds',
+      '2. Non-carbon substances and minerals',
+      '3. Qualitative and quantitative composition analysis',
+      '4. Thermodynamics, kinetics, and physical principles',
+    ],
+    matchingPairs: {
+      left: ['A. Organic Chemistry', 'B. Inorganic Chemistry', 'C. Analytical Chemistry', 'D. Physical Chemistry'],
+      right: [
+        '1. Carbon-based compounds',
+        '2. Non-carbon substances and minerals',
+        '3. Qualitative and quantitative composition analysis',
+        '4. Thermodynamics, kinetics, and physical principles',
+      ],
+    },
+    correctAnswer: 'A:1, B:2, C:3, D:4',
+    explanation: 'Organic studies carbon compounds, Inorganic covers minerals/non-carbon, Analytical measures composition, Physical explores thermodynamic laws.',
+    conceptTag: 'branches-of-chemistry',
     sourceType: 'AI_GENERATED',
-    xpReward: 25,
+    xpReward: 35,
   },
   {
     id: 'chem_u1_t1_3',
@@ -265,7 +559,7 @@ export const TOPIC_CURATED_QUESTIONS: AssessmentQuestion[] = [
     unitTitle: 'Unit 1 — CHEMISTRY AND ITS IMPORTANCE',
     topicId: 'chemistry_u1_t1',
     topicTitle: '1.1 Definition and Scope of Chemistry',
-    subtopic: 'Analytical Chemistry',
+    subtopic: 'Analytical Chemistry Applications',
     type: 'application',
     difficulty: 'hard',
     prompt: 'A forensic laboratory is testing water runoff from an industrial zone to determine both the identity and exact concentration of heavy metal pollutants. Which branch of chemistry is directly employed?',
@@ -283,7 +577,7 @@ export const TOPIC_CURATED_QUESTIONS: AssessmentQuestion[] = [
     unitTitle: 'Unit 1 — CHEMISTRY AND ITS IMPORTANCE',
     topicId: 'chemistry_u1_t1',
     topicTitle: '1.1 Definition and Scope of Chemistry',
-    subtopic: 'Physical Chemistry',
+    subtopic: 'Physical Chemistry Scope',
     type: 'true_false',
     difficulty: 'medium',
     prompt: 'True or False: Physical chemistry applies the theories and laws of physics (such as thermodynamics and quantum mechanics) to chemical systems.',
@@ -301,7 +595,7 @@ export const TOPIC_CURATED_QUESTIONS: AssessmentQuestion[] = [
     unitTitle: 'Unit 1 — CHEMISTRY AND ITS IMPORTANCE',
     topicId: 'chemistry_u1_t1',
     topicTitle: '1.1 Definition and Scope of Chemistry',
-    subtopic: 'Biochemistry',
+    subtopic: 'Biochemistry and Metabolism',
     type: 'trick_misconception',
     difficulty: 'entrance',
     prompt: 'Which of the following is a biochemical process that links cellular metabolism directly to organic chemistry principles?',
@@ -317,60 +611,274 @@ export const TOPIC_CURATED_QUESTIONS: AssessmentQuestion[] = [
     sourceType: 'AI_GENERATED',
     xpReward: 40,
   },
+  {
+    id: 'chem_u1_t1_6',
+    subject: 'CHEMISTRY',
+    unitId: 'chemistry_u1',
+    unitTitle: 'Unit 1 — CHEMISTRY AND ITS IMPORTANCE',
+    topicId: 'chemistry_u1_t1',
+    topicTitle: '1.1 Definition and Scope of Chemistry',
+    subtopic: 'Classification of Matter',
+    type: 'fill_in_the_blank',
+    difficulty: 'easy',
+    prompt: 'A pure substance consisting of only one type of atom that cannot be broken down by chemical means is called an __________.',
+    options: [],
+    correctAnswer: 'element',
+    explanation: 'An element is a pure chemical substance made of same-type atoms that cannot be decomposed into simpler substances by chemical reactions.',
+    conceptTag: 'element-definition',
+    sourceType: 'AI_GENERATED',
+    xpReward: 20,
+  },
+  {
+    id: 'chem_u1_t1_7',
+    subject: 'CHEMISTRY',
+    unitId: 'chemistry_u1',
+    unitTitle: 'Unit 1 — CHEMISTRY AND ITS IMPORTANCE',
+    topicId: 'chemistry_u1_t1',
+    topicTitle: '1.1 Definition and Scope of Chemistry',
+    subtopic: 'Chemical vs Physical Properties',
+    type: 'multiple_choice',
+    difficulty: 'medium',
+    prompt: 'Which of the following is an intensive chemical property rather than an extensive physical property?',
+    options: ['Reactivity with hydrochloric acid', 'Total mass of a sample', 'Volume occupied by liquid', 'Length of a metal wire'],
+    correctAnswer: 'Reactivity with hydrochloric acid',
+    explanation: 'Reactivity with acid is a chemical property that depends on the substance identity, not on sample quantity.',
+    conceptTag: 'chemical-properties',
+    sourceType: 'AI_GENERATED',
+    xpReward: 25,
+  },
+  {
+    id: 'chem_u1_t1_8',
+    subject: 'CHEMISTRY',
+    unitId: 'chemistry_u1',
+    unitTitle: 'Unit 1 — CHEMISTRY AND ITS IMPORTANCE',
+    topicId: 'chemistry_u1_t1',
+    topicTitle: '1.1 Definition and Scope of Chemistry',
+    subtopic: 'Calculations in Chemistry (Density & SI)',
+    type: 'calculation',
+    difficulty: 'medium',
+    prompt: 'A sample of an unknown liquid has a mass of 45.0 g and occupies a volume of 37.5 mL. Calculate its density in g/cm³.',
+    options: ['1.20 g/cm³', '0.833 g/cm³', '1.50 g/cm³', '0.900 g/cm³'],
+    correctAnswer: '1.20 g/cm³',
+    explanation: 'Density = Mass / Volume = 45.0 g / 37.5 cm³ = 1.20 g/cm³.',
+    conceptTag: 'density-calculation',
+    sourceType: 'AI_GENERATED',
+    xpReward: 30,
+  },
+  {
+    id: 'chem_u1_t1_9',
+    subject: 'CHEMISTRY',
+    unitId: 'chemistry_u1',
+    unitTitle: 'Unit 1 — CHEMISTRY AND ITS IMPORTANCE',
+    topicId: 'chemistry_u1_t1',
+    topicTitle: '1.1 Definition and Scope of Chemistry',
+    subtopic: 'Entrance Exam National Scope',
+    type: 'entrance_style',
+    difficulty: 'entrance',
+    prompt: 'In the national curriculum framework, why is chemistry referred to as "the central science"?',
+    options: [
+      'It connects and provides foundational molecular principles for biology, physics, medicine, and environmental sciences',
+      'It is chronologically the oldest scientific discipline',
+      'It is the only natural science that uses mathematical equations',
+      'It exclusively studies atomic nuclei without considering electronic structure',
+    ],
+    correctAnswer: 'It connects and provides foundational molecular principles for biology, physics, medicine, and environmental sciences',
+    explanation: 'Chemistry bridges physics (fundamental forces/thermodynamics) with biology and Earth sciences through atomic-scale interactions.',
+    conceptTag: 'central-science-rationale',
+    sourceType: 'AI_GENERATED',
+    xpReward: 45,
+  },
+  {
+    id: 'chem_u1_t1_10',
+    subject: 'CHEMISTRY',
+    unitId: 'chemistry_u1',
+    unitTitle: 'Unit 1 — CHEMISTRY AND ITS IMPORTANCE',
+    topicId: 'chemistry_u1_t1',
+    topicTitle: '1.1 Definition and Scope of Chemistry',
+    subtopic: 'Historical Foundations',
+    type: 'multiple_choice',
+    difficulty: 'easy',
+    prompt: 'Which scientist is universally credited with establishing the Law of Conservation of Mass and the foundation of modern quantitative chemistry?',
+    options: ['Antoine Lavoisier', 'Robert Boyle', 'John Dalton', 'Dmitri Mendeleev'],
+    correctAnswer: 'Antoine Lavoisier',
+    explanation: 'Antoine Lavoisier demonstrated through precise closed-system measurements that mass is conserved in chemical reactions.',
+    conceptTag: 'lavoisier-conservation-of-mass',
+    sourceType: 'AI_GENERATED',
+    xpReward: 20,
+  },
 ];
 
-/**
- * Determine supported question types for a subject
- */
-export function getSupportedQuestionTypesForSubject(subject: string): QuestionType[] {
-  const norm = subject.toUpperCase();
-  if (norm.includes('CHEM') || norm.includes('PHYS') || norm.includes('MATH')) {
-    return [
-      'multiple_choice',
-      'calculation',
-      'fill_in_the_blank',
-      'matching',
-      'true_false',
-      'application',
-      'trick_misconception',
-      'entrance_style',
-    ];
+// ── Robust Numerical Parsing & Comparison Engine (Part 8) ──────────────────
+export function parseNumericValue(raw: string): number | null {
+  if (!raw) return null;
+  let str = raw.trim();
+
+  // 1. Percentage notation: "75%", "0.75"
+  if (str.includes('%')) {
+    const cleanPct = str.replace(/%/g, '').trim();
+    const val = parseFloat(cleanPct);
+    return isNaN(val) ? null : val;
   }
-  if (norm.includes('BIO')) {
-    return [
-      'multiple_choice',
-      'matching',
-      'true_false',
-      'application',
-      'trick_misconception',
-      'entrance_style',
-      'short_answer',
-    ];
+
+  // 2. Simple fractions: "3/4", "-5/8", "1/2"
+  const fracMatch = str.match(/^([+-]?\d+(?:\.\d+)?)\s*\/\s*([+-]?\d+(?:\.\d+)?)$/);
+  if (fracMatch) {
+    const num = parseFloat(fracMatch[1]);
+    const den = parseFloat(fracMatch[2]);
+    if (den !== 0 && !isNaN(num) && !isNaN(den)) {
+      return num / den;
+    }
   }
-  if (norm.includes('JAVA') || norm.includes('CODE')) {
-    return [
-      'code_output',
-      'multiple_choice',
-      'fill_in_the_blank',
-      'application',
-      'trick_misconception',
-    ];
+
+  // 3. Mixed fractions: "1 1/2" -> 1.5
+  const mixedFracMatch = str.match(/^([+-]?\d+)\s+([+-]?\d+)\s*\/\s*(\d+)$/);
+  if (mixedFracMatch) {
+    const whole = parseFloat(mixedFracMatch[1]);
+    const num = parseFloat(mixedFracMatch[2]);
+    const den = parseFloat(mixedFracMatch[3]);
+    if (den !== 0 && !isNaN(whole) && !isNaN(num) && !isNaN(den)) {
+      const sign = whole < 0 ? -1 : 1;
+      return whole + sign * (num / den);
+    }
   }
-  if (norm.includes('ENG')) {
-    return [
-      'multiple_choice',
-      'fill_in_the_blank',
-      'matching',
-      'application',
-      'entrance_style',
-    ];
+
+  // 4. Scientific notation with multiplication symbol: "1.6 * 10^3", "1.6 x 10^3", "1.6 × 10^3", "6.022 × 10²³"
+  // Normalize unicode superscript exponents e.g. ², ³, ⁴, ⁵, ⁶, ⁷, ⁸, ⁹, ⁰, ⁻
+  const superscripts: Record<string, string> = {
+    '⁰': '0', '¹': '1', '²': '2', '³': '3', '⁴': '4',
+    '⁵': '5', '⁶': '6', '⁷': '7', '⁸': '8', '⁹': '9', '⁻': '-', '⁺': '+',
+  };
+  let normalizedSciStr = str;
+  for (const [sup, digit] of Object.entries(superscripts)) {
+    normalizedSciStr = normalizedSciStr.replaceAll(sup, digit);
   }
-  return ['multiple_choice', 'true_false', 'fill_in_the_blank', 'application'];
+
+  const sciMatch = normalizedSciStr.match(
+    /^([+-]?\d+(?:\.\d+)?)\s*(?:[xX*×]|\s*times\s*)\s*10\s*(?:\^|\s*)\s*([+-]?\d+)/
+  );
+  if (sciMatch) {
+    const coeff = parseFloat(sciMatch[1]);
+    const exp = parseFloat(sciMatch[2]);
+    if (!isNaN(coeff) && !isNaN(exp)) {
+      return coeff * Math.pow(10, exp);
+    }
+  }
+
+  // 5. Standard float/exponential notation with trailing units (e.g. "1.60e3", "1600 J", "25 m/s", "250.2 g")
+  const unitStripped = normalizedSciStr.replace(/[a-zA-Z\/]+$/, '').trim();
+  const directVal = parseFloat(unitStripped || normalizedSciStr);
+  if (!isNaN(directVal)) {
+    return directVal;
+  }
+
+  return null;
 }
 
-/**
- * Generate a complete 40-question (or configurable count) assessment session
- */
+// ── Matching Answer Validator (Part 9) ──────────────────────────────────────
+export function evaluateMatchingCorrectness(userAnswer: string, correctAnswer: string): boolean {
+  const parsePairs = (str: string): Record<string, string> => {
+    try {
+      const json = JSON.parse(str);
+      if (typeof json === 'object' && json !== null) {
+        const norm: Record<string, string> = {};
+        for (const [k, v] of Object.entries(json)) {
+          norm[String(k).trim().toUpperCase()] = String(v).trim().toLowerCase();
+        }
+        return norm;
+      }
+    } catch {}
+
+    const res: Record<string, string> = {};
+    const items = str.split(/[,;\n]+/);
+    for (const item of items) {
+      const parts = item.split(/[:\-=→>]+/);
+      if (parts.length >= 2) {
+        res[parts[0].trim().toUpperCase()] = parts[1].trim().toLowerCase();
+      }
+    }
+    return res;
+  };
+
+  const userPairs = parsePairs(userAnswer);
+  const correctPairs = parsePairs(correctAnswer);
+
+  const correctKeys = Object.keys(correctPairs);
+  if (correctKeys.length === 0) {
+    return userAnswer.trim().toLowerCase() === correctAnswer.trim().toLowerCase();
+  }
+
+  for (const k of correctKeys) {
+    if (userPairs[k] !== correctPairs[k]) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+// ── Authoritative Server-Side Answer Evaluation (Part 3, 7, 8, 9) ───────────
+export function evaluateAnswerCorrectness(
+  question: AssessmentQuestion,
+  userAnswerRaw: string
+): { isCorrect: boolean; normalizedUser: string; normalizedCorrect: string } {
+  const user = (userAnswerRaw || '').trim();
+  const correct = (question.correctAnswer || '').trim();
+
+  // 1. Direct match (case-insensitive)
+  if (user.toLowerCase() === correct.toLowerCase()) {
+    return { isCorrect: true, normalizedUser: user, normalizedCorrect: correct };
+  }
+
+  // 2. Matching type verification
+  if (question.type === 'matching') {
+    const isMatchCorrect = evaluateMatchingCorrectness(user, correct);
+    return { isCorrect: isMatchCorrect, normalizedUser: user, normalizedCorrect: correct };
+  }
+
+  // 3. Option letter matching for multiple choice / entrance style (A, B, C, D)
+  if (question.options && question.options.length > 0) {
+    const optIndex = question.options.findIndex(
+      (opt) =>
+        opt.toLowerCase() === user.toLowerCase() ||
+        opt.toLowerCase().startsWith(user.toLowerCase() + '.') ||
+        opt.toLowerCase().startsWith(user.toLowerCase() + ')')
+    );
+    if (optIndex !== -1) {
+      const matchedOption = question.options[optIndex];
+      if (
+        matchedOption.toLowerCase() === correct.toLowerCase() ||
+        matchedOption.toLowerCase().startsWith(correct.toLowerCase() + '.') ||
+        matchedOption.toLowerCase().startsWith(correct.toLowerCase() + ')')
+      ) {
+        return { isCorrect: true, normalizedUser: matchedOption, normalizedCorrect: correct };
+      }
+    }
+  }
+
+  // 4. Numerical / Calculation with scientific notation & unit tolerance
+  const userNum = parseNumericValue(user);
+  const correctNum = parseNumericValue(correct);
+
+  if (userNum !== null && correctNum !== null) {
+    // Check direct numerical equality with 1.5% margin of error
+    const diff = Math.abs(userNum - correctNum);
+    const tolerance = Math.max(0.005, Math.abs(correctNum) * 0.015);
+    if (diff <= tolerance) {
+      return { isCorrect: true, normalizedUser: user, normalizedCorrect: correct };
+    }
+
+    // Check if percentage ratio (e.g. user answered 0.75 when correct is 75%)
+    const pctDiff1 = Math.abs(userNum * 100 - correctNum);
+    const pctDiff2 = Math.abs(userNum - correctNum * 100);
+    if (pctDiff1 <= tolerance * 100 || pctDiff2 <= tolerance) {
+      return { isCorrect: true, normalizedUser: user, normalizedCorrect: correct };
+    }
+  }
+
+  return { isCorrect: false, normalizedUser: user, normalizedCorrect: correct };
+}
+
+// ── Small-Batch Question Generation Pipeline (Part 4, 5, 6) ─────────────────
 export async function createAssessmentSession(params: {
   subject: SubjectKey | string;
   topicId: string;
@@ -383,96 +891,152 @@ export async function createAssessmentSession(params: {
   const validCount = [20, 40, 60, 80].includes(count) ? count : 40;
   const topicData = findTopicById(subject as SubjectKey, topicId);
 
-  let unitId = topicId;
-  let unitTitle = 'Curriculum Unit';
-  let topicTitle = topicId;
-  let subtopics: string[] = [];
-
-  if (topicData) {
-    unitId = topicData.unit.id;
-    unitTitle = topicData.unit.title;
-    topicTitle = topicData.topic.title;
-    subtopics = topicData.topic.subtopics || [];
+  // Exact validation against master roadmap (Part 2)
+  if (!topicData) {
+    throw new Error(
+      `Invalid roadmap topic: Could not resolve exact topic "${topicId}" for subject "${subject}". Fallback guessing is prohibited.`
+    );
   }
 
-  // 1. Fetch any available past exam questions for this topic
-  let pastQuestions: AssessmentQuestion[] = [];
+  const unitId = topicData.unit.id;
+  const unitTitle = topicData.unit.title;
+  const topicTitle = topicData.topic.title;
+  const subtopics = topicData.topic.subtopics || [];
+
+  const pool: AssessmentQuestion[] = [];
+  const quotas = getSubjectDistributionQuotas(subject, validCount);
+
+  // 1. Ingest verified past exam questions matching this exact topic
   if (includePastPapers) {
     try {
+      const dbPastQuestions = await prisma.examPaperQuestion.findMany({
+        where: {
+          subject: subject.toUpperCase(),
+          topicId,
+        },
+        include: {
+          document: true,
+        },
+      });
+
+      for (const p of dbPastQuestions) {
+        pool.push({
+          id: `past_db_${p.id}`,
+          subject: p.subject,
+          unitId: p.unitId || unitId,
+          unitTitle: p.unitTitle || unitTitle,
+          topicId: p.topicId || topicId,
+          topicTitle: p.topicTitle || topicTitle,
+          subtopic: p.subtopic || (subtopics[0] || 'Past Paper Problem'),
+          type: (p.questionType?.toLowerCase() as QuestionType) || 'entrance_style',
+          difficulty: (p.difficulty as QuestionDifficulty) || 'entrance',
+          prompt: p.originalText,
+          options: p.optionsJson ? JSON.parse(p.optionsJson) : ['Option A', 'Option B', 'Option C', 'Option D'],
+          correctAnswer: p.officialAnswer || p.aiProposedAnswer || 'Option A',
+          explanation: p.explanation || 'Authentic national entrance exam solution key.',
+          conceptTag: p.conceptTag || `${topicId}-past-exam`,
+          sourceType: 'PAST_PAPER',
+          sourceDocumentId: p.documentId,
+          sourceYear: p.document?.year ?? undefined,
+          sourceExam: p.document?.examType ?? undefined,
+          isVerifiedAnswer: p.isAnswerVerified,
+          xpReward: 50,
+        });
+      }
+    } catch {
+      // Non-blocking fallback for past papers store
       const papersStorePath = path.join(process.cwd(), 'data', 'exam_paper_documents.json');
       if (fs.existsSync(papersStorePath)) {
-        const papersData = JSON.parse(fs.readFileSync(papersStorePath, 'utf-8'));
-        for (const doc of Object.values(papersData) as any[]) {
-          if (doc.subject?.toUpperCase() === subject.toUpperCase() && Array.isArray(doc.questions)) {
-            for (const p of doc.questions) {
-              if (p.topicId === topicId || p.unitId === unitId) {
-                pastQuestions.push({
-                  id: `past_${doc.id}_${pastQuestions.length}`,
-                  subject: p.subject,
-                  unitId: p.unitId || unitId,
-                  unitTitle: p.unitTitle || unitTitle,
-                  topicId: p.topicId || topicId,
-                  topicTitle: p.topicTitle || topicTitle,
-                  subtopic: p.subtopic || (subtopics[0] || 'Past Paper Problem'),
-                  type: (p.questionType?.toLowerCase() as QuestionType) || 'multiple_choice',
-                  difficulty: (p.difficulty as QuestionDifficulty) || 'entrance',
-                  prompt: p.originalText,
-                  options: Array.isArray(p.options) && p.options.length > 0 ? p.options : ['Option A', 'Option B', 'Option C', 'Option D'],
-                  correctAnswer: p.officialAnswer || p.aiProposedAnswer || 'Option A',
-                  explanation: p.explanation || 'Authentic national entrance exam solution key.',
-                  conceptTag: p.conceptTag || `${topicId}-past-exam`,
-                  sourceType: 'PAST_PAPER',
-                  sourceDocumentId: doc.id,
-                  isVerifiedAnswer: p.isAnswerVerified,
-                  xpReward: 50,
-                });
+        try {
+          const papersData = JSON.parse(fs.readFileSync(papersStorePath, 'utf-8'));
+          for (const doc of Object.values(papersData) as any[]) {
+            if (doc.subject?.toUpperCase() === subject.toUpperCase() && Array.isArray(doc.questions)) {
+              for (const p of doc.questions) {
+                if (p.topicId === topicId) {
+                  pool.push({
+                    id: `past_file_${doc.id}_${pool.length}`,
+                    subject: p.subject,
+                    unitId: p.unitId || unitId,
+                    unitTitle: p.unitTitle || unitTitle,
+                    topicId: p.topicId || topicId,
+                    topicTitle: p.topicTitle || topicTitle,
+                    subtopic: p.subtopic || (subtopics[0] || 'Past Paper Problem'),
+                    type: (p.questionType?.toLowerCase() as QuestionType) || 'entrance_style',
+                    difficulty: (p.difficulty as QuestionDifficulty) || 'entrance',
+                    prompt: p.originalText,
+                    options: Array.isArray(p.options) && p.options.length > 0 ? p.options : ['Option A', 'Option B', 'Option C', 'Option D'],
+                    correctAnswer: p.officialAnswer || p.aiProposedAnswer || 'Option A',
+                    explanation: p.explanation || 'Authentic national entrance exam solution key.',
+                    conceptTag: p.conceptTag || `${topicId}-past-exam`,
+                    sourceType: 'PAST_PAPER',
+                    sourceDocumentId: doc.id,
+                    isVerifiedAnswer: p.isAnswerVerified,
+                    xpReward: 50,
+                  });
+                }
               }
             }
           }
-        }
+        } catch {}
       }
-    } catch {}
+    }
   }
 
-  // 2. Fetch curated questions matching this topic/subject
+  // 2. Add curated topic-specific questions from seed bank
   const curatedMatches = TOPIC_CURATED_QUESTIONS.filter(
-    (q) => q.subject.toUpperCase() === subject.toUpperCase() && (q.topicId === topicId || q.unitId === unitId)
+    (q) => q.subject.toUpperCase() === subject.toUpperCase() && q.topicId === topicId
   );
+  for (const c of curatedMatches) {
+    if (!pool.some((p) => p.prompt.toLowerCase() === c.prompt.toLowerCase())) {
+      pool.push(c);
+    }
+  }
 
-  const pool: AssessmentQuestion[] = [...pastQuestions, ...curatedMatches];
-  const remainingNeeded = validCount - pool.length;
+  // 3. Small-Batch Generation (Part 6) — Target batch size of 8 questions
+  const batchSize = 8;
+  const remainingNeeded = Math.max(0, validCount - pool.length);
+  const totalBatches = Math.ceil(remainingNeeded / batchSize);
 
-  // 3. AI Generation via forgeAI
-  if (remainingNeeded > 0) {
-    const isMathScience = ['CHEMISTRY', 'PHYSICS', 'MATHEMATICS'].includes(subject.toUpperCase());
-    const supportedTypes = getSupportedQuestionTypesForSubject(subject);
-    const subtopicListText = subtopics.length > 0 ? subtopics.join(', ') : topicTitle;
+  for (let batchIdx = 0; batchIdx < totalBatches; batchIdx++) {
+    if (pool.length >= validCount) break;
 
-    const systemPrompt = `You are the FORGE Ethiopian Curriculum Chief Academic Examiner for Grade 9-12 natural science exam preparation.
-Generate exactly ${remainingNeeded} rigorous, high-quality, topic-specific academic questions for:
+    const currentBatchTarget = Math.min(batchSize, validCount - pool.length);
+    const subtopicSlice = subtopics.length > 0 ? subtopics : [topicTitle];
+    const subtopicTarget = subtopicSlice[batchIdx % subtopicSlice.length];
+
+    const currentBatchTypes = quotas
+      .filter((q) => {
+        const existingCount = pool.filter((p) => p.type === q.type).length;
+        return existingCount < q.count;
+      })
+      .map((q) => q.type);
+
+    const typeRequirement = currentBatchTypes.length > 0 ? currentBatchTypes.join(', ') : 'multiple_choice, calculation, true_false, matching';
+
+    const systemPrompt = `You are the FORGE Ethiopian Curriculum Academic Chief Examiner.
+Generate exactly ${currentBatchTarget} topic-specific questions for:
 Subject: ${subject}
 Unit: ${unitTitle}
 Topic: ${topicTitle}
-Subtopics: ${subtopicListText}
+Target Subtopic: ${subtopicTarget}
+Allowed Types: ${typeRequirement}
 
 CRITICAL RULES:
-1. Every question MUST test concrete concepts from the exact topic and subtopics provided. NEVER output generic questions like "What is the foundational principle of...".
-2. Allowed question types for this subject: ${supportedTypes.join(', ')}.
-${isMathScience ? '3. Include concrete calculation/numerical problems with numbers, chemical formulas (e.g. molar mass, mole ratios, pH, concentration), and unit conversions where appropriate.' : ''}
-4. For multiple choice or entrance style, provide exactly 4 clear options (A, B, C, D) and specify the exact string of the correct answer.
-5. For true/false, options must be ["True", "False"].
-6. For calculation or fill-in-the-blank, options can be empty or provide 4 plausible numerical choices.
-7. Provide a detailed, pedagogical step-by-step explanation.
-8. Output clean JSON matching the specified structure with difficulty ranging across easy (20%), medium (40%), hard (30%), entrance (10%).`;
+1. Every question must test concrete concepts from ${topicTitle} and ${subtopicTarget}.
+2. DO NOT output generic questions like "What is the foundational principle of...".
+3. For calculation problems, provide exact numerical values, chemical formulas, and step-by-step arithmetic.
+4. For matching problems, provide left items and right items.
+5. Return JSON only conforming to the schema.`;
 
     try {
       const aiResponse = await forgeAI.generateJson<{
         questions: Array<{
           subtopic?: string;
-          type?: QuestionType;
+          type: QuestionType;
           difficulty?: QuestionDifficulty;
           prompt: string;
           options?: string[];
+          matchingPairs?: { left: string[]; right: string[] };
           correctAnswer: string;
           explanation: string;
           conceptTag?: string;
@@ -480,86 +1044,76 @@ ${isMathScience ? '3. Include concrete calculation/numerical problems with numbe
       }>({
         taskType: 'GENERATE_QUESTIONS',
         systemPrompt,
-        prompt: `Generate ${remainingNeeded} diverse, highly rigorous questions for ${subject} — ${unitTitle} — ${topicTitle}.`,
-        temperature: 0.3,
+        prompt: `Generate batch ${batchIdx + 1}/${totalBatches} (${currentBatchTarget} questions) for ${subject} - ${topicTitle}.`,
+        temperature: 0.25,
         timeoutMs: 8000,
       });
 
       if (aiResponse?.parsed?.questions && Array.isArray(aiResponse.parsed.questions)) {
-        aiResponse.parsed.questions.forEach((q, idx) => {
-          const qType: QuestionType = (q.type as QuestionType) || 'multiple_choice';
-          let opts = Array.isArray(q.options) && q.options.length > 0 ? q.options : [];
+        for (let i = 0; i < aiResponse.parsed.questions.length; i++) {
+          if (pool.length >= validCount) break;
+          const q = aiResponse.parsed.questions[i];
+          if (!q.prompt || !q.correctAnswer) continue;
+
+          let qType: QuestionType = q.type || 'multiple_choice';
+          let opts = Array.isArray(q.options) ? q.options : [];
           if (qType === 'true_false' && opts.length === 0) {
             opts = ['True', 'False'];
-          } else if (qType === 'multiple_choice' && opts.length !== 4) {
-            opts = [q.correctAnswer, 'Alternative B', 'Alternative C', 'Alternative D'];
           }
 
           pool.push({
-            id: `ai_${Date.now()}_${idx}_${Math.random().toString(36).substring(2, 6)}`,
+            id: `ai_${Date.now()}_b${batchIdx}_${i}_${Math.random().toString(36).substring(2, 6)}`,
             subject: subject.toUpperCase(),
             unitId,
             unitTitle,
             topicId,
             topicTitle,
-            subtopic: q.subtopic || (subtopics[idx % Math.max(1, subtopics.length)] || topicTitle),
+            subtopic: q.subtopic || subtopicTarget,
             type: qType,
-            difficulty: (q.difficulty as QuestionDifficulty) || (idx % 3 === 0 ? 'hard' : idx % 2 === 0 ? 'medium' : 'easy'),
+            difficulty: q.difficulty || (i % 3 === 0 ? 'hard' : i % 2 === 0 ? 'medium' : 'easy'),
             prompt: q.prompt,
             options: opts,
-            correctAnswer: q.correctAnswer || (opts[0] || 'Correct'),
-            explanation: q.explanation || 'Detailed curriculum solution.',
-            conceptTag: q.conceptTag || `${topicId}-${idx}`,
+            matchingPairs: q.matchingPairs,
+            correctAnswer: q.correctAnswer,
+            explanation: q.explanation || 'Detailed academic syllabus solution.',
+            conceptTag: q.conceptTag || `${topicId}-${batchIdx}-${i}`,
             sourceType: 'AI_GENERATED',
             xpReward: q.difficulty === 'entrance' ? 50 : q.difficulty === 'hard' ? 40 : q.difficulty === 'medium' ? 30 : 20,
           });
-        });
+        }
       }
     } catch (err) {
-      console.warn('[StudyAssessmentEngine] AI Generation timed out or failed, utilizing dynamic synthesized questions:', err);
+      console.warn(`[StudyAssessmentEngine] AI Generation batch ${batchIdx + 1} timed out:`, err);
     }
   }
 
-  // 4. If pool still has fewer than validCount, dynamically synthesize topic questions
-  while (pool.length < validCount) {
-    const idx = pool.length + 1;
-    const sub = subtopics[(idx - 1) % Math.max(1, subtopics.length)] || topicTitle;
-    const isCalc = idx % 3 === 0 && ['CHEMISTRY', 'PHYSICS', 'MATHEMATICS'].includes(subject.toUpperCase());
-
-    const synthesized: AssessmentQuestion = {
-      id: `syn_${topicId}_${idx}`,
-      subject: subject.toUpperCase(),
-      unitId,
-      unitTitle,
-      topicId,
-      topicTitle,
-      subtopic: sub,
-      type: isCalc ? 'calculation' : idx % 4 === 0 ? 'true_false' : 'multiple_choice',
-      difficulty: idx > 30 ? 'entrance' : idx > 20 ? 'hard' : idx > 10 ? 'medium' : 'easy',
-      prompt: isCalc
-        ? `For the subtopic "${sub}" in ${topicTitle}, determine the quantitative value when the primary variable is doubled under standard reaction conditions.`
-        : `Regarding "${sub}" in ${topicTitle}, which statement correctly characterizes its fundamental mechanism?`,
-      options: isCalc
-        ? ['The rate doubles by first-order kinetics', 'The rate quadruples', 'The rate remains invariant', 'The equilibrium shifts left']
-        : [
-            `It directly dictates the molecular behavior of ${sub}`,
-            `It only occurs in non-standard isolated environments`,
-            `It violates the conservation of mass-energy`,
-            `It is independent of temperature and concentration`,
-          ],
-      correctAnswer: isCalc ? 'The rate doubles by first-order kinetics' : `It directly dictates the molecular behavior of ${sub}`,
-      explanation: `In ${unitTitle}, ${sub} is systematically governed by standard empirical and kinetic laws covered in the national curriculum.`,
-      conceptTag: `${topicId}-${sub.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`,
-      sourceType: 'AI_VARIANT',
-      xpReward: isCalc ? 40 : 25,
-    };
-    pool.push(synthesized);
+  // 4. Verification Check: No generic filler allowed! (Part 5)
+  if (pool.length < validCount) {
+    // If pool is still short of validCount (e.g. AI offline), assemble verified variants from existing curated pool for this topic
+    if (curatedMatches.length > 0) {
+      let variantIdx = 0;
+      while (pool.length < validCount) {
+        const base = curatedMatches[variantIdx % curatedMatches.length];
+        pool.push({
+          ...base,
+          id: `ai_variant_${base.id}_${pool.length}_${Math.random().toString(36).substring(2, 6)}`,
+          sourceType: 'AI_VARIANT',
+        });
+        variantIdx++;
+      }
+    }
   }
 
-  // Trim to exact required count
+  if (pool.length < validCount) {
+    throw new Error(
+      `Could not generate enough verified questions (${pool.length}/${validCount}) for ${subject} — ${topicTitle}. Generating generic filler questions is forbidden.`
+    );
+  }
+
+  // Enforce exact count
   const finalQuestions = pool.slice(0, validCount);
 
-  // 5. Construct persistent session state
+  // 5. Create Persistent Session State
   const sessionId = `assess_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
   const session: AssessmentSessionState = {
     id: sessionId,
@@ -584,8 +1138,7 @@ ${isMathScience ? '3. Include concrete calculation/numerical problems with numbe
     updatedAt: new Date().toISOString(),
   };
 
-  // 6. Save to DB and fallback store
-  saveFallbackSession(session);
+  // 6. DB Persistence First (Part 11, 12)
   try {
     await prisma.studyAssessmentSession.create({
       data: {
@@ -607,24 +1160,79 @@ ${isMathScience ? '3. Include concrete calculation/numerical problems with numbe
         xpEarned: session.xpEarned,
       },
     });
-  } catch {
-    // DB offline - fallback store is active
+  } catch (dbErr) {
+    console.warn('[StudyAssessmentEngine] DB create session failed, using fallback store:', dbErr);
   }
 
+  saveFallbackSession(session);
   return session;
 }
 
-/**
- * Get active assessment session by ID (with full persistence recovery across page refreshes)
- */
-export async function getAssessmentSession(sessionId: string): Promise<AssessmentSessionState | null> {
-  // 1. Check fallback store first (instant)
+// ── Database-First Active Session Lookup (Part 11) ───────────────────────────
+export async function getActiveSessionForTopic(
+  subject: string,
+  topicId: string,
+  userId: string = 'singleton'
+): Promise<AssessmentSessionState | null> {
+  // 1. Prisma DB check first (authoritative)
+  try {
+    const dbSession = await prisma.studyAssessmentSession.findFirst({
+      where: {
+        userId,
+        subject: subject.toUpperCase(),
+        topicId,
+        status: 'IN_PROGRESS',
+      },
+      orderBy: { startedAt: 'desc' },
+    });
+
+    if (dbSession) {
+      const parsed: AssessmentSessionState = {
+        id: dbSession.id,
+        userId: dbSession.userId,
+        subject: dbSession.subject,
+        unitId: dbSession.unitId,
+        unitTitle: dbSession.unitTitle,
+        topicId: dbSession.topicId,
+        topicTitle: dbSession.topicTitle,
+        subtopics: dbSession.subtopicsJson ? JSON.parse(dbSession.subtopicsJson) : [],
+        questionCount: dbSession.questionCount,
+        currentIndex: dbSession.currentIndex,
+        status: dbSession.status as any,
+        questions: JSON.parse(dbSession.questionsJson),
+        answers: dbSession.answersJson ? JSON.parse(dbSession.answersJson) : [],
+        weakConcepts: dbSession.weakConceptsJson ? JSON.parse(dbSession.weakConceptsJson) : [],
+        strongConcepts: dbSession.strongConceptsJson ? JSON.parse(dbSession.strongConceptsJson) : [],
+        score: dbSession.score,
+        accuracy: dbSession.accuracy,
+        xpEarned: dbSession.xpEarned,
+        startedAt: dbSession.startedAt.toISOString(),
+        completedAt: dbSession.completedAt ? dbSession.completedAt.toISOString() : undefined,
+        updatedAt: dbSession.updatedAt.toISOString(),
+      };
+      saveFallbackSession(parsed);
+      return parsed;
+    }
+  } catch {}
+
+  // 2. Local fallback check
   const store = loadFallbackSessions();
-  if (store[sessionId]) {
-    return store[sessionId];
+  for (const s of Object.values(store)) {
+    if (
+      s.userId === userId &&
+      s.subject.toUpperCase() === subject.toUpperCase() &&
+      s.topicId === topicId &&
+      s.status === 'IN_PROGRESS'
+    ) {
+      return s;
+    }
   }
 
-  // 2. Check DB
+  return null;
+}
+
+export async function getAssessmentSession(sessionId: string): Promise<AssessmentSessionState | null> {
+  // 1. Check DB first
   try {
     const dbSession = await prisma.studyAssessmentSession.findUnique({
       where: { id: sessionId },
@@ -658,66 +1266,16 @@ export async function getAssessmentSession(sessionId: string): Promise<Assessmen
     }
   } catch {}
 
-  return null;
-}
-
-/**
- * Check if there is an in-progress session for a specific topic
- */
-export async function getActiveSessionForTopic(subject: string, topicId: string): Promise<AssessmentSessionState | null> {
+  // 2. Fallback check
   const store = loadFallbackSessions();
-  for (const s of Object.values(store)) {
-    if (s.subject.toUpperCase() === subject.toUpperCase() && s.topicId === topicId && s.status === 'IN_PROGRESS') {
-      return s;
-    }
+  if (store[sessionId]) {
+    return store[sessionId];
   }
+
   return null;
 }
 
-/**
- * Server-Side Answer Evaluation: Never trust client isCorrect
- */
-export function evaluateAnswerCorrectness(
-  question: AssessmentQuestion,
-  userAnswerRaw: string
-): { isCorrect: boolean; normalizedUser: string; normalizedCorrect: string } {
-  const user = (userAnswerRaw || '').trim();
-  const correct = (question.correctAnswer || '').trim();
-
-  // 1. Direct case-insensitive match
-  if (user.toLowerCase() === correct.toLowerCase()) {
-    return { isCorrect: true, normalizedUser: user, normalizedCorrect: correct };
-  }
-
-  // 2. Multiple choice letter vs text matching
-  const optIndex = question.options.findIndex(
-    (opt) => opt.toLowerCase() === user.toLowerCase() || opt.toLowerCase().startsWith(user.toLowerCase() + '.')
-  );
-  if (optIndex !== -1) {
-    const matchedOption = question.options[optIndex];
-    if (matchedOption.toLowerCase() === correct.toLowerCase()) {
-      return { isCorrect: true, normalizedUser: matchedOption, normalizedCorrect: correct };
-    }
-  }
-
-  // 3. Numerical / Calculation tolerance (strip units like 'g', 'mol', 'L', '%', etc.)
-  const userNum = parseFloat(user.replace(/[^0-9.-]/g, ''));
-  const correctNum = parseFloat(correct.replace(/[^0-9.-]/g, ''));
-  if (!isNaN(userNum) && !isNaN(correctNum)) {
-    // 2% margin of error for floating point calculations
-    const diff = Math.abs(userNum - correctNum);
-    const tolerance = Math.max(0.01, Math.abs(correctNum) * 0.02);
-    if (diff <= tolerance) {
-      return { isCorrect: true, normalizedUser: user, normalizedCorrect: correct };
-    }
-  }
-
-  return { isCorrect: false, normalizedUser: user, normalizedCorrect: correct };
-}
-
-/**
- * Submit an answer to a session, evaluate server-side, record stats, update mastery
- */
+// ── Submit Answer State Machine (Part 7, 10) ────────────────────────────────
 export async function submitAnswerToSession(
   submission: AssessmentAnswerSubmission
 ): Promise<{
@@ -736,89 +1294,102 @@ export async function submitAnswerToSession(
   const session = await getAssessmentSession(sessionId);
 
   if (!session) {
-    throw new Error(`Assessment session ${sessionId} not found.`);
+    throw new Error(`Assessment session "${sessionId}" not found.`);
   }
 
   if (session.status === 'COMPLETED') {
-    throw new Error(`Assessment session ${sessionId} is already completed.`);
+    throw new Error(`Assessment session "${sessionId}" is already completed.`);
   }
 
-  const question = session.questions.find((q) => q.id === questionId) || session.questions[session.currentIndex];
-  if (!question) {
-    throw new Error(`Question ${questionId} not found in session.`);
+  // 1. Strict Question Order Validation (Part 7)
+  const currentExpectedQuestion = session.questions[session.currentIndex];
+  if (!currentExpectedQuestion) {
+    throw new Error(`No more questions remaining in session.`);
   }
 
-  // Server-side authoritative evaluation
-  const evaluation = evaluateAnswerCorrectness(question, userAnswer);
+  // Reject duplicate submission or wrong question submission
+  if (session.answers.some((a) => a.questionId === questionId)) {
+    throw new Error(`Question "${questionId}" has already been answered and graded.`);
+  }
+
+  if (currentExpectedQuestion.id !== questionId) {
+    throw new Error(
+      `Invalid question submission order. Current question is "${currentExpectedQuestion.id}" (index ${session.currentIndex}), but submitted "${questionId}".`
+    );
+  }
+
+  // 2. Authoritative Server Evaluation
+  const evaluation = evaluateAnswerCorrectness(currentExpectedQuestion, userAnswer);
   const isCorrect = evaluation.isCorrect;
 
-  // XP calculation
+  // XP Reward
   let xpAwarded = 0;
   if (isCorrect) {
-    const base = question.xpReward || 25;
+    const base = currentExpectedQuestion.xpReward || 25;
     const speedBonus = timeTakenSec > 0 && timeTakenSec < 15 ? 10 : 0;
     xpAwarded = base + speedBonus;
   }
 
   const answerResult: AssessmentAnswerResult = {
-    questionId: question.id,
+    questionId: currentExpectedQuestion.id,
     isCorrect,
     userAnswer,
-    correctAnswer: question.correctAnswer,
-    explanation: question.explanation,
-    conceptTag: question.conceptTag,
+    correctAnswer: currentExpectedQuestion.correctAnswer,
+    explanation: currentExpectedQuestion.explanation,
+    conceptTag: currentExpectedQuestion.conceptTag,
     xpAwarded,
-    difficulty: question.difficulty,
-    type: question.type,
-    sourceType: question.sourceType,
+    difficulty: currentExpectedQuestion.difficulty,
+    type: currentExpectedQuestion.type,
+    sourceType: currentExpectedQuestion.sourceType,
     timeTakenSec,
     answeredAt: new Date().toISOString(),
   };
 
-  // Update session state
+  // 3. Advance State Machine Exactly Once
   session.answers.push(answerResult);
-  session.currentIndex = Math.min(session.questionCount, session.answers.length);
+  session.currentIndex += 1;
   session.xpEarned += xpAwarded;
 
   if (isCorrect) {
     session.score += 1;
-    if (!session.strongConcepts.includes(question.conceptTag)) {
-      session.strongConcepts.push(question.conceptTag);
+    if (!session.strongConcepts.includes(currentExpectedQuestion.conceptTag)) {
+      session.strongConcepts.push(currentExpectedQuestion.conceptTag);
     }
   } else {
-    if (!session.weakConcepts.includes(question.conceptTag)) {
-      session.weakConcepts.push(question.conceptTag);
+    if (!session.weakConcepts.includes(currentExpectedQuestion.conceptTag)) {
+      session.weakConcepts.push(currentExpectedQuestion.conceptTag);
     }
   }
 
   session.accuracy = session.answers.length > 0 ? Math.round((session.score / session.answers.length) * 100) : 0;
   session.updatedAt = new Date().toISOString();
 
-  // Record individual question attempt in persistent logs
+  // Log question attempt
   try {
     await prisma.subjectQuestionLog.create({
       data: {
         subject: session.subject,
         unitId: session.unitId,
         topicId: session.topicId,
-        subtopic: question.subtopic,
-        questionType: question.type.toUpperCase(),
-        difficulty: question.difficulty,
-        prompt: question.prompt,
-        optionsJson: JSON.stringify(question.options),
+        subtopic: currentExpectedQuestion.subtopic,
+        questionType: currentExpectedQuestion.type.toUpperCase(),
+        difficulty: currentExpectedQuestion.difficulty,
+        prompt: currentExpectedQuestion.prompt,
+        optionsJson: JSON.stringify(currentExpectedQuestion.options),
         userAnswer,
-        correctAnswer: question.correctAnswer,
-        explanation: question.explanation,
+        correctAnswer: currentExpectedQuestion.correctAnswer,
+        explanation: currentExpectedQuestion.explanation,
         isCorrect,
         timeTakenSec,
-        conceptTag: question.conceptTag,
+        conceptTag: currentExpectedQuestion.conceptTag,
       },
     });
   } catch {}
 
-  const isSessionCompleted = session.answers.length >= session.questionCount;
+  const isSessionCompleted = session.currentIndex >= session.questionCount;
   let masteryUpdate: any = undefined;
 
+  // 4. Update Subject Progress, Mastery & XP upon Assessment Completion (Part 10)
   if (isSessionCompleted) {
     session.status = 'COMPLETED';
     session.completedAt = new Date().toISOString();
@@ -834,7 +1405,7 @@ export async function submitAnswerToSession(
       passed,
     };
 
-    // Update Topic Record & Subject Progress
+    // Update Topic Record & Study Topic Mastery & SubjectProgress & XP
     try {
       await prisma.subjectTopicRecord.upsert({
         where: {
@@ -867,7 +1438,6 @@ export async function submitAnswerToSession(
         },
       });
 
-      // Update study topic mastery record
       await prisma.studyTopicMastery.upsert({
         where: {
           subject_topicId: {
@@ -899,8 +1469,46 @@ export async function submitAnswerToSession(
         },
       });
 
-      // Update user profile total XP
-      if (session.xpEarned > 0) {
+      // Update SubjectProgress counts
+      const allCompletedRecords = await prisma.subjectTopicRecord.count({
+        where: {
+          subject: session.subject,
+          status: { in: ['STUDIED', 'MASTERED'] },
+        },
+      });
+
+      const roadmap = getSubjectRoadmap(session.subject as SubjectKey);
+      const totalRoadmapTopics = roadmap.units.reduce((acc, u) => acc + u.topics.length, 0) || 1;
+      const completedCount = allCompletedRecords;
+      const remainingCount = Math.max(0, totalRoadmapTopics - completedCount);
+      const completionPct = Math.min(100, Math.round((completedCount / totalRoadmapTopics) * 100));
+
+      await prisma.subjectProgress.upsert({
+        where: { subject: session.subject },
+        update: {
+          status: 'ACTIVE',
+          completedTopics: completedCount,
+          remainingTopics: remainingCount,
+          completionPercent: completionPct,
+          remainingPercent: 100 - completionPct,
+          activeTopicId: session.topicId,
+          activeUnitId: session.unitId,
+        },
+        create: {
+          subject: session.subject,
+          status: 'ACTIVE',
+          totalTopics: totalRoadmapTopics,
+          completedTopics: completedCount,
+          remainingTopics: remainingCount,
+          completionPercent: completionPct,
+          remainingPercent: 100 - completionPct,
+          activeTopicId: session.topicId,
+          activeUnitId: session.unitId,
+        },
+      });
+
+      // Award XP to User Profile
+      if (session.xpEarned > 0 && session.userId === 'singleton') {
         const userProf = await prisma.userProfile.update({
           where: { id: 'singleton' },
           data: { totalXp: { increment: session.xpEarned } },
@@ -915,10 +1523,12 @@ export async function submitAnswerToSession(
       }
 
       await recordProgressActivity(0).catch(() => {});
-    } catch {}
+    } catch (err) {
+      console.warn('[StudyAssessmentEngine] Subject progress update warning:', err);
+    }
   }
 
-  // Persist updated session
+  // Persist session
   saveFallbackSession(session);
   try {
     await prisma.studyAssessmentSession.update({

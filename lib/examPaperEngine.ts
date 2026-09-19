@@ -75,7 +75,7 @@ function saveFallbackPaper(doc: IngestedExamDocument) {
 }
 
 /**
- * Main Exam Paper Ingestion Pipeline
+ * Main Exam Paper Ingestion Pipeline (Part 13)
  */
 export async function ingestExamPaperDocument(params: {
   title: string;
@@ -99,7 +99,7 @@ export async function ingestExamPaperDocument(params: {
   fs.writeFileSync(filePath, fileBuffer);
   const sourceFileUrl = `/uploads/past-papers/${safeFileName}`;
 
-  // 2. Extract initial raw text from PDF if text layer exists
+  // 2. Extract initial raw text from PDF
   let extractedRawText = '';
   let pageCount = 1;
   const isPdf = fileName.toLowerCase().endsWith('.pdf') || mimeType === 'application/pdf';
@@ -137,7 +137,7 @@ YOUR TASKS:
 3. PRESERVE ORIGINAL TEXT EXACTLY including mathematical notation (LaTeX/Unicode), exponents, subscripts, and chemical formulas. DO NOT distort chemical equations or numbers.
 4. If the text is in another language (e.g. Amharic), provide a high-precision English translatedText while keeping originalText completely intact.
 5. Identify question type (MULTIPLE_CHOICE, CALCULATION, TRUE_FALSE, SHORT_ANSWER, MATCHING).
-6. Match each question to the most specific Unit ID (${roadmap.units.map((u) => u.id).join(', ')}) and Topic ID from the provided curriculum roadmap.
+6. Match each question to the exact Unit ID and Topic ID from the provided curriculum roadmap IF AND ONLY IF confidence is high. If confidence is low or ambiguous, return null for unitId and topicId. DO NOT guess.
 7. If an official answer key is clearly marked in the paper, set officialAnswer. If not present, provide a proposed aiProposedAnswer and set isAnswerVerified: false.
 8. Provide a clear pedagogical explanation and tag key concepts.`;
 
@@ -153,7 +153,7 @@ YOUR TASKS:
       const base64Data = fileBuffer.toString('base64');
       const aiDocResult = await forgeAI.processDocument({
         systemPrompt,
-        prompt: `Extract and categorize all examination questions from this ${subject} test paper titled "${title}". Return JSON conforming to schema: { language: string, questions: Array<{ questionNumber: number, originalText: string, translatedText?: string, options: string[], officialAnswer?: string, aiProposedAnswer: string, isAnswerVerified: boolean, unitId: string, topicId: string, subtopic: string, questionType: string, conceptTag: string, explanation: string, difficulty: string }> }`,
+        prompt: `Extract and categorize all examination questions from this ${subject} test paper titled "${title}". Return JSON conforming to schema: { language: string, questions: Array<{ questionNumber: number, originalText: string, translatedText?: string, options: string[], officialAnswer?: string, aiProposedAnswer: string, isAnswerVerified: boolean, unitId?: string, topicId?: string, subtopic?: string, questionType: string, conceptTag?: string, explanation?: string, difficulty?: string }> }`,
         documents: [
           {
             mimeType: isPdf ? 'application/pdf' : mimeType || 'image/png',
@@ -167,27 +167,33 @@ YOUR TASKS:
       const parsedJson = JSON.parse(aiDocResult.text.replace(/```json|```/g, '').trim());
       if (parsedJson && Array.isArray(parsedJson.questions)) {
         detectedLanguage = parsedJson.language || 'en';
-        parsedQuestions = parsedJson.questions.map((q: any) => ({
-          questionNumber: q.questionNumber,
-          pageNumber: q.pageNumber || 1,
-          subject: subject.toUpperCase(),
-          unitId: q.unitId || roadmap.units[0]?.id || 'u1',
-          unitTitle: roadmap.units.find((u) => u.id === q.unitId)?.title || 'Curriculum Unit',
-          topicId: q.topicId || roadmap.units[0]?.topics[0]?.id || 't1',
-          topicTitle: roadmap.units.flatMap((u) => u.topics).find((t) => t.id === q.topicId)?.title || 'Core Topic',
-          subtopic: q.subtopic || 'Examination Question',
-          questionType: q.questionType || 'MULTIPLE_CHOICE',
-          originalLanguage: detectedLanguage,
-          originalText: q.originalText,
-          translatedText: q.translatedText,
-          options: Array.isArray(q.options) ? q.options : [],
-          officialAnswer: q.officialAnswer,
-          aiProposedAnswer: q.aiProposedAnswer,
-          isAnswerVerified: Boolean(q.isAnswerVerified),
-          explanation: q.explanation || 'Official national exam solution.',
-          conceptTag: q.conceptTag || `${subject.toLowerCase()}-past-paper`,
-          difficulty: (q.difficulty as any) || 'entrance',
-        }));
+        parsedQuestions = parsedJson.questions.map((q: any) => {
+          // Exact roadmap validation
+          let resolvedUnit = q.unitId ? roadmap.units.find((u) => u.id === q.unitId) : null;
+          let resolvedTopic = q.topicId ? roadmap.units.flatMap((u) => u.topics).find((t) => t.id === q.topicId) : null;
+
+          return {
+            questionNumber: q.questionNumber,
+            pageNumber: q.pageNumber || 1,
+            subject: subject.toUpperCase(),
+            unitId: resolvedUnit?.id ?? undefined,
+            unitTitle: resolvedUnit?.title ?? undefined,
+            topicId: resolvedTopic?.id ?? undefined,
+            topicTitle: resolvedTopic?.title ?? undefined,
+            subtopic: q.subtopic ?? undefined,
+            questionType: q.questionType || 'MULTIPLE_CHOICE',
+            originalLanguage: detectedLanguage,
+            originalText: q.originalText,
+            translatedText: q.translatedText,
+            options: Array.isArray(q.options) ? q.options : [],
+            officialAnswer: q.officialAnswer,
+            aiProposedAnswer: q.aiProposedAnswer,
+            isAnswerVerified: Boolean(q.isAnswerVerified),
+            explanation: q.explanation || 'Official national exam solution.',
+            conceptTag: q.conceptTag || `${subject.toLowerCase()}-past-paper`,
+            difficulty: (q.difficulty as any) || 'entrance',
+          };
+        });
       }
     }
   } catch (err) {
@@ -203,20 +209,39 @@ YOUR TASKS:
       .filter((c) => c.length > 5);
 
     parsedQuestions = chunks.map((chunk, idx) => {
-      // Extract options if present (A), B), C), D))
       const lines = chunk.split('\n').map((l) => l.trim());
       const promptLine = lines[0];
       const optLines = lines.filter((l) => /^[A-D][\)\.]/i.test(l)).map((l) => l.replace(/^[A-D][\)\.]\s*/i, '').trim());
+
+      // Attempt keyword matching against roadmap topics without blind guessing
+      let matchedUnitId: string | undefined = undefined;
+      let matchedUnitTitle: string | undefined = undefined;
+      let matchedTopicId: string | undefined = undefined;
+      let matchedTopicTitle: string | undefined = undefined;
+
+      const lowerChunk = chunk.toLowerCase();
+      for (const u of roadmap.units) {
+        for (const t of u.topics) {
+          if (lowerChunk.includes(t.title.toLowerCase()) || (t.subtopics && t.subtopics.some((st) => lowerChunk.includes(st.toLowerCase())))) {
+            matchedUnitId = u.id;
+            matchedUnitTitle = u.title;
+            matchedTopicId = t.id;
+            matchedTopicTitle = t.title;
+            break;
+          }
+        }
+        if (matchedTopicId) break;
+      }
 
       return {
         questionNumber: idx + 1,
         pageNumber: 1,
         subject: subject.toUpperCase(),
-        unitId: roadmap.units[0]?.id || 'chemistry_u1',
-        unitTitle: roadmap.units[0]?.title || 'Unit 1',
-        topicId: roadmap.units[0]?.topics[0]?.id || 'chemistry_u1_t1',
-        topicTitle: roadmap.units[0]?.topics[0]?.title || 'General Concept',
-        subtopic: 'Past Exam Question',
+        unitId: matchedUnitId,
+        unitTitle: matchedUnitTitle,
+        topicId: matchedTopicId,
+        topicTitle: matchedTopicTitle,
+        subtopic: matchedTopicId ? 'Extracted Past Exam Question' : 'Unmapped — Review Required',
         questionType: optLines.length > 0 ? 'MULTIPLE_CHOICE' : 'CALCULATION',
         originalLanguage: 'en',
         originalText: promptLine || chunk,
@@ -224,7 +249,7 @@ YOUR TASKS:
         aiProposedAnswer: optLines[0] || 'A',
         isAnswerVerified: false,
         explanation: 'Extracted from imported past examination paper.',
-        conceptTag: `${subject.toLowerCase()}-past-exam`,
+        conceptTag: matchedTopicId ? `${matchedTopicId}-past-exam` : `${subject.toLowerCase()}-unmapped-past-exam`,
         difficulty: 'entrance',
       };
     });
@@ -272,26 +297,28 @@ YOUR TASKS:
           questionNumber: q.questionNumber,
           pageNumber: q.pageNumber,
           subject: q.subject,
-          unitId: q.unitId,
-          unitTitle: q.unitTitle,
-          topicId: q.topicId,
-          topicTitle: q.topicTitle,
-          subtopic: q.subtopic,
+          unitId: q.unitId ?? null,
+          unitTitle: q.unitTitle ?? null,
+          topicId: q.topicId ?? null,
+          topicTitle: q.topicTitle ?? null,
+          subtopic: q.subtopic ?? null,
           questionType: q.questionType,
           originalLanguage: q.originalLanguage,
           originalText: q.originalText,
-          translatedText: q.translatedText,
+          translatedText: q.translatedText ?? null,
           optionsJson: JSON.stringify(q.options),
-          officialAnswer: q.officialAnswer,
-          aiProposedAnswer: q.aiProposedAnswer,
+          officialAnswer: q.officialAnswer ?? null,
+          aiProposedAnswer: q.aiProposedAnswer ?? null,
           isAnswerVerified: q.isAnswerVerified,
-          explanation: q.explanation,
-          conceptTag: q.conceptTag,
+          explanation: q.explanation ?? null,
+          conceptTag: q.conceptTag ?? null,
           difficulty: q.difficulty,
         },
       });
     }
-  } catch {}
+  } catch (err) {
+    console.warn('[ExamPaperEngine] DB persistence warning, saved to fallback store:', err);
+  }
 
   return examDoc;
 }
@@ -300,6 +327,52 @@ YOUR TASKS:
  * Get all past examination papers
  */
 export async function getExamPaperDocuments(subject?: string): Promise<IngestedExamDocument[]> {
+  try {
+    const dbDocs = await prisma.examPaperDocument.findMany({
+      where: subject ? { subject: subject.toUpperCase() } : undefined,
+      include: { questions: true },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    if (dbDocs.length > 0) {
+      return dbDocs.map((d) => ({
+        id: d.id,
+        title: d.title,
+        subject: d.subject,
+        year: d.year ?? undefined,
+        examType: d.examType ?? undefined,
+        language: d.language,
+        sourceFile: d.sourceFile ?? undefined,
+        pageCount: d.pageCount,
+        status: d.status as any,
+        rawText: d.rawText ?? undefined,
+        questionsCount: d.questionsCount,
+        createdAt: d.createdAt.toISOString(),
+        questions: d.questions.map((q) => ({
+          questionNumber: q.questionNumber ?? undefined,
+          pageNumber: q.pageNumber ?? undefined,
+          subject: q.subject,
+          unitId: q.unitId ?? undefined,
+          unitTitle: q.unitTitle ?? undefined,
+          topicId: q.topicId ?? undefined,
+          topicTitle: q.topicTitle ?? undefined,
+          subtopic: q.subtopic ?? undefined,
+          questionType: q.questionType,
+          originalLanguage: q.originalLanguage,
+          originalText: q.originalText,
+          translatedText: q.translatedText ?? undefined,
+          options: q.optionsJson ? JSON.parse(q.optionsJson) : [],
+          officialAnswer: q.officialAnswer ?? undefined,
+          aiProposedAnswer: q.aiProposedAnswer ?? undefined,
+          isAnswerVerified: q.isAnswerVerified,
+          explanation: q.explanation ?? undefined,
+          conceptTag: q.conceptTag ?? undefined,
+          difficulty: q.difficulty as any,
+        })),
+      }));
+    }
+  } catch {}
+
   const store = loadFallbackPapers();
   const list = Object.values(store);
   if (subject) {

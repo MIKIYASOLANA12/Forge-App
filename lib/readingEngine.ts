@@ -123,29 +123,31 @@ export function get2027DeadlineMetrics(now: Date = getAddisNow()) {
  * Ensures the initial sequential reading curriculum is seeded.
  */
 export async function ensureReadingCurriculum() {
-  const existingBooks = await prisma.book.findMany({ orderBy: { order: 'asc' } });
+  try {
+    const existingBooks = await prisma.book.findMany({ orderBy: { order: 'asc' } }).catch(() => []);
 
-  if (existingBooks.length === 0) {
-    for (const item of INITIAL_CURRICULUM) {
-      await prisma.book.create({
-        data: {
-          title: item.title,
-          author: item.author,
-          totalPages: item.totalPages,
-          startPage: 1,
-          currentPage: 0,
-          deadlineDays: item.deadlineDays,
-          category: item.category,
-          goals: item.goals,
-          competencyTags: item.competencyTags,
-          order: item.order,
-          status: item.order === 1 ? 'reading' : 'queued',
-          startDate: item.order === 1 ? new Date() : null,
-          targetFinishDate: item.order === 1 ? new Date(Date.now() + item.deadlineDays * 86400000) : null,
-        },
-      });
+    if (existingBooks.length === 0) {
+      for (const item of INITIAL_CURRICULUM) {
+        await prisma.book.create({
+          data: {
+            title: item.title,
+            author: item.author,
+            totalPages: item.totalPages,
+            startPage: 1,
+            currentPage: 0,
+            deadlineDays: item.deadlineDays,
+            category: item.category,
+            goals: item.goals,
+            competencyTags: item.competencyTags,
+            order: item.order,
+            status: item.order === 1 ? 'reading' : 'queued',
+            startDate: item.order === 1 ? new Date() : null,
+            targetFinishDate: item.order === 1 ? new Date(Date.now() + item.deadlineDays * 86400000) : null,
+          },
+        }).catch(() => {});
+      }
     }
-  }
+  } catch {}
 }
 
 /**
@@ -207,7 +209,7 @@ export function calculateBookPacing(book: {
  * Returns the complete reading system status, active book, queue, reflections, and 2027 metrics.
  */
 export async function getReadingSystemStatus() {
-  await ensureReadingCurriculum();
+  await ensureReadingCurriculum().catch(() => {});
 
   const books = await prisma.book.findMany({
     orderBy: { order: 'asc' },
@@ -217,7 +219,7 @@ export async function getReadingSystemStatus() {
         take: 10,
       },
     },
-  });
+  }).catch(() => []);
 
   // Current active book is the first one with status 'reading' or non-finished
   const activeBook = books.find((b) => b.status === 'reading') || books.find((b) => b.status === 'queued') || books[0];
@@ -229,7 +231,7 @@ export async function getReadingSystemStatus() {
 
   // Competency Progress aggregation
   const totalPagesRead = books.reduce((sum, b) => sum + (b.status === 'finished' ? b.totalPages : b.currentPage), 0);
-  const totalReflectionsCount = await prisma.bookDailyReflection.count();
+  const totalReflectionsCount = await prisma.bookDailyReflection.count().catch(() => 0);
 
   return {
     deadline2027,

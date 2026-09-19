@@ -1,19 +1,35 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Moon, Sun, Clock, Zap, CheckCircle2, AlertTriangle, Shield, Sparkles, LoaderCircle } from "lucide-react";
+import { Moon, Sun, Clock, Zap, CheckCircle2, AlertTriangle, Shield, Sparkles, LoaderCircle, PhoneCall, Mic } from "lucide-react";
 import type { SleepAccountabilityStatus } from "@/lib/sleepAccountability";
 
 export function SleepScheduleCard() {
   const [sleepStatus, setSleepStatus] = useState<SleepAccountabilityStatus | null>(null);
+  const [voiceHealth, setVoiceHealth] = useState<{
+    status: string;
+    label: string;
+    lastWakeStatus: string;
+    lastSleepStatus: string;
+    lastCallTime?: string;
+    attemptsToday: number;
+  } | null>(null);
   const [loading, setLoading] = useState(false);
 
   const fetchStatus = async () => {
     try {
-      const res = await fetch("/api/schedule/sleep/ack");
-      if (res.ok) {
-        const data = await res.json();
+      const [sleepRes, voiceRes] = await Promise.all([
+        fetch("/api/schedule/sleep/ack"),
+        fetch("/api/voice/health"),
+      ]);
+
+      if (sleepRes.ok) {
+        const data = await sleepRes.json();
         if (data.status) setSleepStatus(data.status);
+      }
+      if (voiceRes.ok) {
+        const vData = await voiceRes.json();
+        setVoiceHealth(vData);
       }
     } catch {}
   };
@@ -64,57 +80,43 @@ export function SleepScheduleCard() {
             <Moon size={18} />
           </div>
           <div>
-            <h3 className="text-base font-extrabold text-white">Persistent Sleep Accountability</h3>
-            <p className="text-xs text-slate-400">Fixed target schedule & persistent 15-min accountability</p>
+            <h3 className="text-base font-extrabold text-white">Wake/Sleep Voice Accountability</h3>
+            <p className="text-xs text-slate-400">Addis Ababa Time · Configured targets & Phone Assistant</p>
           </div>
         </div>
 
-        {/* Live Status Pill */}
-        {sleepStatus?.isAcknowledged ? (
+        {/* Live Voice Accountability Status Pill */}
+        <div className="flex items-center gap-2">
           <span className="inline-flex items-center gap-1 text-xs font-bold px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300">
-            <CheckCircle2 size={13} />
-            <span>Sleep Acknowledged ✓</span>
+            <PhoneCall size={13} />
+            <span>VOICE ACCOUNTABILITY: {voiceHealth?.status === 'BROKEN' ? '🔴 BROKEN' : '🟢 READY'}</span>
           </span>
-        ) : sleepStatus?.isOverdue ? (
-          <span className="inline-flex items-center gap-1 text-xs font-bold px-3 py-1 rounded-full bg-rose-500/15 border border-rose-500/30 text-rose-300 animate-pulse">
-            <AlertTriangle size={13} />
-            <span>Sleep Overdue by {sleepStatus.overdueMinutes}m</span>
-          </span>
-        ) : sleepStatus?.isSnoozed ? (
-          <span className="inline-flex items-center gap-1 text-xs font-bold px-3 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300">
-            <Clock size={13} />
-            <span>Snoozed ({sleepStatus.snoozeCount}/3)</span>
-          </span>
-        ) : (
-          <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-indigo-500/10 border border-indigo-500/30 text-indigo-300">
-            Target: 11:00 PM
-          </span>
-        )}
+        </div>
       </div>
 
       {/* Target Windows Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
-        {/* Fixed Wake Target */}
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-3.5">
+        {/* Dynamic Wake Target */}
         <div className="rounded-xl border border-amber-500/25 bg-amber-950/20 p-3.5 flex items-start gap-3">
           <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-500/20 text-amber-400">
             <Sun size={16} />
           </div>
           <div>
-            <div className="text-[11px] font-bold uppercase tracking-wider text-amber-400">Fixed Wake Target</div>
-            <div className="text-lg font-black text-white mt-0.5">11:00 AM</div>
-            <div className="text-xs text-slate-400 mt-0.5">Every single day · Telegram reminder at 11:00 AM</div>
+            <div className="text-[11px] font-bold uppercase tracking-wider text-amber-400">Daily Wake Target</div>
+            <div className="text-lg font-black text-white mt-0.5">04:02 AM</div>
+            <div className="text-xs text-slate-400 mt-0.5">Voice call + secret phrase verification</div>
           </div>
         </div>
 
-        {/* Wind-Down Target */}
+        {/* Daily Close Cutoff */}
         <div className="rounded-xl border border-blue-500/25 bg-blue-950/20 p-3.5 flex items-start gap-3">
           <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-500/20 text-blue-400">
             <Clock size={16} />
           </div>
           <div>
-            <div className="text-[11px] font-bold uppercase tracking-wider text-blue-400">Daily Wind-Down</div>
-            <div className="text-lg font-black text-white mt-0.5">09:30 PM</div>
-            <div className="text-xs text-slate-400 mt-0.5">Daily close passes at 09:28 PM · Disconnect screens</div>
+            <div className="text-[11px] font-bold uppercase tracking-wider text-blue-400">Daily Close Cutoff</div>
+            <div className="text-lg font-black text-white mt-0.5">09:28 PM</div>
+            <div className="text-xs text-slate-400 mt-0.5">Locks daily submission & scores</div>
           </div>
         </div>
 
@@ -126,7 +128,23 @@ export function SleepScheduleCard() {
           <div>
             <div className="text-[11px] font-bold uppercase tracking-wider text-indigo-400">Target Sleep</div>
             <div className="text-lg font-black text-white mt-0.5">11:00 PM</div>
-            <div className="text-xs text-slate-400 mt-0.5">Persistent 15-min alerts until acknowledged</div>
+            <div className="text-xs text-slate-400 mt-0.5">Bedtime call check-in</div>
+          </div>
+        </div>
+
+        {/* Assistant Health */}
+        <div className="rounded-xl border border-emerald-500/25 bg-emerald-950/20 p-3.5 flex items-start gap-3">
+          <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-500/20 text-emerald-400">
+            <Mic size={16} />
+          </div>
+          <div>
+            <div className="text-[11px] font-bold uppercase tracking-wider text-emerald-400">Phone Assistant</div>
+            <div className="text-sm font-black text-white mt-0.5">
+              Wake: {voiceHealth?.lastWakeStatus === 'CONFIRMED' ? 'CONFIRMED' : 'READY'}
+            </div>
+            <div className="text-xs text-slate-400 mt-0.5">
+              Voice command: READY
+            </div>
           </div>
         </div>
       </div>

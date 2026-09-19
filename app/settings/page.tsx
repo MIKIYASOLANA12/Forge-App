@@ -24,6 +24,8 @@ type Settings = {
   targetProtein: number;
   targetCarbs: number;
   targetFat: number;
+  wakeTime?: string;
+  sleepTime?: string;
 };
 
 type TelegramStatus = {
@@ -244,6 +246,86 @@ export default function SettingsPage() {
           )}
         </section>
 
+        {/* Wake & Sleep Targets Configuration */}
+        <section className="card">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h2 className="text-lg font-bold">Daily Wake & Sleep Targets</h2>
+              <p className="mt-1 text-sm text-[var(--text-secondary)]">
+                Configured schedule for morning voice check-in and bedtime accountability. Timezone: Africa/Addis_Ababa.
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 space-y-2">
+              <label className="text-xs font-bold uppercase text-amber-400 block">Daily Wake-Up Time</label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  placeholder="04:02"
+                  value={settings.wakeTime || "04:02"}
+                  onChange={(e) => setSettings({ ...settings, wakeTime: e.target.value })}
+                  className="input w-32 font-mono text-sm"
+                />
+                <button
+                  className="btn btn-primary btn-sm"
+                  onClick={async () => {
+                    setSaving(true);
+                    const res = await fetch("/api/settings", {
+                      method: "PATCH",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ wakeTime: settings.wakeTime }),
+                    });
+                    if (res.ok) {
+                      setMessage("Wake time saved");
+                      setTimeout(() => setMessage(""), 2000);
+                    }
+                    setSaving(false);
+                  }}
+                  disabled={saving}
+                >
+                  <Save size={13} /> Save Wake
+                </button>
+              </div>
+              <span className="text-[11px] text-slate-500 block">Triggers morning phone check-in call</span>
+            </div>
+
+            <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 space-y-2">
+              <label className="text-xs font-bold uppercase text-indigo-400 block">Daily Bedtime Sleep Target</label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  placeholder="23:00"
+                  value={settings.sleepTime || "23:00"}
+                  onChange={(e) => setSettings({ ...settings, sleepTime: e.target.value })}
+                  className="input w-32 font-mono text-sm"
+                />
+                <button
+                  className="btn btn-primary btn-sm"
+                  onClick={async () => {
+                    setSaving(true);
+                    const res = await fetch("/api/settings", {
+                      method: "PATCH",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ sleepTime: settings.sleepTime }),
+                    });
+                    if (res.ok) {
+                      setMessage("Sleep time saved");
+                      setTimeout(() => setMessage(""), 2000);
+                    }
+                    setSaving(false);
+                  }}
+                  disabled={saving}
+                >
+                  <Save size={13} /> Save Sleep
+                </button>
+              </div>
+              <span className="text-[11px] text-slate-500 block">Triggers bedtime sleep accountability call</span>
+            </div>
+          </div>
+        </section>
+
         {/* Challenges & Fixed Schedule Target Overview */}
         <section className="card border-slate-800 bg-slate-950/60">
           <h2 className="text-lg font-bold text-white mb-1">Active Protocols & Target Schedules</h2>
@@ -251,27 +333,27 @@ export default function SettingsPage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="rounded-xl border border-amber-500/20 bg-amber-950/15 p-4">
-              <div className="text-xs font-black uppercase text-amber-400">🔥 7-Month Body Transformation</div>
-              <div className="text-sm font-bold text-white mt-1">August 31, 2026 → March 10, 2027</div>
-              <div className="text-xs text-slate-400 mt-1">Exact Challenge End Date: Wednesday, March 10, 2027</div>
+              <div className="text-xs font-black uppercase text-amber-400">🔥 Physique Transformation</div>
+              <div className="text-sm font-bold text-white mt-1">Target: Wednesday, March 10, 2027</div>
+              <div className="text-xs text-slate-400 mt-1">Live countdown decreasing automatically daily</div>
             </div>
 
             <div className="rounded-xl border border-rose-500/20 bg-rose-950/15 p-4">
-              <div className="text-xs font-black uppercase text-rose-400">🏡 16-Day Holiday Home Workout</div>
-              <div className="text-sm font-bold text-white mt-1">August 31, 2026 → September 15, 2026</div>
-              <div className="text-xs text-slate-400 mt-1">Auto-switches to bodyweight routines & reverts on completion</div>
+              <div className="text-xs font-black uppercase text-rose-400">🏡 7-Day Protocol Routine</div>
+              <div className="text-sm font-bold text-white mt-1">Sunday → Saturday Rotation</div>
+              <div className="text-xs text-slate-400 mt-1">Structured gym & home prescription with per-set history</div>
             </div>
 
             <div className="rounded-xl border border-blue-500/20 bg-blue-950/15 p-4">
               <div className="text-xs font-black uppercase text-blue-400">☀️ Daily Fixed Wake-Up Target</div>
-              <div className="text-sm font-bold text-white mt-1">11:00 AM (Daily)</div>
-              <div className="text-xs text-slate-400 mt-1">Daily Telegram wake-up alert dispatched at 11:00 AM</div>
+              <div className="text-sm font-bold text-white mt-1">{settings.wakeTime || "04:02 AM"} (Daily)</div>
+              <div className="text-xs text-slate-400 mt-1">Daily Voice & Telegram wake-up alert dispatched at {settings.wakeTime || "04:02 AM"}</div>
             </div>
 
             <div className="rounded-xl border border-indigo-500/20 bg-indigo-950/15 p-4">
               <div className="text-xs font-black uppercase text-indigo-400">🌙 Daily Target Sleep & Close</div>
-              <div className="text-sm font-bold text-white mt-1">Close: 09:28 PM · Sleep: 11:00 PM</div>
-              <div className="text-xs text-slate-400 mt-1">Daily cutoff passes at 09:28 PM · 8-hour sleep window</div>
+              <div className="text-sm font-bold text-white mt-1">Close: 09:28 PM · Sleep: {settings.sleepTime || "11:00 PM"}</div>
+              <div className="text-xs text-slate-400 mt-1">Daily cutoff passes at 09:28 PM · Night sleep check-in</div>
             </div>
           </div>
         </section>

@@ -10,15 +10,15 @@ import {
   getDayOfJourney300,
 } from '@/lib/workoutTime';
 import {
-  WORKOUT_DAY_TARGETS,
+  WEEKLY_WORKOUT_SCHEDULE,
+  DAILY_CORE_ROUTINE,
+  getScheduledRoutineForDayOfWeek,
   getExerciseMuscleInfo,
-  getProtocolExercises,
+  getProgressiveOverloadSuggestion,
 } from '@/lib/workoutMuscleTargets';
 import { detectMissedActivities } from '@/lib/accountabilityRecheck';
 import { getHolidayWorkoutStatus } from '@/lib/holidayWorkout';
 import { getDashboardCountdowns } from '@/lib/countdowns';
-
-const ORDER = ['Push', 'Pull', 'LegsCore'];
 
 export async function GET(req: NextRequest) {
   const session = await getSessionUserFromRequest(req);
@@ -37,50 +37,56 @@ export async function GET(req: NextRequest) {
   const yesterdayWindow = workoutWindowForAddisDate(yesterdayAddis);
   const yesterdayReport = await detectMissedActivities(yesterdayWindow);
 
-  const [program, lastLog, days, todayLog] = await Promise.all([
+  // Normalized date key for daily core
+  const normalizedCoreDate = new Date(
+    Date.UTC(windowInfo.startAddis.getFullYear(), windowInfo.startAddis.getMonth(), windowInfo.startAddis.getDate())
+  );
+
+  const [program, todayLog, morningCoreLog, nightCoreLog] = await Promise.all([
     prisma.workoutProgram.findUnique({ where: { id: 'singleton' } }),
-    prisma.workoutLog.findFirst({ orderBy: { completedAt: 'desc' }, include: { workoutDay: true } }),
-    prisma.workoutDay.findMany({ include: { exercises: { orderBy: { order: 'asc' } } } }),
     prisma.workoutLog.findFirst({
       where: { completedAt: { gte: windowInfo.startUtc, lte: windowInfo.endUtc } },
       include: { workoutDay: true, exerciseLogs: { include: { exercise: true } } },
     }),
+    prisma.dailyCoreLog.findUnique({
+      where: { date_slot: { date: normalizedCoreDate, slot: 'MORNING' } },
+    }),
+    prisma.dailyCoreLog.findUnique({
+      where: { date_slot: { date: normalizedCoreDate, slot: 'NIGHT' } },
+    }),
   ]);
 
-  if (!program || !days.length) {
-    return NextResponse.json({ error: 'Workout program is not seeded' }, { status: 404 });
-  }
-
-  const week = getCurrentWeek(program.startDate);
+  const week = program ? getCurrentWeek(program.startDate) : 1;
   const phase = getPhase(week);
 
-  // Determine scheduled workout by calendar day progression
-  // Every day has its own scheduled workout in the sequence regardless of past misses
-  const scheduledType = ORDER[(day300.dayNumber - 1) % ORDER.length];
-  let activeDay = days.find((d) => d.type === scheduledType) || days[0];
+  // Exact 7-day schedule lookup by day of week (0..6)
+  const todayDayOfWeek = windowInfo.startAddis.getDay();
+  const todayRoutine = getScheduledRoutineForDayOfWeek(todayDayOfWeek);
 
-  if (todayLog) {
-    activeDay = days.find((d) => d.id === todayLog.workoutDayId) || days.find((d) => d.type === todayLog.workoutDay.type) || activeDay;
-  }
+  const nextDayOfWeek = (todayDayOfWeek + 1) % 7;
+  const nextRoutine = getScheduledRoutineForDayOfWeek(nextDayOfWeek);
 
-  // Location based on weekly schedule: Monday, Wednesday, Saturday = GYM; other days = HOME
-  const location = getWorkoutLocationForAddisDate(windowInfo.startAddis);
-  const targetInfo = WORKOUT_DAY_TARGETS[activeDay.type] || {
-    primaryBodyParts: 'Full Body Hypertrophy',
-    focusBadges: ['Compound Movements', 'Core Stability'],
-    description: 'Targeted muscular overload session.',
-  };
-
-  // Fetch previous weights with setDetails for active day's exercises
+  // Fetch previous logs for all exercises in today's routine to provide per-set reference
+  const exerciseNames = todayRoutine.exercises.map((e) => e.name);
   const previousLogs = await prisma.exerciseLog.findMany({
-    where: { exercise: { workoutDayId: activeDay.id } },
+    where: {
+      exercise: {
+        name: { in: exerciseNames },
+      },
+    },
     orderBy: { workoutLog: { completedAt: 'desc' } },
-    include: { workoutLog: { select: { completedAt: true } } },
+    include: {
+      workoutLog: { select: { completedAt: true, submittedAt: true } },
+      exercise: true,
+    },
+    take: 40,
   });
 
-  const lastByExercise = new Map<string, (typeof previousLogs)[number]>();
+  const lastByExerciseName = new Map<string, (typeof previousLogs)[number]>();
   for (const log of previousLogs) {
-    if (!lastByExercise.has(log.exerciseId)) lastByExercise.set(log.exerciseId, log);
+    if (!lastByExerciseName.has(log.exercise.name)) {
+      lastByExerciseName.set(log.exercise.name, log);
+    }
   }
 
   const nextUnlockFormatted = windowInfo.nextUnlockAddis.toLocaleDateString('en-US', {
@@ -90,65 +96,94 @@ export async function GET(req: NextRequest) {
     year: 'numeric',
   });
 
-  // Next workout day details (Calendar progression to next day)
-  const nextScheduledType = ORDER[day300.dayNumber % ORDER.length];
-  const nextDay = days.find((item) => item.type === nextScheduledType) ?? days[0];
-  const nextLocation = getWorkoutLocationForAddisDate(windowInfo.nextUnlockAddis);
-  const nextTargetInfo = WORKOUT_DAY_TARGETS[nextDay.type] || targetInfo;
-
-  const currentDayName = addisNow.toLocaleDateString('en-US', { weekday: 'long' });
-  const currentDateFormatted = addisNow.toLocaleDateString('en-US', {
+  const currentDayName = windowInfo.startAddis.toLocaleDateString('en-US', { weekday: 'long' });
+  const currentDateFormatted = windowInfo.startAddis.toLocaleDateString('en-US', {
     weekday: 'long',
     month: 'long',
     day: 'numeric',
     year: 'numeric',
   });
 
-  // Filter exercises by location: HOME (order >= 100) vs GYM (order < 100)
-  const rawActiveExercises = activeDay.exercises.filter((ex) =>
-    location === 'HOME' ? ex.order >= 100 : ex.order < 100
-  );
-
-  const activeExerciseList = rawActiveExercises.length > 0
-    ? rawActiveExercises
-    : getProtocolExercises(activeDay.type, location).map((p, idx) => ({
-        id: `${activeDay.id}-${location.toLowerCase()}-${idx + 1}`,
-        workoutDayId: activeDay.id,
-        name: p.name,
-        order: location === 'HOME' ? 101 + idx : idx + 1,
-      }));
-
-  const rawNextExercises = nextDay.exercises.filter((ex) =>
-    nextLocation === 'HOME' ? ex.order >= 100 : ex.order < 100
-  );
-
-  const nextExerciseList = rawNextExercises.length > 0
-    ? rawNextExercises
-    : getProtocolExercises(nextDay.type, nextLocation).map((p, idx) => ({
-        id: `${nextDay.id}-${nextLocation.toLowerCase()}-${idx + 1}`,
-        workoutDayId: nextDay.id,
-        name: p.name,
-        order: nextLocation === 'HOME' ? 101 + idx : idx + 1,
-      }));
-
   const isClosed = windowInfo.isClosed;
+
+  // Build active exercise list with per-set history & progressive overload suggestions
+  const activeExerciseList = todayRoutine.exercises.map((def, idx) => {
+    const lastLog = lastByExerciseName.get(def.name) || null;
+    const todayExerciseLog = todayLog?.exerciseLogs.find(
+      (el) => el.exerciseId === def.id || el.exercise?.name === def.name
+    ) ?? null;
+
+    let parsedLastSets: any[] = [];
+    if (lastLog?.setDetails) {
+      try {
+        parsedLastSets = JSON.parse(lastLog.setDetails);
+      } catch {}
+    }
+
+    const overloadSuggestion = getProgressiveOverloadSuggestion(def.name, parsedLastSets, def.targetReps);
+
+    return {
+      id: def.id,
+      name: def.name,
+      order: idx + 1,
+      targetMuscle: def.muscle,
+      masterCue: def.cue,
+      equipment: def.equipment,
+      targetSets: def.targetSets,
+      targetReps: def.targetReps,
+      targetDurationSeconds: def.targetDurationSeconds,
+      startingWeightKg: def.startingWeightKg,
+      startingWeightGuide: def.startingWeightGuide,
+      variants: def.variants,
+      defaultVariant: def.defaultVariant,
+      safetyWarning: def.safetyWarning,
+      isTimed: def.isTimed,
+      overloadSuggestion,
+      lastLog: lastLog
+        ? {
+            setsCompleted: lastLog.setsCompleted,
+            repsCompleted: lastLog.repsCompleted,
+            weightKg: lastLog.weightKg,
+            setDetails: lastLog.setDetails,
+          }
+        : null,
+      todayLog: todayExerciseLog
+        ? {
+            setsCompleted: todayExerciseLog.setsCompleted,
+            repsCompleted: todayExerciseLog.repsCompleted,
+            weightKg: todayExerciseLog.weightKg,
+            checked: todayExerciseLog.checked,
+            setDetails: todayExerciseLog.setDetails,
+            clientId: todayExerciseLog.clientId,
+          }
+        : null,
+    };
+  });
+
   const allExercisesChecked =
     Boolean(todayLog) &&
     activeExerciseList.length > 0 &&
     activeExerciseList.every((exercise) =>
-      Boolean(todayLog?.exerciseLogs.find((el) => el.exerciseId === exercise.id && el.checked))
+      Boolean(todayLog?.exerciseLogs.find((el) => (el.exerciseId === exercise.id || el.exercise?.name === exercise.name) && el.checked))
     );
+
   const submittedBeforeCutoff = Boolean(
     todayLog?.submittedAt && todayLog.submittedAt.getTime() <= windowInfo.closeUtc.getTime()
   );
+
   const legacyFullLogBeforeCutoff = Boolean(
     todayLog &&
       !todayLog.submittedAt &&
       allExercisesChecked &&
       todayLog.completedAt.getTime() <= windowInfo.closeUtc.getTime()
   );
+
   const isCompleted = submittedBeforeCutoff || (!isClosed && allExercisesChecked) || legacyFullLogBeforeCutoff;
   const isMissed = isClosed && !isCompleted;
+
+  // Daily Core Routine State
+  const morningCoreCompleted = Boolean(morningCoreLog?.completed);
+  const nightCoreCompleted = Boolean(nightCoreLog?.completed);
 
   return NextResponse.json({
     currentDayName,
@@ -164,58 +199,75 @@ export async function GET(req: NextRequest) {
     missedToday: isMissed,
     sessionInProgress: Boolean(todayLog) && !isCompleted,
     day300,
-    targetBodyParts: targetInfo.primaryBodyParts,
-    focusBadges: targetInfo.focusBadges,
-    targetDescription: targetInfo.description,
-    todayLog: todayLog ? {
-      id: todayLog.id,
-      completedAt: todayLog.completedAt,
-      type: todayLog.workoutDay.type,
-      notes: todayLog.notes,
-    } : null,
+    targetBodyParts: todayRoutine.targetBodyParts,
+    focusBadges: todayRoutine.focusBadges,
+    targetDescription: todayRoutine.description,
+    isRecovery: Boolean(todayRoutine.isRecovery),
+    recoveryNotice: todayRoutine.recoveryNotice,
+    equipmentSummary: todayRoutine.equipmentSummary,
+    todayLog: todayLog
+      ? {
+          id: todayLog.id,
+          completedAt: todayLog.completedAt,
+          type: todayRoutine.targetBodyParts,
+          notes: todayLog.notes,
+        }
+      : null,
     day: {
-      id: activeDay.id,
-      type: activeDay.type,
-      location,
-      targetBodyParts: targetInfo.primaryBodyParts,
-      focusBadges: targetInfo.focusBadges,
-      exercises: activeExerciseList.map((exercise) => {
-        const muscleInfo = getExerciseMuscleInfo(exercise.name);
-        const todayExerciseLog = todayLog?.exerciseLogs.find((el) => el.exerciseId === exercise.id) ?? null;
-        return {
-          ...exercise,
-          targetMuscle: muscleInfo.muscle,
-          masterCue: muscleInfo.cue,
-          lastLog: lastByExercise.get(exercise.id) ?? null,
-          todayLog: todayExerciseLog
-            ? {
-                setsCompleted: todayExerciseLog.setsCompleted,
-                repsCompleted: todayExerciseLog.repsCompleted,
-                weightKg: todayExerciseLog.weightKg,
-                checked: todayExerciseLog.checked,
-                setDetails: todayExerciseLog.setDetails,
-                clientId: todayExerciseLog.clientId,
-              }
-            : null,
-        };
-      }),
+      id: `day-${todayRoutine.dayOfWeek}`,
+      dayOfWeek: todayRoutine.dayOfWeek,
+      type: todayRoutine.dayName,
+      location: todayRoutine.location,
+      targetBodyParts: todayRoutine.targetBodyParts,
+      focusBadges: todayRoutine.focusBadges,
+      description: todayRoutine.description,
+      isRecovery: Boolean(todayRoutine.isRecovery),
+      recoveryNotice: todayRoutine.recoveryNotice,
+      equipmentSummary: todayRoutine.equipmentSummary,
+      exercises: activeExerciseList,
+    },
+    dailyCore: {
+      routine: DAILY_CORE_ROUTINE,
+      morning: {
+        completed: morningCoreCompleted,
+        completedAt: morningCoreLog?.completedAt || null,
+        xpEarned: morningCoreLog?.xpEarned || 0,
+        exercisesJson: morningCoreLog?.exercisesJson || null,
+      },
+      night: {
+        completed: nightCoreCompleted,
+        completedAt: nightCoreLog?.completedAt || null,
+        xpEarned: nightCoreLog?.xpEarned || 0,
+        exercisesJson: nightCoreLog?.exercisesJson || null,
+      },
     },
     nextWorkout: {
       dateFormatted: nextUnlockFormatted,
       unlockTimestamp: windowInfo.nextUnlockUtc.getTime(),
-      type: nextDay.type,
-      location: nextLocation,
-      targetBodyParts: nextTargetInfo.primaryBodyParts,
-      focusBadges: nextTargetInfo.focusBadges,
+      dayOfWeek: nextRoutine.dayOfWeek,
+      type: nextRoutine.dayName,
+      location: nextRoutine.location,
+      targetBodyParts: nextRoutine.targetBodyParts,
+      focusBadges: nextRoutine.focusBadges,
+      description: nextRoutine.description,
+      isRecovery: Boolean(nextRoutine.isRecovery),
+      recoveryNotice: nextRoutine.recoveryNotice,
+      equipmentSummary: nextRoutine.equipmentSummary,
       phase,
-      exercises: nextExerciseList.map((exercise) => {
-        const muscleInfo = getExerciseMuscleInfo(exercise.name);
-        return {
-          ...exercise,
-          targetMuscle: muscleInfo.muscle,
-          masterCue: muscleInfo.cue,
-        };
-      }),
+      exercises: nextRoutine.exercises.map((e, idx) => ({
+        id: e.id,
+        name: e.name,
+        order: idx + 1,
+        targetMuscle: e.muscle,
+        masterCue: e.cue,
+        equipment: e.equipment,
+        targetSets: e.targetSets,
+        targetReps: e.targetReps,
+        targetDurationSeconds: e.targetDurationSeconds,
+        startingWeightGuide: e.startingWeightGuide,
+        safetyWarning: e.safetyWarning,
+        isTimed: e.isTimed,
+      })),
     },
     weekNumber: week,
     phase,

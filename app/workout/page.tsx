@@ -11,7 +11,6 @@ import {
   TimerReset,
   Flame,
   Lock,
-  TrendingUp,
   Calendar,
   Sparkles,
   Award,
@@ -26,16 +25,14 @@ import {
   Wifi,
   WifiOff,
   CloudUpload,
-  Save
+  Save,
+  ShieldAlert,
+  Sun,
+  Moon,
+  Info,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
-import {
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts";
 import { clsx } from "clsx";
 import {
   SetEntry,
@@ -57,6 +54,17 @@ type Exercise = {
   order: number;
   targetMuscle?: string;
   masterCue?: string;
+  equipment?: string;
+  targetSets?: number;
+  targetReps?: string;
+  targetDurationSeconds?: number;
+  startingWeightKg?: number | null;
+  startingWeightGuide?: string | null;
+  variants?: string[];
+  defaultVariant?: string;
+  safetyWarning?: string;
+  isTimed?: boolean;
+  overloadSuggestion?: string | null;
   lastLog: {
     setsCompleted: number;
     repsCompleted: number;
@@ -76,17 +84,51 @@ type Exercise = {
 type NextWorkout = {
   dateFormatted: string;
   unlockTimestamp: number;
+  dayOfWeek?: number;
   type: string;
   location: string;
   targetBodyParts?: string;
   focusBadges?: string[];
-  phase: {
+  description?: string;
+  isRecovery?: boolean;
+  recoveryNotice?: string;
+  equipmentSummary?: string;
+  phase?: {
     weeks: readonly number[];
     sets: number;
     reps: string;
     goal: string;
   };
-  exercises: { id: string; name: string; order: number; targetMuscle?: string; masterCue?: string }[];
+  exercises: {
+    id: string;
+    name: string;
+    order: number;
+    targetMuscle?: string;
+    masterCue?: string;
+    equipment?: string;
+    targetSets?: number;
+    targetReps?: string;
+    targetDurationSeconds?: number;
+    startingWeightGuide?: string | null;
+    safetyWarning?: string;
+    isTimed?: boolean;
+  }[];
+};
+
+type DailyCoreState = {
+  routine: Array<{ id: string; name: string; target: string; cue: string; targetDurationSeconds?: number; isTimed?: boolean }>;
+  morning: {
+    completed: boolean;
+    completedAt: string | null;
+    xpEarned: number;
+    exercisesJson: string | null;
+  };
+  night: {
+    completed: boolean;
+    completedAt: string | null;
+    xpEarned: number;
+    exercisesJson: string | null;
+  };
 };
 
 type TodayData = {
@@ -96,6 +138,9 @@ type TodayData = {
   targetBodyParts?: string;
   focusBadges?: string[];
   targetDescription?: string;
+  isRecovery?: boolean;
+  recoveryNotice?: string;
+  equipmentSummary?: string;
   todayLog: {
     id: string;
     completedAt: string;
@@ -104,27 +149,45 @@ type TodayData = {
   } | null;
   day: {
     id: string;
+    dayOfWeek: number;
     type: string;
     location: string;
     targetBodyParts?: string;
     focusBadges?: string[];
+    description?: string;
+    isRecovery?: boolean;
+    recoveryNotice?: string;
+    equipmentSummary?: string;
     exercises: Exercise[];
   };
+  dailyCore?: DailyCoreState;
   nextWorkout: NextWorkout;
   weekNumber: number;
-  phase: {
+  phase?: {
     weeks: readonly number[];
     sets: number;
     reps: string;
     goal: string;
   };
-  isNewPhase: boolean;
+  isNewPhase?: boolean;
   isOpen?: boolean;
   isClosed?: boolean;
   isMissed?: boolean;
   missedToday?: boolean;
   sessionInProgress?: boolean;
   closeTimestamp?: number;
+  countdowns?: Array<{
+    id: string;
+    title: string;
+    badge: string;
+    badgeColor: string;
+    daysRemaining: number;
+    totalDays?: number;
+    progressPercent: number;
+    targetDateFormatted: string;
+    statusText: string;
+    subText: string;
+  }>;
   yesterday?: {
     dateFormatted: string;
     missedItems: string[];
@@ -138,7 +201,7 @@ type HistoryLog = {
   completedAt: string;
   weekNumber: number;
   notes: string | null;
-  workoutDay: { type: string };
+  workoutDay: { type: string; targetBodyParts?: string; location?: string };
   exerciseLogs: {
     id: string;
     setsCompleted: number;
@@ -192,11 +255,12 @@ function CountdownTimer({ targetTimestamp }: { targetTimestamp: number }) {
 }
 
 export default function WorkoutPage() {
-  const [tab, setTab] = useState<"today" | "progress" | "history">("today");
+  const [tab, setTab] = useState<"today" | "core" | "history">("today");
   const [today, setToday] = useState<TodayData | null>(null);
   const [history, setHistory] = useState<HistoryLog[]>([]);
   const [exerciseSets, setExerciseSets] = useState<Record<string, SetEntry[]>>({});
   const [checkedExercises, setCheckedExercises] = useState<Record<string, boolean>>({});
+  const [selectedVariants, setSelectedVariants] = useState<Record<string, string>>({});
   const [notes, setNotes] = useState("");
   const [rest, setRest] = useState(90);
   const [restRunning, setRestRunning] = useState(false);
@@ -206,6 +270,12 @@ export default function WorkoutPage() {
   const [syncStatus, setSyncStatus] = useState<OfflineSyncStatus>("LOCAL_ONLY");
   const [isOnline, setIsOnline] = useState(true);
   const [hydrated, setHydrated] = useState(false);
+
+  // Daily Core Local State
+  const [morningCoreChecked, setMorningCoreChecked] = useState(false);
+  const [nightCoreChecked, setNightCoreChecked] = useState(false);
+  const [morningCoreSubmitting, setMorningCoreSubmitting] = useState(false);
+  const [nightCoreSubmitting, setNightCoreSubmitting] = useState(false);
 
   const todayDateKey = getTodayDateKey();
   const todayRef = useRef<TodayData | null>(null);
@@ -241,10 +311,9 @@ export default function WorkoutPage() {
   };
 
   const buildInitialSets = (data: TodayData, localSaved: ReturnType<typeof loadLocalWorkoutState>) => {
-    const defaultSetsCount = data.phase?.sets || 3;
-    const defaultReps = Number(String(data.phase?.reps || "8-10").split("-")[0]) || 8;
     const initialSetsState: Record<string, SetEntry[]> = { ...(localSaved?.exerciseSets || {}) };
     const initialChecked: Record<string, boolean> = { ...(localSaved?.checkedExercises || {}) };
+    const initialVariants: Record<string, string> = {};
 
     data.day.exercises.forEach((ex) => {
       const serverToday = parseSetDetails(ex.todayLog?.setDetails);
@@ -252,16 +321,23 @@ export default function WorkoutPage() {
       const local = initialSetsState[ex.id] || [];
       const merged = mergeSetsByClientId(local, serverToday);
 
+      if (ex.defaultVariant) {
+        initialVariants[ex.id] = ex.defaultVariant;
+      }
+
       if (merged.length > 0) {
         initialSetsState[ex.id] = merged.map((s) => ensureSetClientId(ex.id, s));
       } else {
+        const defaultSetsCount = ex.targetSets || 3;
+        const defaultReps = Number(String(ex.targetReps || "10").split(/[–-]/)[0]) || 10;
         const setsArray: SetEntry[] = [];
         for (let s = 1; s <= defaultSetsCount; s++) {
           const lastSet = previous[s - 1];
+          const initialWeight = lastSet?.weightKg ?? ex.startingWeightKg ?? "";
           setsArray.push(
             ensureSetClientId(ex.id, {
               setNumber: s,
-              weightKg: lastSet?.weightKg ?? ex.lastLog?.weightKg ?? "",
+              weightKg: initialWeight,
               reps: lastSet?.reps ?? defaultReps,
               notes: lastSet?.notes ?? "",
               completed: false,
@@ -274,15 +350,19 @@ export default function WorkoutPage() {
       initialChecked[ex.id] = Boolean(initialChecked[ex.id] || ex.todayLog?.checked);
     });
 
+    setSelectedVariants((prev) => ({ ...initialVariants, ...prev }));
     return { initialSetsState, initialChecked, notes: localSaved?.notes || data.todayLog?.notes || "" };
   };
 
-  // Restore locally saved sets BEFORE any network so leaving/re-entering never blanks the form.
   useEffect(() => {
     const cached = loadCachedTodayProtocol(todayDateKey) as TodayData | null;
     const localSaved = loadLocalWorkoutState(todayDateKey);
     if (cached?.day) {
       setToday(cached);
+      if (cached.dailyCore) {
+        setMorningCoreChecked(cached.dailyCore.morning.completed);
+        setNightCoreChecked(cached.dailyCore.night.completed);
+      }
       const built = buildInitialSets(cached, localSaved);
       setExerciseSets(built.initialSetsState);
       setCheckedExercises(built.initialChecked);
@@ -322,13 +402,18 @@ export default function WorkoutPage() {
 
   const loadTodayData = async () => {
     const controller = new AbortController();
-    const timeout = window.setTimeout(() => controller.abort(), 5000);
+    const timeout = window.setTimeout(() => controller.abort(), 6000);
     try {
       const response = await fetch("/api/workout/today", { signal: controller.signal });
       if (response.ok) {
         const data = (await response.json()) as TodayData;
         cacheTodayProtocol(todayDateKey, data as unknown as Record<string, unknown>);
         setToday(data);
+
+        if (data.dailyCore) {
+          setMorningCoreChecked(data.dailyCore.morning.completed);
+          setNightCoreChecked(data.dailyCore.night.completed);
+        }
 
         const localSaved = loadLocalWorkoutState(todayDateKey, data.day?.id || "");
         const built = buildInitialSets(data, localSaved);
@@ -398,7 +483,6 @@ export default function WorkoutPage() {
     if (rest === 0) setRestRunning(false);
   }, [rest]);
 
-  // Set-by-Set Management Handlers with Immediate Offline Persistence
   const loggingLocked = Boolean((today?.isClosed || today?.isMissed || today?.missedToday) && !manualOverride);
 
   const handleUpdateSet = (exerciseId: string, setIndex: number, field: keyof SetEntry, value: any) => {
@@ -438,7 +522,6 @@ export default function WorkoutPage() {
     const updatedChecked = { ...checkedExercisesRef.current, [exerciseId]: isNowChecked };
     setCheckedExercises(updatedChecked);
 
-    const currentSets = exerciseSetsRef.current[exerciseId] || [];
     persistLocal(exerciseSetsRef.current, updatedChecked, notesRef.current, "LOCAL_ONLY");
 
     if (typeof navigator !== "undefined" && navigator.onLine) {
@@ -462,7 +545,7 @@ export default function WorkoutPage() {
         ensureSetClientId(exerciseId, {
           setNumber: nextSetNum,
           weightKg: lastSet?.weightKg ?? "",
-          reps: lastSet?.reps ?? 8,
+          reps: lastSet?.reps ?? 10,
           notes: "",
           completed: false,
         })
@@ -540,225 +623,46 @@ export default function WorkoutPage() {
     }
   };
 
+  // Daily Core Check-in Handlers
+  const handleToggleCore = async (slot: "MORNING" | "NIGHT") => {
+    const isMorning = slot === "MORNING";
+    const currentVal = isMorning ? morningCoreChecked : nightCoreChecked;
+    const setSubmitting = isMorning ? setMorningCoreSubmitting : setNightCoreSubmitting;
+    const setVal = isMorning ? setMorningCoreChecked : setNightCoreChecked;
+
+    setSubmitting(true);
+    setVal(!currentVal);
+
+    try {
+      const res = await fetch("/api/workout/core", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slot, completed: !currentVal }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setMessage(`✅ Daily Core (${isMorning ? "Morning" : "Night"}) updated${data.xpEarned ? ` (+${data.xpEarned} XP)` : ""}`);
+      }
+    } catch {
+      setMessage("⚠️ Saved locally — will sync with server.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const onToggleOverride = () => setManualOverride((prev) => !prev);
 
   if (!today) {
     return (
       <div className="flex h-72 items-center justify-center gap-3 text-sm text-[var(--text-muted)]">
         <LoaderCircle size={20} className="animate-spin text-orange-500" />
-        <span>{hydrated && !isOnline ? "Offline — waiting for cached workout protocol..." : "Loading Workout Protocol & Offline Sync Engine..."}</span>
+        <span>{hydrated && !isOnline ? "Offline — waiting for cached workout protocol..." : "Loading 7-Day Workout Protocol & Engine..."}</span>
       </div>
     );
   }
 
-  const missedLocked = Boolean((today.isMissed || today.missedToday || (today.isClosed && !today.completedToday)) && !manualOverride);
-
-  // ── CASE 1: WORKOUT MISSED TODAY (LOCKED AT 09:28 PM) ────────────────────────
-  if (missedLocked) {
-    const nextWk = today.nextWorkout;
-    return (
-      <div className="space-y-6 animate-fade-in">
-        {today.yesterday && today.yesterday.missedItems && today.yesterday.missedItems.length > 0 && (
-          <section className="rounded-2xl border border-rose-500/30 bg-rose-950/20 p-4 shadow-lg">
-            <div className="flex items-center justify-between border-b border-rose-500/20 pb-2 mb-3">
-              <h3 className="text-xs font-black uppercase tracking-widest text-rose-400">
-                🔴 Yesterday's Missed Items — LOCKED
-              </h3>
-              <span className="text-xs text-slate-400 font-mono">{today.yesterday.dateFormatted}</span>
-            </div>
-            <ul className="space-y-1.5">
-              {today.yesterday.missedItems.map((m) => (
-                <li key={m} className="flex items-center justify-between text-sm text-rose-300">
-                  <span className="font-semibold">🔴 {m}</span>
-                  <span className="text-[10px] font-bold text-rose-400 uppercase bg-rose-500/10 px-2 py-0.5 rounded border border-rose-500/20">
-                    MISSED / LOCKED
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </section>
-        )}
-        <section className="relative overflow-hidden rounded-2xl border border-rose-500/40 bg-gradient-to-br from-rose-950/30 via-slate-900/90 to-slate-950 p-6 md:p-8 shadow-2xl">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold bg-rose-500/20 text-rose-300 border border-rose-500/40">
-                  <Lock size={14} /> 🔴 WORKOUT MISSED & LOCKED
-                </span>
-                <span className="text-xs text-slate-400">
-                  Window Closed at <strong className="text-white">09:28 PM</strong> Ethiopia Time
-                </span>
-              </div>
-              <h2 className="text-3xl md:text-4xl font-extrabold text-white">
-                Daily Workout Locked as MISSED
-              </h2>
-              <p className="text-sm text-slate-300 max-w-xl leading-relaxed">
-                You had 16 hours and 28 minutes (05:00 AM – 09:28 PM) to log today's session.
-                Because the cutoff passed without submission, this workout is permanently locked and cannot be backdated or submitted.
-                The protocol advances tomorrow at <strong className="text-orange-400">05:00 AM</strong> with a fresh scheduled session.
-              </p>
-            </div>
-
-            <div className="flex flex-col items-start md:items-end gap-2 bg-slate-950/90 p-5 rounded-2xl border border-rose-500/30 shadow-xl">
-              <span className="text-xs font-bold uppercase tracking-wider text-rose-400 flex items-center gap-1.5">
-                <Clock3 size={14} /> Next Session Unlocks In
-              </span>
-              <CountdownTimer targetTimestamp={nextWk.unlockTimestamp} />
-              <span className="text-xs text-slate-400 flex items-center gap-1 mt-1 font-semibold">
-                Tomorrow ({nextWk.dateFormatted.split(",")[0]}) at 05:00 AM
-              </span>
-            </div>
-          </div>
-        </section>
-
-        <section className="relative rounded-2xl border border-slate-800 bg-slate-900/50 p-6 md:p-8 overflow-hidden">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4 border-b border-slate-800 pb-4">
-            <div>
-              <span className="text-xs font-bold uppercase tracking-wider text-orange-400">
-                Tomorrow's Scheduled Protocol · {nextWk.location}
-              </span>
-              <h3 className="text-2xl font-bold text-white mt-1">
-                {nextWk.type} Day ({nextWk.targetBodyParts || "Target Hypertrophy"})
-              </h3>
-              <p className="text-xs text-slate-400 mt-1">
-                Phase Prescription: <strong className="text-white">{nextWk.phase.sets} sets × {nextWk.phase.reps} reps</strong>
-              </p>
-            </div>
-
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-orange-500/10 border border-orange-500/20 text-orange-400 text-xs font-bold">
-              <Lock size={14} /> Unlocks at 05:00 AM
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-            {nextWk.exercises.map((ex, i) => (
-              <div
-                key={ex.id || i}
-                className="p-3 rounded-xl border border-slate-800/80 bg-slate-950/60 flex flex-col justify-between space-y-1.5"
-              >
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-mono font-bold text-slate-500">0{i + 1}</span>
-                  <span className="text-xs font-bold text-slate-200 truncate">{ex.name}</span>
-                </div>
-                {ex.targetMuscle && (
-                  <span className="text-[10px] text-orange-400 font-medium">🎯 {ex.targetMuscle}</span>
-                )}
-              </div>
-            ))}
-          </div>
-        </section>
-      </div>
-    );
-  }
-
-  // ── CASE 2: WORKOUT COMPLETED TODAY ─────────────────────────────────────────
-  if (today.completedToday && !manualOverride) {
-    const nextWk = today.nextWorkout;
-    return (
-      <div className="space-y-6 animate-fade-in">
-        {today.yesterday && today.yesterday.missedItems && today.yesterday.missedItems.length > 0 && (
-          <section className="rounded-2xl border border-rose-500/30 bg-rose-950/20 p-4 shadow-lg">
-            <div className="flex items-center justify-between border-b border-rose-500/20 pb-2 mb-3">
-              <h3 className="text-xs font-black uppercase tracking-widest text-rose-400">
-                🔴 Yesterday's Missed Items — LOCKED
-              </h3>
-              <span className="text-xs text-slate-400 font-mono">{today.yesterday.dateFormatted}</span>
-            </div>
-            <ul className="space-y-1.5">
-              {today.yesterday.missedItems.map((m) => (
-                <li key={m} className="flex items-center justify-between text-sm text-rose-300">
-                  <span className="font-semibold">🔴 {m}</span>
-                  <span className="text-[10px] font-bold text-rose-400 uppercase bg-rose-500/10 px-2 py-0.5 rounded border border-rose-500/20">
-                    MISSED / LOCKED
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </section>
-        )}
-        <section className="relative overflow-hidden rounded-2xl border border-emerald-500/40 bg-gradient-to-br from-emerald-950/30 via-slate-900/90 to-slate-950 p-6 md:p-8 shadow-2xl">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
-                  <CheckCircle2 size={14} /> TODAY'S WORKOUT COMPLETED
-                </span>
-                <span className="text-xs text-slate-400">
-                  Recovery Active for <strong className="text-white">{today.currentDayName}</strong>
-                </span>
-              </div>
-              <h2 className="text-3xl md:text-4xl font-extrabold text-white">
-                Great Work! Session Locked for Recovery.
-              </h2>
-              <p className="text-sm text-slate-300 max-w-xl leading-relaxed">
-                You have completed and logged today's workout. Your muscles are in active synthesis.
-                The system has locked the checklist and will automatically unlock your next session at{" "}
-                <strong className="text-orange-400">05:00 AM Ethiopia Time</strong>.
-              </p>
-            </div>
-
-            <div className="flex flex-col items-start md:items-end gap-2 bg-slate-950/90 p-5 rounded-2xl border border-emerald-500/30 shadow-xl">
-              <span className="text-xs font-bold uppercase tracking-wider text-orange-400 flex items-center gap-1.5">
-                <Flame size={14} /> Next Session Unlocks In
-              </span>
-              <CountdownTimer targetTimestamp={nextWk.unlockTimestamp} />
-              <span className="text-xs text-slate-400 flex items-center gap-1 mt-1 font-semibold">
-                <Clock3 size={13} /> Tomorrow ({nextWk.dateFormatted.split(",")[0]}) at 05:00 AM
-              </span>
-            </div>
-          </div>
-        </section>
-
-        <section className="relative rounded-2xl border border-slate-800 bg-slate-900/50 p-6 md:p-8 overflow-hidden">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4 border-b border-slate-800 pb-4">
-            <div>
-              <span className="text-xs font-bold uppercase tracking-wider text-orange-400">
-                Tomorrow's Scheduled Protocol · {nextWk.location}
-              </span>
-              <h3 className="text-2xl font-bold text-white mt-1">
-                {nextWk.type} Day ({nextWk.targetBodyParts || "Target Hypertrophy"})
-              </h3>
-              <p className="text-xs text-slate-400 mt-1">
-                Phase Prescription: <strong className="text-white">{nextWk.phase.sets} sets × {nextWk.phase.reps} reps</strong>
-              </p>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-orange-500/10 border border-orange-500/20 text-orange-400 text-xs font-bold">
-                <Lock size={14} /> Unlocks at 05:00 AM
-              </div>
-              <button
-                onClick={onToggleOverride}
-                className="btn btn-ghost btn-xs text-slate-400 hover:text-white flex items-center gap-1"
-                title="Preview or Edit Today's Completed Session"
-              >
-                <Unlock size={12} /> Edit / Review Today
-              </button>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-            {nextWk.exercises.map((ex, i) => (
-              <div
-                key={ex.id || i}
-                className="p-3 rounded-xl border border-slate-800/80 bg-slate-950/60 flex flex-col justify-between space-y-1.5"
-              >
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-mono font-bold text-slate-500">0{i + 1}</span>
-                  <span className="text-xs font-bold text-slate-200 truncate">{ex.name}</span>
-                </div>
-                {ex.targetMuscle && (
-                  <span className="text-[10px] text-orange-400 font-medium">🎯 {ex.targetMuscle}</span>
-                )}
-              </div>
-            ))}
-          </div>
-        </section>
-      </div>
-    );
-  }
-
-  // ── CASE 3: ACTIVE WORKOUT SESSION (READY TO LOG OFFLINE/ONLINE) ────────────
+  const physiqueCard = today.countdowns?.find((c) => c.id === "body_transformation");
   const totalExercises = today.day.exercises.length;
   const completedExercises = today.day.exercises.filter((ex) => {
     const isChecked = Boolean(checkedExercises[ex.id]);
@@ -766,32 +670,80 @@ export default function WorkoutPage() {
     return isChecked || (sets.length > 0 && sets.every((s) => s.completed));
   }).length;
 
-  const allDone = totalExercises > 0 && completedExercises === totalExercises;
-
   return (
-    <div className="space-y-6">
-      {today.yesterday && today.yesterday.missedItems && today.yesterday.missedItems.length > 0 && (
-        <section className="rounded-2xl border border-rose-500/30 bg-rose-950/20 p-4 shadow-lg">
-          <div className="flex items-center justify-between border-b border-rose-500/20 pb-2 mb-3">
-            <h3 className="text-xs font-black uppercase tracking-widest text-rose-400">
-              🔴 Yesterday's Missed Items — LOCKED
-            </h3>
-            <span className="text-xs text-slate-400 font-mono">{today.yesterday.dateFormatted}</span>
-          </div>
-          <ul className="space-y-1.5">
-            {today.yesterday.missedItems.map((m) => (
-              <li key={m} className="flex items-center justify-between text-sm text-rose-300">
-                <span className="font-semibold">🔴 {m}</span>
-                <span className="text-[10px] font-bold text-rose-400 uppercase bg-rose-500/10 px-2 py-0.5 rounded border border-rose-500/20">
-                  MISSED / LOCKED
+    <div className="space-y-6 animate-fade-in pb-12">
+      {/* ── PART A: LIVE PHYSIQUE TRANSFORMATION COUNTDOWN BANNER ──────────────── */}
+      {physiqueCard && (
+        <section className="relative overflow-hidden rounded-2xl border border-amber-500/40 bg-gradient-to-r from-amber-950/40 via-slate-900/90 to-slate-950 p-5 shadow-xl">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center gap-1">
+                  <Flame size={12} className="text-amber-400" />
+                  PHYSIQUE TRANSFORMATION
                 </span>
-              </li>
-            ))}
-          </ul>
+                <span className="text-xs text-slate-400">Target: {physiqueCard.targetDateFormatted}</span>
+              </div>
+              <h3 className="text-2xl md:text-3xl font-black text-amber-300 tracking-tight">
+                {physiqueCard.statusText}
+              </h3>
+              <p className="text-xs text-slate-300">{physiqueCard.subText}</p>
+            </div>
+
+            <div className="flex items-center gap-3 self-start sm:self-center">
+              <div className="text-right">
+                <span className="text-[10px] font-bold uppercase text-slate-400 block">Countdown</span>
+                <span className="text-xl font-black text-white font-mono">{physiqueCard.daysRemaining} Days</span>
+              </div>
+            </div>
+          </div>
         </section>
       )}
 
-      {/* ── OFFLINE STATUS & SYNC CONTROL BAR ─────────────────────────────────── */}
+      {/* ── TAB SELECTOR: TODAY'S WORKOUT / DAILY ABS / HISTORY ─────────────────── */}
+      <div className="flex items-center gap-2 border-b border-slate-800 pb-2">
+        <button
+          onClick={() => setTab("today")}
+          className={clsx(
+            "px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2",
+            tab === "today"
+              ? "bg-orange-500 text-black shadow-lg font-black"
+              : "text-slate-400 hover:text-white hover:bg-slate-900"
+          )}
+        >
+          <Dumbbell size={15} />
+          Today's Routine ({today.day.type})
+        </button>
+
+        <button
+          onClick={() => setTab("core")}
+          className={clsx(
+            "px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2",
+            tab === "core"
+              ? "bg-orange-500 text-black shadow-lg font-black"
+              : "text-slate-400 hover:text-white hover:bg-slate-900"
+          )}
+        >
+          <Target size={15} />
+          Daily Core Routine
+          {(morningCoreChecked && nightCoreChecked) && <span className="text-[10px] bg-black/20 px-1.5 py-0.5 rounded">2/2</span>}
+        </button>
+
+        <button
+          onClick={() => setTab("history")}
+          className={clsx(
+            "px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2",
+            tab === "history"
+              ? "bg-orange-500 text-black shadow-lg font-black"
+              : "text-slate-400 hover:text-white hover:bg-slate-900"
+          )}
+        >
+          <History size={15} />
+          Session History
+        </button>
+      </div>
+
+      {/* ── OFFLINE STATUS & SYNC BAR ─────────────────────────────────────────── */}
       <section className="flex flex-wrap items-center justify-between gap-3 p-3.5 rounded-2xl bg-slate-950 border border-slate-800 shadow-md">
         <div className="flex items-center gap-3">
           <span
@@ -814,13 +766,13 @@ export default function WorkoutPage() {
               </>
             ) : (
               <>
-                <Save size={14} /> OFFLINE — Saved on this device (LOCAL_ONLY)
+                <Save size={14} /> OFFLINE — Saved on device
               </>
             )}
           </span>
 
           <span className="text-xs text-slate-400 hidden sm:inline">
-            {isOnline ? "🌐 Online" : "📴 Offline Mode (Gym data safe)"}
+            {isOnline ? "🌐 Online" : "📴 Offline Mode Active"}
           </span>
         </div>
 
@@ -836,249 +788,583 @@ export default function WorkoutPage() {
         </div>
       </section>
 
-      {/* ── TARGET BODY PARTS HERO BANNER ───────────────────────────────────── */}
-      <section className="rounded-2xl border border-orange-500/30 bg-gradient-to-r from-[#17101a] via-[#1c1424] to-[#120e1a] p-6 shadow-xl space-y-4">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800 pb-4">
-          <div>
-            <div className="flex items-center gap-2 mb-1.5">
-              <span className="px-2.5 py-0.5 text-[11px] font-extrabold uppercase tracking-wider bg-orange-500/15 text-orange-400 border border-orange-500/30 rounded-full flex items-center gap-1">
-                <Target size={12} />
-                Target Muscles Worked Today
+      {/* ══════════════════════════════════════════════════════════════════════════ */}
+      {/* TAB 1: TODAY'S WORKOUT ROUTINE                                             */}
+      {/* ══════════════════════════════════════════════════════════════════════════ */}
+      {tab === "today" && (
+        <div className="space-y-6">
+          {/* Active Recovery Notice (Thursday) */}
+          {today.day.isRecovery && (
+            <section className="rounded-2xl border-2 border-emerald-500/50 bg-emerald-950/30 p-5 text-center shadow-xl space-y-2">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase bg-emerald-500 text-black">
+                <Sparkles size={14} /> ACTIVE RECOVERY
               </span>
-              <span className="text-xs text-slate-400">Week {today.weekNumber} · {today.phase.goal}</span>
-            </div>
-            <h2 className="text-2xl md:text-3xl font-extrabold text-white">
-              {today.day.targetBodyParts || `${today.day.type} Day (Chest, Shoulders & Triceps)`}
-            </h2>
-            <p className="text-xs text-slate-300 mt-1 max-w-2xl">
-              {today.targetDescription || "Execute progressive overload set-by-set. Record each set's KG and reps below. Saved immediately on your device."}
-            </p>
-          </div>
+              <h3 className="text-xl font-black text-white">LIGHT INTENSITY · RECOVERY DAY</h3>
+              <p className="text-xs text-emerald-200 max-w-xl mx-auto font-medium">
+                {today.day.recoveryNotice || "DO NOT TREAT THIS AS A HARD WORKOUT DAY. Focus on gentle movement, joint mobility, and blood flow."}
+              </p>
+            </section>
+          )}
 
-          <div className="flex flex-col items-start md:items-end gap-1">
-            <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Exercises Done</span>
-            <div className="text-3xl font-extrabold text-orange-400">
-              {completedExercises} <span className="text-base text-slate-500">/ {totalExercises}</span>
-            </div>
-          </div>
-        </div>
+          {/* Day Hero Banner */}
+          <section className="rounded-2xl border border-orange-500/30 bg-gradient-to-r from-[#17101a] via-[#1c1424] to-[#120e1a] p-6 shadow-xl space-y-4">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+              <div>
+                <div className="flex items-center gap-2 mb-1.5">
+                  <span className="px-2.5 py-0.5 text-[11px] font-extrabold uppercase tracking-wider bg-orange-500/15 text-orange-400 border border-orange-500/30 rounded-full flex items-center gap-1">
+                    <Target size={12} />
+                    {today.day.type} · {today.day.location}
+                  </span>
+                  <span className="text-xs text-slate-400">{today.currentDateFormatted}</span>
+                </div>
+                <h2 className="text-2xl md:text-3xl font-extrabold text-white">
+                  {today.day.targetBodyParts}
+                </h2>
+                <p className="text-xs text-slate-300 mt-1 max-w-2xl">
+                  {today.day.description}
+                </p>
+                {today.day.equipmentSummary && (
+                  <p className="text-xs text-orange-400 mt-1 font-semibold">
+                    Equipment: {today.day.equipmentSummary}
+                  </p>
+                )}
+              </div>
 
-        {today.focusBadges && today.focusBadges.length > 0 && (
-          <div className="flex flex-wrap items-center gap-2 pt-1">
-            <span className="text-xs font-bold text-slate-400">Primary Targets:</span>
-            {today.focusBadges.map((badge, idx) => (
-              <span
-                key={idx}
-                className="px-3 py-1 rounded-xl text-xs font-bold bg-slate-900/80 border border-orange-500/20 text-orange-300 shadow-sm flex items-center gap-1.5"
+              <div className="flex flex-col items-start md:items-end gap-1">
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Exercises Completed</span>
+                <div className="text-3xl font-extrabold text-orange-400">
+                  {completedExercises} <span className="text-base text-slate-500">/ {totalExercises}</span>
+                </div>
+              </div>
+            </div>
+
+            {today.day.focusBadges && today.day.focusBadges.length > 0 && (
+              <div className="flex flex-wrap items-center gap-2 pt-1">
+                <span className="text-xs font-bold text-slate-400">Key Focus:</span>
+                {today.day.focusBadges.map((badge, idx) => (
+                  <span
+                    key={idx}
+                    className="px-3 py-1 rounded-xl text-xs font-bold bg-slate-900/80 border border-orange-500/20 text-orange-300 shadow-sm flex items-center gap-1.5"
+                  >
+                    🎯 {badge}
+                  </span>
+                ))}
+              </div>
+            )}
+          </section>
+
+          {/* Rest Timer */}
+          {restRunning && (
+            <section className="rounded-xl border border-orange-500/40 bg-orange-950/30 p-4 flex items-center justify-between text-orange-300 animate-pulse">
+              <div className="flex items-center gap-2">
+                <TimerReset className="animate-spin" size={18} />
+                <span className="font-bold text-sm">Active Rest Timer</span>
+              </div>
+              <span className="font-mono text-2xl font-black">{rest}s</span>
+            </section>
+          )}
+
+          {/* ── SET-BY-SET EXERCISE LIST ──────────────────────────────────────── */}
+          <section className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-black text-white flex items-center gap-2">
+                <Layers className="text-orange-400" size={20} />
+                Prescribed Exercises & Weight History
+              </h3>
+              <span className="text-xs font-bold text-slate-400">
+                Window Closes at 09:28 PM
+              </span>
+            </div>
+
+            <div className="space-y-4">
+              {today.day.exercises.map((ex, index) => {
+                const sets = exerciseSets[ex.id] || [];
+                const isChecked = Boolean(checkedExercises[ex.id]);
+                const selectedVariant = selectedVariants[ex.id] || ex.defaultVariant || ex.variants?.[0] || ex.name;
+
+                return (
+                  <article
+                    key={ex.id}
+                    className={clsx(
+                      "rounded-2xl border p-5 shadow-lg space-y-4 transition-all",
+                      isChecked
+                        ? "border-emerald-500/40 bg-emerald-950/10"
+                        : "border-slate-800 bg-slate-950/80"
+                    )}
+                  >
+                    {/* Header */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800/80 pb-3">
+                      <div className="space-y-1.5">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-xs font-mono font-bold text-orange-400">0{index + 1}</span>
+                          <h4 className="text-base font-extrabold text-white">{ex.name}</h4>
+                          <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-slate-900 text-orange-300 border border-slate-800">
+                            {ex.targetSets} × {ex.targetReps}
+                          </span>
+                          {ex.equipment && (
+                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-900 text-slate-400 border border-slate-800">
+                              {ex.equipment}
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Safety Warning (e.g. Towel Rows) */}
+                        {ex.safetyWarning && (
+                          <div className="p-2.5 rounded-xl border border-rose-500/40 bg-rose-950/30 text-rose-300 text-xs font-semibold flex items-start gap-2">
+                            <ShieldAlert size={16} className="text-rose-400 shrink-0 mt-0.5" />
+                            <span>{ex.safetyWarning}</span>
+                          </div>
+                        )}
+
+                        {/* Variant Selector (e.g. Pull-ups vs Lat Pulldown) */}
+                        {ex.variants && ex.variants.length > 0 && (
+                          <div className="flex items-center gap-2 pt-1">
+                            <span className="text-xs font-bold text-slate-400">Performed Variation:</span>
+                            <div className="flex items-center gap-1.5">
+                              {ex.variants.map((v) => (
+                                <button
+                                  key={v}
+                                  onClick={() => setSelectedVariants((prev) => ({ ...prev, [ex.id]: v }))}
+                                  className={clsx(
+                                    "px-2.5 py-1 rounded-lg text-xs font-bold border transition-all",
+                                    selectedVariant === v
+                                      ? "bg-orange-500 text-black border-orange-400"
+                                      : "bg-slate-900 text-slate-400 border-slate-700 hover:text-white"
+                                  )}
+                                >
+                                  {v}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {ex.startingWeightGuide && (
+                          <p className="text-[11px] text-slate-400">
+                            <span className="text-orange-400 font-bold">Starting Guide:</span> {ex.startingWeightGuide} (Adjust per set below)
+                          </p>
+                        )}
+
+                        {ex.masterCue && (
+                          <p className="text-xs text-slate-400 italic">"{ex.masterCue}"</p>
+                        )}
+
+                        {/* Progressive Overload Suggestion */}
+                        {ex.overloadSuggestion && (
+                          <div className="p-2 rounded-lg bg-orange-500/10 border border-orange-500/20 text-orange-300 text-xs font-semibold">
+                            {ex.overloadSuggestion}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Check-In Button */}
+                      <div className="flex items-center gap-2 self-end sm:self-center">
+                        <button
+                          onClick={() => handleToggleCheckIn(ex.id)}
+                          className={clsx(
+                            "px-3 py-1.5 rounded-xl text-xs font-extrabold flex items-center gap-1.5 transition-all shadow-sm border",
+                            isChecked
+                              ? "bg-emerald-500 text-black border-emerald-400"
+                              : "bg-slate-900 text-slate-300 border-slate-700 hover:border-orange-500"
+                          )}
+                        >
+                          <CheckCircle2 size={15} />
+                          {isChecked ? "Checked In" : "Check In"}
+                        </button>
+                        <button
+                          onClick={() => handleAddSet(ex.id)}
+                          className="btn btn-ghost btn-xs text-xs text-orange-400 hover:text-orange-300 flex items-center gap-1"
+                        >
+                          <Plus size={13} /> Add Set
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Last Session Reference */}
+                    {ex.lastLog && (
+                      <div className="p-2.5 rounded-xl bg-slate-900/60 border border-slate-800 text-xs text-slate-400 flex items-center justify-between">
+                        <span>
+                          <strong className="text-slate-300">LAST SESSION REFERENCE:</strong>{" "}
+                          {ex.lastLog.weightKg ? `${ex.lastLog.weightKg} kg × ` : ""}{ex.lastLog.repsCompleted} reps ({ex.lastLog.setsCompleted} sets logged)
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Sets Table */}
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left text-xs">
+                        <thead>
+                          <tr className="border-b border-slate-800 text-slate-400">
+                            <th className="pb-2 font-bold uppercase tracking-wider">Set</th>
+                            <th className="pb-2 font-bold uppercase tracking-wider">
+                              {ex.isTimed ? "Duration" : "Weight (KG)"}
+                            </th>
+                            <th className="pb-2 font-bold uppercase tracking-wider">Reps / Target</th>
+                            <th className="pb-2 font-bold uppercase tracking-wider text-right">Status</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-900">
+                          {sets.map((set, setIdx) => (
+                            <tr key={setIdx} className="hover:bg-slate-900/30">
+                              <td className="py-2.5 font-bold font-mono text-slate-300">
+                                #{set.setNumber} {setIdx === 0 && <span className="text-[10px] text-orange-400 font-sans ml-1">Top</span>}
+                              </td>
+
+                              <td className="py-2.5">
+                                {ex.isTimed ? (
+                                  <span className="text-slate-400 font-semibold">{ex.targetDurationSeconds || 30}s hold</span>
+                                ) : (
+                                  <div className="flex items-center gap-1">
+                                    <input
+                                      type="number"
+                                      step="0.5"
+                                      placeholder={ex.startingWeightKg ? String(ex.startingWeightKg) : "kg"}
+                                      value={set.weightKg}
+                                      onChange={(e) => handleUpdateSet(ex.id, setIdx, "weightKg", e.target.value)}
+                                      className="w-20 rounded-lg border border-slate-700 bg-slate-900 px-2.5 py-1.5 text-xs text-white focus:border-orange-500 focus:outline-none font-mono"
+                                    />
+                                    <span className="text-slate-500 font-semibold text-[11px]">kg</span>
+                                  </div>
+                                )}
+                              </td>
+
+                              <td className="py-2.5">
+                                <div className="flex items-center gap-1">
+                                  <input
+                                    type="text"
+                                    placeholder={ex.targetReps || "reps"}
+                                    value={set.reps}
+                                    onChange={(e) => handleUpdateSet(ex.id, setIdx, "reps", e.target.value)}
+                                    className="w-20 rounded-lg border border-slate-700 bg-slate-900 px-2 py-1.5 text-xs text-white text-center focus:border-orange-500 focus:outline-none font-mono"
+                                  />
+                                </div>
+                              </td>
+
+                              <td className="py-2.5 text-right">
+                                <button
+                                  onClick={() => handleToggleSetComplete(ex.id, setIdx)}
+                                  className={clsx(
+                                    "px-3 py-1.5 rounded-lg text-xs font-bold transition-all inline-flex items-center gap-1",
+                                    set.completed
+                                      ? "bg-emerald-500 text-black font-extrabold shadow-sm"
+                                      : "bg-slate-900 text-slate-400 border border-slate-700 hover:border-orange-500 hover:text-white"
+                                  )}
+                                >
+                                  <Check size={13} />
+                                  {set.completed ? "Done" : "Check"}
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    {sets.length > 1 && (
+                      <div className="flex justify-end pt-1">
+                        <button
+                          onClick={() => handleRemoveSet(ex.id)}
+                          className="text-[11px] text-slate-500 hover:text-rose-400 flex items-center gap-1"
+                        >
+                          <Minus size={12} /> Remove Last Set
+                        </button>
+                      </div>
+                    )}
+                  </article>
+                );
+              })}
+            </div>
+          </section>
+
+          {/* Session Notes & Finish */}
+          <section className="rounded-2xl border border-slate-800 bg-slate-950 p-6 space-y-4 shadow-xl">
+            <h4 className="text-sm font-extrabold uppercase tracking-wider text-slate-300">Session Notes & Finish</h4>
+            <textarea
+              rows={2}
+              placeholder="How did the session feel? Any progressive overload PRs or equipment notes..."
+              value={notes}
+              onChange={(e) => {
+                setNotes(e.target.value);
+                if (today?.day?.id) {
+                  saveLocalWorkoutState(
+                    todayDateKey,
+                    today.day.id,
+                    today.weekNumber || 1,
+                    e.target.value,
+                    exerciseSets,
+                    checkedExercises,
+                    "LOCAL_ONLY"
+                  );
+                }
+              }}
+              className="w-full rounded-xl border border-slate-700 bg-slate-900 p-3 text-xs text-white placeholder-slate-500 focus:border-orange-500 focus:outline-none"
+            />
+
+            {message && (
+              <div className="p-3 rounded-xl bg-orange-950/40 border border-orange-500/30 text-xs font-bold text-orange-300">
+                {message}
+              </div>
+            )}
+
+            <div className="flex flex-wrap items-center justify-between gap-4 pt-2">
+              <div className="text-xs text-slate-400">
+                Cutoff: <strong className="text-white">09:28 PM</strong> Ethiopia Time.
+              </div>
+
+              <button
+                onClick={finishSession}
+                disabled={saving}
+                className="btn btn-primary font-extrabold px-6 py-2.5 rounded-xl flex items-center gap-2 shadow-xl"
               >
-                🎯 {badge}
-              </span>
-            ))}
-          </div>
-        )}
-      </section>
-
-      {/* Rest Timer Float Header */}
-      {restRunning && (
-        <section className="rounded-xl border border-orange-500/40 bg-orange-950/30 p-4 flex items-center justify-between text-orange-300">
-          <div className="flex items-center gap-2">
-            <TimerReset className="animate-spin" size={18} />
-            <span className="font-bold text-sm">Active Rest Timer</span>
-          </div>
-          <span className="font-mono text-2xl font-black">{rest}s</span>
-        </section>
+                {saving ? <LoaderCircle size={16} className="animate-spin" /> : <Award size={16} />}
+                Complete & Finish Session
+              </button>
+            </div>
+          </section>
+        </div>
       )}
 
-      {/* ── SET-BY-SET EXERCISE LIST ────────────────────────────────────────── */}
-      <section className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h3 className="text-lg font-black text-white flex items-center gap-2">
-            <Layers className="text-orange-400" size={20} />
-            Set-by-Set Weight & Overload Tracker
-          </h3>
-          <span className="text-xs font-bold text-slate-400">
-            Standard Target: {today.phase.sets} sets × {today.phase.reps} reps
-          </span>
-        </div>
+      {/* ══════════════════════════════════════════════════════════════════════════ */}
+      {/* TAB 2: DAILY CORE ROUTINE (MORNING & NIGHT SEPARATE TRACKING)              */}
+      {/* ══════════════════════════════════════════════════════════════════════════ */}
+      {tab === "core" && (
+        <div className="space-y-6">
+          <section className="rounded-2xl border border-orange-500/30 bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 p-6 shadow-xl space-y-3">
+            <div className="flex items-center gap-2">
+              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-orange-500/20 text-orange-400 border border-orange-500/30">
+                DAILY CORE PROTOCOL
+              </span>
+              <span className="text-xs text-slate-400">Non-Rotating Fixed Routine</span>
+            </div>
+            <h2 className="text-2xl font-black text-white">Daily Abdominal Check-Ins</h2>
+            <p className="text-xs text-slate-300 max-w-xl">
+              Executed twice daily (Morning / Wake-up AND Night / Before bed) every single day regardless of weekly body-part split.
+            </p>
+          </section>
 
-        <div className="space-y-4">
-          {today.day.exercises.map((ex, index) => {
-            const sets = exerciseSets[ex.id] || [];
-            const isChecked = Boolean(checkedExercises[ex.id]);
+          {/* Routine Specification Card */}
+          <section className="rounded-2xl border border-slate-800 bg-slate-950/80 p-5 space-y-3">
+            <h4 className="text-xs font-black uppercase tracking-wider text-slate-400">Fixed 4-Movement Routine</h4>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+              <div className="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800">
+                <span className="text-[10px] font-bold text-orange-400">01</span>
+                <h5 className="text-sm font-black text-white mt-1">Crunches</h5>
+                <span className="text-xs text-slate-300 font-mono">20 reps</span>
+              </div>
+              <div className="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800">
+                <span className="text-[10px] font-bold text-orange-400">02</span>
+                <h5 className="text-sm font-black text-white mt-1">Leg Raises</h5>
+                <span className="text-xs text-slate-300 font-mono">15 reps</span>
+              </div>
+              <div className="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800">
+                <span className="text-[10px] font-bold text-orange-400">03</span>
+                <h5 className="text-sm font-black text-white mt-1">Plank</h5>
+                <span className="text-xs text-slate-300 font-mono">45 seconds</span>
+              </div>
+              <div className="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800">
+                <span className="text-[10px] font-bold text-orange-400">04</span>
+                <h5 className="text-sm font-black text-white mt-1">Bicycle Crunches</h5>
+                <span className="text-xs text-slate-300 font-mono">20 / each side</span>
+              </div>
+            </div>
+          </section>
 
-            return (
-              <article
-                key={ex.id}
+          {/* Morning & Night Check-In Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            {/* Morning Slot */}
+            <article
+              className={clsx(
+                "rounded-2xl border p-6 space-y-4 shadow-xl transition-all",
+                morningCoreChecked
+                  ? "border-emerald-500/40 bg-emerald-950/15"
+                  : "border-slate-800 bg-slate-950"
+              )}
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Sun className="text-amber-400" size={20} />
+                  <h3 className="text-lg font-black text-white">Morning / Wake-Up Core</h3>
+                </div>
+                <span
+                  className={clsx(
+                    "px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase border",
+                    morningCoreChecked
+                      ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/30"
+                      : "bg-slate-900 text-slate-400 border-slate-800"
+                  )}
+                >
+                  {morningCoreChecked ? "✅ Completed" : "⏳ Pending"}
+                </span>
+              </div>
+
+              <ul className="space-y-2 text-xs text-slate-300">
+                <li className="flex items-center gap-2">
+                  <Check size={14} className={morningCoreChecked ? "text-emerald-400" : "text-slate-600"} />
+                  Crunches × 20
+                </li>
+                <li className="flex items-center gap-2">
+                  <Check size={14} className={morningCoreChecked ? "text-emerald-400" : "text-slate-600"} />
+                  Leg Raises × 15
+                </li>
+                <li className="flex items-center gap-2">
+                  <Check size={14} className={morningCoreChecked ? "text-emerald-400" : "text-slate-600"} />
+                  Plank × 45s
+                </li>
+                <li className="flex items-center gap-2">
+                  <Check size={14} className={morningCoreChecked ? "text-emerald-400" : "text-slate-600"} />
+                  Bicycle Crunches × 20 each side
+                </li>
+              </ul>
+
+              <button
+                onClick={() => handleToggleCore("MORNING")}
+                disabled={morningCoreSubmitting}
                 className={clsx(
-                  "rounded-2xl border p-5 shadow-lg space-y-4 transition-all",
-                  isChecked
-                    ? "border-emerald-500/40 bg-emerald-950/10"
-                    : "border-slate-800 bg-slate-950/80"
+                  "w-full py-2.5 rounded-xl font-extrabold text-xs flex items-center justify-center gap-2 transition-all shadow-md",
+                  morningCoreChecked
+                    ? "bg-emerald-500 text-black"
+                    : "bg-orange-500 hover:bg-orange-600 text-black"
                 )}
               >
-                {/* Exercise Header & Cue */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800/80 pb-3">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-mono font-bold text-orange-400">0{index + 1}</span>
-                      <h4 className="text-base font-extrabold text-white">{ex.name}</h4>
-                      {ex.targetMuscle && (
-                        <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-slate-900 text-slate-400 border border-slate-800">
-                          {ex.targetMuscle}
-                        </span>
-                      )}
+                {morningCoreSubmitting ? (
+                  <LoaderCircle size={15} className="animate-spin" />
+                ) : (
+                  <CheckCircle2 size={15} />
+                )}
+                {morningCoreChecked ? "Morning Core Verified ✓" : "Mark Morning Core Complete (+25 XP)"}
+              </button>
+            </article>
+
+            {/* Night Slot */}
+            <article
+              className={clsx(
+                "rounded-2xl border p-6 space-y-4 shadow-xl transition-all",
+                nightCoreChecked
+                  ? "border-emerald-500/40 bg-emerald-950/15"
+                  : "border-slate-800 bg-slate-950"
+              )}
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Moon className="text-indigo-400" size={20} />
+                  <h3 className="text-lg font-black text-white">Night / Bedtime Core</h3>
+                </div>
+                <span
+                  className={clsx(
+                    "px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase border",
+                    nightCoreChecked
+                      ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/30"
+                      : "bg-slate-900 text-slate-400 border-slate-800"
+                  )}
+                >
+                  {nightCoreChecked ? "✅ Completed" : "⏳ Pending"}
+                </span>
+              </div>
+
+              <ul className="space-y-2 text-xs text-slate-300">
+                <li className="flex items-center gap-2">
+                  <Check size={14} className={nightCoreChecked ? "text-emerald-400" : "text-slate-600"} />
+                  Crunches × 20
+                </li>
+                <li className="flex items-center gap-2">
+                  <Check size={14} className={nightCoreChecked ? "text-emerald-400" : "text-slate-600"} />
+                  Leg Raises × 15
+                </li>
+                <li className="flex items-center gap-2">
+                  <Check size={14} className={nightCoreChecked ? "text-emerald-400" : "text-slate-600"} />
+                  Plank × 45s
+                </li>
+                <li className="flex items-center gap-2">
+                  <Check size={14} className={nightCoreChecked ? "text-emerald-400" : "text-slate-600"} />
+                  Bicycle Crunches × 20 each side
+                </li>
+              </ul>
+
+              <button
+                onClick={() => handleToggleCore("NIGHT")}
+                disabled={nightCoreSubmitting}
+                className={clsx(
+                  "w-full py-2.5 rounded-xl font-extrabold text-xs flex items-center justify-center gap-2 transition-all shadow-md",
+                  nightCoreChecked
+                    ? "bg-emerald-500 text-black"
+                    : "bg-orange-500 hover:bg-orange-600 text-black"
+                )}
+              >
+                {nightCoreSubmitting ? (
+                  <LoaderCircle size={15} className="animate-spin" />
+                ) : (
+                  <CheckCircle2 size={15} />
+                )}
+                {nightCoreChecked ? "Night Core Verified ✓" : "Mark Night Core Complete (+25 XP)"}
+              </button>
+            </article>
+          </div>
+        </div>
+      )}
+
+      {/* ══════════════════════════════════════════════════════════════════════════ */}
+      {/* TAB 3: WORKOUT HISTORY                                                     */}
+      {/* ══════════════════════════════════════════════════════════════════════════ */}
+      {tab === "history" && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-black text-white">Historical Workout Log</h3>
+            <span className="text-xs text-slate-400">All sessions preserved permanently</span>
+          </div>
+
+          {history.length === 0 ? (
+            <div className="p-8 text-center text-slate-500 border border-slate-800 rounded-2xl bg-slate-950">
+              No historical workout sessions recorded yet.
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {history.map((h) => (
+                <article key={h.id} className="p-5 rounded-2xl border border-slate-800 bg-slate-950/80 space-y-3">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800/80 pb-2.5">
+                    <div>
+                      <span className="text-xs font-mono font-bold text-orange-400">
+                        {new Date(h.completedAt).toLocaleDateString("en-US", {
+                          weekday: "long",
+                          year: "numeric",
+                          month: "short",
+                          day: "numeric",
+                        })}
+                      </span>
+                      <h4 className="text-base font-extrabold text-white">
+                        {h.workoutDay?.targetBodyParts || h.workoutDay?.type || "Workout Session"}
+                      </h4>
                     </div>
-                    {ex.masterCue && (
-                      <p className="text-xs text-slate-400 italic">"{ex.masterCue}"</p>
+
+                    {h.notes && (
+                      <p className="text-xs text-slate-400 italic max-w-xs truncate">
+                        "{h.notes}"
+                      </p>
                     )}
                   </div>
 
-                  {/* Exercise Check In Toggle Button */}
-                  <div className="flex items-center gap-2 self-end sm:self-center">
-                    <button
-                      onClick={() => handleToggleCheckIn(ex.id)}
-                      className={clsx(
-                        "px-3 py-1.5 rounded-xl text-xs font-extrabold flex items-center gap-1.5 transition-all shadow-sm border",
-                        isChecked
-                          ? "bg-emerald-500 text-black border-emerald-400"
-                          : "bg-slate-900 text-slate-300 border-slate-700 hover:border-orange-500"
-                      )}
-                    >
-                      <CheckCircle2 size={15} />
-                      {isChecked ? "Checked In" : "Check In"}
-                    </button>
-                    <button
-                      onClick={() => handleAddSet(ex.id)}
-                      className="btn btn-ghost btn-xs text-xs text-orange-400 hover:text-orange-300 flex items-center gap-1"
-                    >
-                      <Plus size={13} /> Add Set
-                    </button>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+                    {h.exerciseLogs.map((el) => {
+                      const parsedSets = parseSetDetails(el.setDetails);
+                      return (
+                        <div key={el.id} className="p-3 rounded-xl bg-slate-900 border border-slate-800 text-xs">
+                          <span className="font-extrabold text-white block">{el.exercise?.name || "Exercise"}</span>
+                          <span className="text-slate-400 mt-1 block">
+                            {parsedSets.length > 0 ? (
+                              parsedSets.map((s) => `${s.weightKg ? `${s.weightKg}kg×` : ""}${s.reps}`).join(", ")
+                            ) : (
+                              `${el.weightKg ? `${el.weightKg} kg × ` : ""}${el.repsCompleted} reps (${el.setsCompleted} sets)`
+                            )}
+                          </span>
+                        </div>
+                      );
+                    })}
                   </div>
-                </div>
-
-                {/* Sets Table */}
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs">
-                    <thead>
-                      <tr className="border-b border-slate-800 text-slate-400">
-                        <th className="pb-2 font-bold uppercase tracking-wider">Set</th>
-                        <th className="pb-2 font-bold uppercase tracking-wider">Weight (KG)</th>
-                        <th className="pb-2 font-bold uppercase tracking-wider">Reps</th>
-                        <th className="pb-2 font-bold uppercase tracking-wider text-right">Status</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-900">
-                      {sets.map((set, setIdx) => (
-                        <tr key={setIdx} className="hover:bg-slate-900/30">
-                          <td className="py-2.5 font-bold font-mono text-slate-300">
-                            #{set.setNumber} {setIdx === 0 && <span className="text-[10px] text-orange-400 font-sans ml-1">Top</span>}
-                          </td>
-                          <td className="py-2.5">
-                            <div className="flex items-center gap-1">
-                              <input
-                                type="number"
-                                step="0.5"
-                                placeholder="kg"
-                                value={set.weightKg}
-                                onChange={(e) => handleUpdateSet(ex.id, setIdx, "weightKg", e.target.value)}
-                                className="w-20 rounded-lg border border-slate-700 bg-slate-900 px-2.5 py-1.5 text-xs text-white focus:border-orange-500 focus:outline-none"
-                              />
-                              <span className="text-slate-500 font-semibold text-[11px]">kg</span>
-                            </div>
-                          </td>
-                          <td className="py-2.5">
-                            <div className="flex items-center gap-1">
-                              <input
-                                type="number"
-                                placeholder="reps"
-                                value={set.reps}
-                                onChange={(e) => handleUpdateSet(ex.id, setIdx, "reps", e.target.value)}
-                                className="w-16 rounded-lg border border-slate-700 bg-slate-900 px-2 py-1.5 text-xs text-white text-center focus:border-orange-500 focus:outline-none"
-                              />
-                              <span className="text-slate-500 font-semibold text-[11px]">reps</span>
-                            </div>
-                          </td>
-                          <td className="py-2.5 text-right">
-                            <button
-                              onClick={() => handleToggleSetComplete(ex.id, setIdx)}
-                              className={clsx(
-                                "px-3 py-1.5 rounded-lg text-xs font-bold transition-all inline-flex items-center gap-1",
-                                set.completed
-                                  ? "bg-emerald-500 text-black font-extrabold shadow-sm"
-                                  : "bg-slate-900 text-slate-400 border border-slate-700 hover:border-orange-500 hover:text-white"
-                              )}
-                            >
-                              <Check size={13} />
-                              {set.completed ? "Done" : "Check"}
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-
-                {sets.length > 1 && (
-                  <div className="flex justify-end pt-1">
-                    <button
-                      onClick={() => handleRemoveSet(ex.id)}
-                      className="text-[11px] text-slate-500 hover:text-rose-400 flex items-center gap-1"
-                    >
-                      <Minus size={12} /> Remove Last Set
-                    </button>
-                  </div>
-                )}
-              </article>
-            );
-          })}
+                </article>
+              ))}
+            </div>
+          )}
         </div>
-      </section>
-
-      {/* ── SESSION FINISH & SUBMISSION CARD ─────────────────────────────────── */}
-      <section className="rounded-2xl border border-slate-800 bg-slate-950 p-6 space-y-4 shadow-xl">
-        <h4 className="text-sm font-extrabold uppercase tracking-wider text-slate-300">Session Notes & Finish</h4>
-        <textarea
-          rows={2}
-          placeholder="How did the lifts feel? Any joint tightness or progressive overload PRs..."
-          value={notes}
-          onChange={(e) => {
-            setNotes(e.target.value);
-            if (today?.day?.id) {
-              saveLocalWorkoutState(
-                todayDateKey,
-                today.day.id,
-                today.weekNumber || 1,
-                e.target.value,
-                exerciseSets,
-                checkedExercises,
-                "LOCAL_ONLY"
-              );
-            }
-          }}
-          className="w-full rounded-xl border border-slate-700 bg-slate-900 p-3 text-xs text-white placeholder-slate-500 focus:border-orange-500 focus:outline-none"
-        />
-
-        {message && (
-          <div className="p-3 rounded-xl bg-orange-950/40 border border-orange-500/30 text-xs font-bold text-orange-300">
-            {message}
-          </div>
-        )}
-
-        <div className="flex flex-wrap items-center justify-between gap-4 pt-2">
-          <div className="text-xs text-slate-400">
-            Window closes at <strong className="text-white">09:28 PM</strong> Ethiopia Time.
-          </div>
-
-          <button
-            onClick={finishSession}
-            disabled={saving}
-            className="btn btn-primary font-extrabold px-6 py-2.5 rounded-xl flex items-center gap-2 shadow-xl"
-          >
-            {saving ? <LoaderCircle size={16} className="animate-spin" /> : <Award size={16} />}
-            Complete & Finish Session
-          </button>
-        </div>
-      </section>
+      )}
     </div>
   );
 }

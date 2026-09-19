@@ -163,7 +163,7 @@ export async function ensureTodayDailyPlan(): Promise<EnrichedDailyPlan> {
               orderBy: [{ isStudy: 'desc' }, { priority: 'asc' }],
             },
           },
-        });
+        }).catch(() => null);
       }
     }
 

@@ -25,6 +25,7 @@ import {
   snoozeSleep,
   getSleepAccountabilityStatus,
 } from './sleepAccountability';
+import { getAddisNow, getAddisTimeComponents } from './workoutTime';
 
 export const AUTHORIZED_PHONE = '+251977409986';
 
@@ -163,7 +164,32 @@ export async function handleTelegramWebhookUpdate(update: any): Promise<void> {
   });
 
   if (linkedAccount && linkedAccount.active) {
-    // 2a. Handle explicit accountability acknowledgement (spec section 5/7).
+    // 2a. Handle incoming Progress / Comparison Photos (Part K)
+    if (message.photo && Array.isArray(message.photo) && message.photo.length > 0) {
+      const bestPhoto = message.photo[message.photo.length - 1];
+      const addisNow = getAddisNow();
+      const { year, month, day } = getAddisTimeComponents(addisNow);
+      const addisDateKey = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+
+      await prisma.physiquePhotoLog.create({
+        data: {
+          userId: linkedAccount.userId || 'singleton',
+          addisDate: addisDateKey,
+          telegramFileId: bestPhoto.file_id,
+          telegramMessageId: message.message_id,
+          photoUrl: `telegram:${bestPhoto.file_id}`,
+          note: message.caption || 'Daily physique comparison photo',
+        },
+      });
+
+      await sendTelegramMessage(
+        chatId,
+        `📸 Forge Physique Check-In Recorded!\n\nComparison photo saved for ${addisDateKey}. Keep forging your physique!`
+      );
+      return;
+    }
+
+    // 2b. Handle explicit accountability acknowledgement (spec section 5/7).
     // Command messages (starting with "/") are never acknowledgement text.
     if (!text.startsWith('/')) {
       const ack = await resolveAccountabilityByMessage(text);

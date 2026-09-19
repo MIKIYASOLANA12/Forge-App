@@ -328,23 +328,36 @@ export async function sendSmartCoachScheduleReminder(customNow?: Date) {
     return { slotType, sent: confirmed, message: msg };
   };
 
-  // ── [1] FIXED 11:00 AM WAKE-UP (660..719 mins) ──────────────────────────────
-  if (totalMinutes >= 660 && totalMinutes < 720) {
+  // Fetch preferences for dynamic wake/sleep targets
+  const pref = await prisma.notificationPreference.findUnique({ where: { id: 'singleton' } }).catch(() => null);
+  const wakeTimeStr = pref?.wakeTime || '04:02';
+  const wakeMinutes = parseTimeToMinutes(wakeTimeStr) ?? 242; // 04:02 AM = 242 minutes
+  const formattedWakeTime = formatMinutesTo12Hour(wakeMinutes);
+
+  // ── [1] DYNAMIC WAKE-UP BASED ON STORED WAKE TIME (e.g. 04:02 AM) ───────────
+  if (totalMinutes >= wakeMinutes && totalMinutes < wakeMinutes + 60) {
     const todayPlan = await ensureTodayDailyPlan();
     const firstTask = todayPlan?.tasks?.find((t) => parseTimeToMinutes(t.plannedStartTime) !== null);
     let nextMsg = 'Review your roadmap in Forge to start your day.';
     if (firstTask) {
       const title = getTaskCleanTitle(firstTask);
-      const sTime = firstTask.plannedStartTime ? formatMinutesTo12Hour(parseTimeToMinutes(firstTask.plannedStartTime)!) : '12:00 PM';
+      const sTime = firstTask.plannedStartTime ? formatMinutesTo12Hour(parseTimeToMinutes(firstTask.plannedStartTime)!) : '05:00 AM';
       nextMsg = `Next planned activity: ${title} at ${sTime}.`;
     }
 
     const wakeMsg = `☀️ Good morning, Mikiyas.
-It's 11:00 AM — time to wake up.
+It's ${formattedWakeTime} — time to wake up.
 
 ${nextMsg}`;
 
-    await helperSend('COACH_WAKE_1100', wakeMsg);
+    await helperSend(`COACH_WAKE_${wakeTimeStr.replace(':', '')}`, wakeMsg);
+  }
+
+  // ── [1.5] DAILY PHYSIQUE PHOTO CHECK-IN REMINDER ────────────────────────────
+  if (totalMinutes >= 480 && totalMinutes < 540) { // 08:00 AM window
+    const photoMsg = `Forge Physique Check-In 📸
+Send today's comparison photo.`;
+    await helperSend('COACH_PHYSIQUE_PHOTO', photoMsg);
   }
 
   // ── [2] 09:28 PM DAILY CLOSE CUTOFF (1288..1289 mins) ───────────────────────

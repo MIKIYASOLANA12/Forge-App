@@ -2,289 +2,475 @@ export interface MuscleTargetInfo {
   primaryBodyParts: string;
   focusBadges: string[];
   description: string;
+  isRecovery?: boolean;
+  recoveryNotice?: string;
 }
 
-export const WORKOUT_DAY_TARGETS: Record<string, MuscleTargetInfo> = {
-  Push: {
-    primaryBodyParts: "Chest, Shoulders & Triceps",
-    focusBadges: ["Upper & Mid Chest", "Front & Side Deltoids", "Triceps (Horseshoe & Long Head)"],
-    description: "Heavy horizontal and vertical pressing targeting pectoral mass, shoulder cap width, and triceps lockout strength.",
-  },
-  Pull: {
-    primaryBodyParts: "Back (Wings), Biceps & Rear Delts",
-    focusBadges: ["Lats Width (Wings)", "Mid-Back & Traps", "Biceps Peaks", "Rear Deltoids & Forearms"],
-    description: "Vertical and horizontal pulling targeting V-taper lat width, upper back thickness, and bicep peak development.",
-  },
-  LegsCore: {
-    primaryBodyParts: "Legs (Quads, Hamstrings, Glutes) & Core/Abs",
-    focusBadges: ["Quadriceps & Glutes", "Hamstrings & Calves", "Upper/Lower Abs", "Obliques & Core Bracing"],
-    description: "Lower body compound power, knee stability, and rotational/isometric abdominal strength.",
-  },
-  ArmsShoulders: {
-    primaryBodyParts: "Biceps, Chest & Shoulders",
-    focusBadges: ["Biceps (Peak & Thickness)", "Upper & Mid Chest", "Shoulder Caps (Delts)", "Triceps Horseshoe"],
-    description: "Upper body hypertrophy focus emphasizing arm size, chest shelf thickness, and 3D shoulder roundness.",
-  },
-};
+export interface DayRoutineDefinition {
+  dayOfWeek: number; // 0 = Sunday, 1 = Monday, ... 6 = Saturday
+  dayName: string;   // "Sunday", "Monday", etc.
+  location: "HOME" | "GYM";
+  targetBodyParts: string;
+  focusBadges: string[];
+  description: string;
+  isRecovery?: boolean;
+  recoveryNotice?: string;
+  equipmentSummary?: string;
+  exercises: WorkoutExerciseDefinition[];
+}
 
-export interface ExerciseDefinition {
+export interface WorkoutExerciseDefinition {
+  id: string;
   name: string;
   muscle: string;
   cue: string;
-  equipment: "GYM" | "HOME";
+  equipment: string;
+  targetSets: number;
+  targetReps: string; // e.g. "12", "8–10", "max", "30s"
+  targetDurationSeconds?: number;
+  startingWeightKg?: number;
+  startingWeightGuide?: string; // e.g. "approximately 30–40 kg"
+  variants?: string[]; // e.g. ["Pull-ups", "Lat Pulldown"]
+  defaultVariant?: string;
+  safetyWarning?: string;
+  isTimed?: boolean;
 }
 
-export const PROTOCOL_EXERCISES: Record<"GYM" | "HOME", Record<string, ExerciseDefinition[]>> = {
-  GYM: {
-    Push: [
+export interface CoreExerciseItem {
+  id: string;
+  name: string;
+  target: string;
+  targetDurationSeconds?: number;
+  isTimed?: boolean;
+  cue: string;
+}
+
+// ── FIXED DAILY CORE ROUTINE (Tracked twice daily: Morning & Night) ───────────
+export const DAILY_CORE_ROUTINE: CoreExerciseItem[] = [
+  {
+    id: "core_crunches",
+    name: "Crunches",
+    target: "20 reps",
+    cue: "Curl ribcage toward pelvis, exhale deeply at contraction, keep neck relaxed.",
+  },
+  {
+    id: "core_leg_raises",
+    name: "Leg Raises",
+    target: "15 reps",
+    cue: "Keep lower back firmly pressed into the floor throughout the entire movement.",
+  },
+  {
+    id: "core_plank",
+    name: "Plank",
+    target: "45 seconds",
+    targetDurationSeconds: 45,
+    isTimed: true,
+    cue: "Brace abs 360 degrees, glutes tight, neutral spine from neck to ankles.",
+  },
+  {
+    id: "core_bicycle_crunches",
+    name: "Bicycle Crunches",
+    target: "20 each side",
+    cue: "Rotate shoulder across to opposite knee in a controlled burn; avoid pulling the head.",
+  },
+];
+
+// ── EXACT 7-DAY WORKOUT ROTATION (Sunday to Saturday) ─────────────────────────
+export const WEEKLY_WORKOUT_SCHEDULE: Record<number, DayRoutineDefinition> = {
+  // SUNDAY — HOME: Shoulders + Back
+  0: {
+    dayOfWeek: 0,
+    dayName: "Sunday",
+    location: "HOME",
+    targetBodyParts: "Shoulders + Back",
+    focusBadges: ["Shoulder Press", "Lateral Delts", "Upper Back Rows", "Erector Spinae"],
+    description: "Home upper session using a 5-liter jar as dumbbell and bodyweight holds.",
+    equipmentSummary: "5-liter jar used as dumbbell",
+    exercises: [
       {
-        name: "Barbell Bench Press",
-        muscle: "Chest (Mid/Lower Pectoralis Major)",
-        cue: "Arch lower back lightly, tuck elbows 45 degrees, explode upward off chest.",
-        equipment: "GYM",
+        id: "sun_jar_shoulder_press",
+        name: "Jar Shoulder Press",
+        muscle: "Shoulders (Anterior & Lateral Delts)",
+        cue: "Hold 5L jar securely with both hands or per arm, press overhead with full lockout.",
+        equipment: "5L Jar",
+        targetSets: 3,
+        targetReps: "12",
       },
       {
-        name: "Dumbbell Shoulder Press",
-        muscle: "Shoulders (Anterior Deltoids & Triceps)",
-        cue: "Press straight up, touch dumbbells softly at top without locking elbows.",
-        equipment: "GYM",
+        id: "sun_jar_lateral_raise",
+        name: "Jar Lateral Raise",
+        muscle: "Shoulders (Lateral Side Delts)",
+        cue: "Lead with the elbow, raise to shoulder height without swinging the torso.",
+        equipment: "5L Jar",
+        targetSets: 3,
+        targetReps: "12",
       },
       {
-        name: "Cable Lateral Raises (cable crossover)",
-        muscle: "Shoulders (Lateral Side Delts for Width)",
-        cue: "Lead with your elbows and pause for 0.5s at shoulder height.",
-        equipment: "GYM",
+        id: "sun_jar_bent_over_row",
+        name: "Jar Bent-Over Row",
+        muscle: "Back (Lats & Rhomboids)",
+        cue: "Hinge at hips with flat spine, row the 5L jar toward lower ribs squeezing shoulder blades.",
+        equipment: "5L Jar",
+        targetSets: 3,
+        targetReps: "12",
       },
       {
-        name: "Pec Deck Machine",
-        muscle: "Chest (Inner Squeeze & Cleavage)",
-        cue: "Keep slight bend in elbows and focus on squeezing pec fibers together.",
-        equipment: "GYM",
-      },
-      {
-        name: "Cable Tricep Pushdown (cable crossover)",
-        muscle: "Triceps (Lateral Head 'Horseshoe')",
-        cue: "Lock elbows to your ribs, flare wrists outward at the bottom contraction.",
-        equipment: "GYM",
-      },
-      {
-        name: "Overhead Tricep Extension (EZ-bar or cable)",
-        muscle: "Triceps (Long Head / Arm Thickness)",
-        cue: "Full deep stretch behind your head, extend arms fully to the ceiling.",
-        equipment: "GYM",
-      },
-    ],
-    Pull: [
-      {
-        name: "Lat Pulldown (wide grip)",
-        muscle: "Back (Lats Width / 'Wings')",
-        cue: "Pull through your elbows down to your collarbone while arching upper chest.",
-        equipment: "GYM",
-      },
-      {
-        name: "Cable Row",
-        muscle: "Back (Mid-Back Thickness & Lower Lats)",
-        cue: "Pull handles to your navel, squeeze shoulder blades together at peak.",
-        equipment: "GYM",
-      },
-      {
-        name: "Hammer Strength Row",
-        muscle: "Back (Upper Traps, Rhomboids & Teres Major)",
-        cue: "Full stretch forward on the eccentric, drive elbows back hard.",
-        equipment: "GYM",
-      },
-      {
-        name: "Face Pulls (cable crossover)",
-        muscle: "Shoulders (Rear Delts) & Upper Traps",
-        cue: "Pull rope to eye level, rotating hands backward to target rear delts.",
-        equipment: "GYM",
-      },
-      {
-        name: "EZ-Bar Bicep Curl",
-        muscle: "Biceps (Inner/Outer Head Peak & Power)",
-        cue: "Keep elbows stationary, supinate wrists and squeeze biceps at top.",
-        equipment: "GYM",
-      },
-      {
-        name: "Hammer Curl",
-        muscle: "Biceps (Brachialis & Forearm Thickness)",
-        cue: "Neutral grip with palms facing each other, control the descent.",
-        equipment: "GYM",
-      },
-    ],
-    LegsCore: [
-      {
-        name: "Barbell Squat",
-        muscle: "Legs (Quadriceps, Glutes & Adductors)",
-        cue: "Brace core 360 degrees, break at hips and knees, drive through mid-foot.",
-        equipment: "GYM",
-      },
-      {
-        name: "Hammer Strength Leg Press",
-        muscle: "Legs (Quadriceps Sweep & Hamstrings)",
-        cue: "Feet shoulder-width on platform, descend until 90-degree knee bend.",
-        equipment: "GYM",
-      },
-      {
-        name: "Ab Crunch Machine",
-        muscle: "Abs (Rectus Abdominis / 6-Pack)",
-        cue: "Crunch ribcage down toward pelvis, exhale on the contraction.",
-        equipment: "GYM",
-      },
-      {
-        name: "Hanging Knee Raises (pull-up bar)",
-        muscle: "Abs (Lower Abs & Hip Flexors)",
-        cue: "Curl your pelvis up toward your chest, avoid swinging.",
-        equipment: "GYM",
-      },
-      {
-        name: "Dip Bar L-Sit Hold",
-        muscle: "Core (Isometric Core & Serratus Strength)",
-        cue: "Lock arms straight, hold legs parallel to ground with toes pointed.",
-        equipment: "GYM",
-      },
-      {
-        name: "Cable Woodchop (cable crossover)",
-        muscle: "Core (Obliques & Rotational Power)",
-        cue: "Pivot back foot, rotate torso with arms extended across the body.",
-        equipment: "GYM",
+        id: "sun_superman_hold",
+        name: "Superman Hold",
+        muscle: "Lower & Upper Back (Erector Spinae & Glutes)",
+        cue: "Lie face down, simultaneously raise chest, arms, and legs off floor. Hold tight.",
+        equipment: "Bodyweight",
+        targetSets: 3,
+        targetReps: "30s",
+        targetDurationSeconds: 30,
+        isTimed: true,
       },
     ],
   },
-  HOME: {
-    Push: [
+
+  // MONDAY — HOME: Chest + Triceps
+  1: {
+    dayOfWeek: 1,
+    dayName: "Monday",
+    location: "HOME",
+    targetBodyParts: "Chest + Triceps",
+    focusBadges: ["Push-ups Max", "Diamond Push-ups", "Pike Overhead"],
+    description: "High-intensity bodyweight pressing targeting chest thickness and triceps lockout power.",
+    equipmentSummary: "Bodyweight",
+    exercises: [
       {
-        name: "Feet-Elevated Decline Push-Ups",
-        muscle: "Chest (Upper Pectorals & Front Delts)",
-        cue: "Place feet on chair or bed, lower chest slowly to floor and explode up.",
-        equipment: "HOME",
+        id: "mon_pushups",
+        name: "Push-ups",
+        muscle: "Chest (Pectoralis Major & Triceps)",
+        cue: "Tuck elbows 45 degrees, chest to floor on every rep, explosive ascent.",
+        equipment: "Bodyweight",
+        targetSets: 3,
+        targetReps: "max",
       },
       {
-        name: "Pike Push-Ups (or Wall Handstand Press)",
-        muscle: "Shoulders (Anterior Deltoids & Overhead Power)",
-        cue: "Elevate hips in an A-frame, lower head between hands, press through shoulders.",
-        equipment: "HOME",
+        id: "mon_diamond_pushups",
+        name: "Diamond Push-ups",
+        muscle: "Triceps (Horseshoe & Inner Chest)",
+        cue: "Place thumbs and index fingers together under sternum; elbows track close to ribs.",
+        equipment: "Bodyweight",
+        targetSets: 3,
+        targetReps: "12",
       },
       {
-        name: "Dumbbell / Water-Bottle Lateral Raises",
+        id: "mon_pike_pushups",
+        name: "Pike Push-ups",
+        muscle: "Shoulders & Upper Chest (Front Delts)",
+        cue: "Hips elevated in high A-frame; lower crown of head toward floor between hands.",
+        equipment: "Bodyweight",
+        targetSets: 3,
+        targetReps: "10",
+      },
+    ],
+  },
+
+  // TUESDAY — HOME: Biceps + Back
+  2: {
+    dayOfWeek: 2,
+    dayName: "Tuesday",
+    location: "HOME",
+    targetBodyParts: "Biceps + Back",
+    focusBadges: ["Jar Bicep Curls", "Hammer Curls", "Superman Rows", "Towel Inverted Rows"],
+    description: "Home pulling session combining loaded jar curls, floor rows, and door towel rows.",
+    equipmentSummary: "5-liter jar + bodyweight",
+    exercises: [
+      {
+        id: "tue_jar_curls",
+        name: "Jar Curls",
+        muscle: "Biceps (Biceps Brachii)",
+        cue: "Keep elbows pinned to ribs, supinate wrist and squeeze biceps at peak contraction.",
+        equipment: "5L Jar",
+        targetSets: 3,
+        targetReps: "15",
+      },
+      {
+        id: "tue_jar_hammer_curls",
+        name: "Jar Hammer Curls",
+        muscle: "Biceps & Forearms (Brachialis & Brachioradialis)",
+        cue: "Neutral grip with thumbs facing upward; controlled 2-second negative descent.",
+        equipment: "5L Jar",
+        targetSets: 3,
+        targetReps: "15",
+      },
+      {
+        id: "tue_superman_rows",
+        name: "Superman Rows",
+        muscle: "Back (Lats, Traps & Rear Delts)",
+        cue: "Lie prone, lift chest and pull elbows back forcefully toward hips squeezing lats.",
+        equipment: "Bodyweight",
+        targetSets: 3,
+        targetReps: "15",
+      },
+      {
+        id: "tue_towel_rows",
+        name: "Towel Rows",
+        muscle: "Back (Lats Wings & Upper Back)",
+        cue: "Anchor towel around door/frame, lean back at 45 degrees, pull chest smoothly to anchor.",
+        equipment: "Towel + Door Anchor",
+        targetSets: 3,
+        targetReps: "12",
+        safetyWarning: "⚠️ SAFETY INSTRUCTION: Ensure towel is securely knotted behind a locked/solid door before leaning. Verify door latch holds your full weight.",
+      },
+    ],
+  },
+
+  // WEDNESDAY — GYM: Chest + Shoulders
+  3: {
+    dayOfWeek: 3,
+    dayName: "Wednesday",
+    location: "GYM",
+    targetBodyParts: "Chest + Shoulders",
+    focusBadges: ["Barbell Bench", "Incline Dumbbell", "Lateral Raises", "Overhead Press"],
+    description: "Heavy compound gym pushing for pectoral thickness and 3D shoulder deltoids.",
+    equipmentSummary: "Barbell, Dumbbells, Bench",
+    exercises: [
+      {
+        id: "wed_bench_press",
+        name: "Bench Press",
+        muscle: "Chest (Mid/Lower Pectoralis Major & Triceps)",
+        cue: "Arch lower back lightly, tuck elbows 45 degrees, explode upward off chest.",
+        equipment: "Barbell & Bench",
+        targetSets: 4,
+        targetReps: "8–10",
+        startingWeightKg: 35,
+        startingWeightGuide: "approximately 30–40 kg",
+      },
+      {
+        id: "wed_incline_db_press",
+        name: "Incline Dumbbell Press",
+        muscle: "Chest (Upper Clavicular Pectoralis)",
+        cue: "Set bench to 30 degrees incline, press dumbbells up with smooth arc, no elbow hyper-extension.",
+        equipment: "Dumbbells & Incline Bench",
+        targetSets: 3,
+        targetReps: "10",
+        startingWeightKg: 10,
+        startingWeightGuide: "approximately 10–12 kg each",
+      },
+      {
+        id: "wed_lateral_raises",
+        name: "Lateral Raises",
         muscle: "Shoulders (Lateral Side Delts for Width)",
-        cue: "Lead with your elbows, pause for 1 second at shoulder height with zero swing.",
-        equipment: "HOME",
+        cue: "Lead with elbows, pause for 0.5s at shoulder height without swinging.",
+        equipment: "Dumbbells or Cable",
+        targetSets: 3,
+        targetReps: "12",
+        startingWeightKg: 6,
+        startingWeightGuide: "approximately 5–8 kg",
       },
       {
-        name: "Diamond Push-Ups (or Chair Tricep Dips)",
-        muscle: "Triceps (Horseshoe Lateral Head & Inner Chest)",
-        cue: "Keep elbows tucked tight to ribs, squeeze triceps hard at lockout.",
-        equipment: "HOME",
-      },
-      {
-        name: "Overhead Dumbbell / Backpack Tricep Extension",
-        muscle: "Triceps (Long Head / Arm Thickness)",
-        cue: "Full deep stretch behind head, extend arms fully to ceiling.",
-        equipment: "HOME",
-      },
-      {
-        name: "Floor Isometric Squeeze Press / Floor Flyes",
-        muscle: "Chest (Inner Pec Squeeze & Cleavage)",
-        cue: "Lie on floor, press weights while driving palms inward with maximum tension.",
-        equipment: "HOME",
+        id: "wed_overhead_press",
+        name: "Overhead Press",
+        muscle: "Shoulders (Anterior Deltoids & Triceps)",
+        cue: "Stand tall, brace glutes and core, press barbell vertically past forehead to full extension.",
+        equipment: "Barbell",
+        targetSets: 3,
+        targetReps: "8",
+        startingWeightKg: 17.5,
+        startingWeightGuide: "approximately 15–20 kg",
       },
     ],
-    Pull: [
+  },
+
+  // THURSDAY — HOME: ACTIVE RECOVERY / LIGHT FULL UPPER BODY
+  4: {
+    dayOfWeek: 4,
+    dayName: "Thursday",
+    location: "HOME",
+    targetBodyParts: "Active Recovery / Light Upper",
+    focusBadges: ["Active Recovery", "Light Intensity", "Mobility & Blood Flow"],
+    description: "Intentionally light session to stimulate recovery and blood flow without causing fatigue.",
+    equipmentSummary: "Bodyweight + 5L jar",
+    isRecovery: true,
+    recoveryNotice: "ACTIVE RECOVERY · LIGHT INTENSITY · DO NOT TREAT THIS AS A HARD WORKOUT DAY",
+    exercises: [
       {
-        name: "Doorframe / Towel Inverted Rows",
-        muscle: "Back (Lats Width / 'Wings' & Upper Back)",
-        cue: "Anchor towel around sturdy door or frame, lean back and pull chest to door.",
-        equipment: "HOME",
+        id: "thu_pushups",
+        name: "Push-ups",
+        muscle: "Chest & Shoulders (Light Flush)",
+        cue: "Moderate pace, smooth tempo, focus on range of motion and joint lubrication.",
+        equipment: "Bodyweight",
+        targetSets: 2,
+        targetReps: "15",
       },
       {
-        name: "Prone Cobra / Floor Y-T-W Raises",
-        muscle: "Back (Upper Traps, Rhomboids & Posterior Chain)",
-        cue: "Lie face down, lift chest, thumbs up to ceiling, squeeze shoulder blades.",
-        equipment: "HOME",
+        id: "thu_jar_curls",
+        name: "Jar Curls",
+        muscle: "Biceps (Blood Flow)",
+        cue: "Light controlled contractions without reaching muscular failure.",
+        equipment: "5L Jar",
+        targetSets: 2,
+        targetReps: "15",
       },
       {
-        name: "Dumbbell / Backpack / Resistance Band Bicep Curls",
-        muscle: "Biceps (Inner/Outer Peak & Strength)",
-        cue: "Elbows pinned to sides, supinate wrists and squeeze biceps at peak contraction.",
-        equipment: "HOME",
-      },
-      {
-        name: "Hammer Curls (Dumbbell or Loaded Backpack)",
-        muscle: "Biceps (Brachialis & Forearm Thickness)",
-        cue: "Palms facing inward, slow 3-second negative descent on every rep.",
-        equipment: "HOME",
-      },
-      {
-        name: "Bent-Over Rear Delt Flyes",
-        muscle: "Shoulders (Rear Deltoids & Upper Back)",
-        cue: "Hinge at hips with flat back, fly arms out wide squeezing rear delts.",
-        equipment: "HOME",
-      },
-      {
-        name: "Superman Lat Pulls (Floor Lat Drive)",
-        muscle: "Back (Lower Lats Width & Serratus)",
-        cue: "Lie on stomach, reach arms overhead and pull elbows back to ribs squeezing lats.",
-        equipment: "HOME",
+        id: "thu_plank",
+        name: "Plank",
+        muscle: "Core (Isometric Stability)",
+        cue: "Hold steady isometric brace, deep diaphragmatic breathing.",
+        equipment: "Bodyweight",
+        targetSets: 2,
+        targetReps: "45s",
+        targetDurationSeconds: 45,
+        isTimed: true,
       },
     ],
-    LegsCore: [
+  },
+
+  // FRIDAY — GYM: Back + Biceps
+  5: {
+    dayOfWeek: 5,
+    dayName: "Friday",
+    location: "GYM",
+    targetBodyParts: "Back + Biceps",
+    focusBadges: ["Pull-ups / Lat Pulldown", "Barbell Rows", "Seated Cable Row", "Bicep Curls"],
+    description: "Gym pulling session for V-taper lat width, mid-back density, and bicep peaks.",
+    equipmentSummary: "Barbell, Cable Machines, Pull-up Bar",
+    exercises: [
       {
-        name: "Bulgarian Split Squats (Rear Foot on Chair)",
-        muscle: "Legs (Quadriceps Power & Glute Mass)",
-        cue: "Elevate back foot on chair, descend until front thigh is parallel to floor.",
-        equipment: "HOME",
+        id: "fri_pullups_or_lat_pulldown",
+        name: "Pull-ups OR Lat Pulldown",
+        muscle: "Back (Lats Width / 'Wings')",
+        cue: "Drive elbows down to hips while keeping chest high and arched toward bar/cable.",
+        equipment: "Pull-up Bar or Lat Pulldown Machine",
+        targetSets: 4,
+        targetReps: "8–10",
+        startingWeightKg: 45,
+        startingWeightGuide: "Lat pulldown starting guide: approximately 40–50 kg",
+        variants: ["Pull-ups", "Lat Pulldown"],
+        defaultVariant: "Lat Pulldown",
       },
       {
-        name: "Bodyweight / Dumbbell Goblet Squats",
-        muscle: "Legs (Quadriceps Sweep & Adductors)",
-        cue: "Break at hips and knees simultaneously, deep squat with chest tall.",
-        equipment: "HOME",
+        id: "fri_barbell_rows",
+        name: "Barbell Rows",
+        muscle: "Back (Mid-Back Thickness & Lower Lats)",
+        cue: "Hinge at 45 degrees, pull barbell to lower navel, squeeze shoulder blades together.",
+        equipment: "Barbell",
+        targetSets: 4,
+        targetReps: "10",
+        startingWeightKg: 35,
+        startingWeightGuide: "approximately 30–40 kg",
       },
       {
-        name: "Single-Leg Glute Bridges / Romanian Deadlifts",
-        muscle: "Legs (Hamstrings & Glute Maximum)",
-        cue: "Drive heel into floor, bridge hips up and lock glutes at the top.",
-        equipment: "HOME",
+        id: "fri_seated_cable_row",
+        name: "Seated Cable Row",
+        muscle: "Back (Rhomboids, Middle Traps & Lats)",
+        cue: "Sit tall, pull attachment to lower ribcage, 1-second squeeze with zero torso swing.",
+        equipment: "Cable Row Machine",
+        targetSets: 3,
+        targetReps: "12",
+        startingWeightKg: 30,
+        startingWeightGuide: "approximately 30 kg",
       },
       {
-        name: "Bicycle Crunches & Deadbugs",
-        muscle: "Abs (Rectus Abdominis & Rotational Core)",
-        cue: "Opposite elbow to opposite knee, slow controlled burn with lower back flat.",
-        equipment: "HOME",
+        id: "fri_bicep_curls",
+        name: "Bicep Curls",
+        muscle: "Biceps (Inner/Outer Head Peaks)",
+        cue: "Stationary elbows, supinate wrists at top, controlled 2-second negative.",
+        equipment: "Dumbbells or Barbell",
+        targetSets: 3,
+        targetReps: "10",
+        startingWeightKg: 10,
+        startingWeightGuide: "approximately 10–12 kg",
+      },
+    ],
+  },
+
+  // SATURDAY — GYM: Triceps + Arms + Forearms
+  6: {
+    dayOfWeek: 6,
+    dayName: "Saturday",
+    location: "GYM",
+    targetBodyParts: "Triceps + Arms + Forearms",
+    focusBadges: ["Tricep Dips", "Rope Pushdowns", "Overhead Tricep Extension", "Wrist Curls"],
+    description: "Dedicated arm hypertrophy focusing on tricep long/lateral heads and forearm density.",
+    equipmentSummary: "Dip Bar, Cable Crossover, Dumbbells",
+    exercises: [
+      {
+        id: "sat_tricep_dips",
+        name: "Tricep Dips",
+        muscle: "Triceps (Long & Lateral Heads) & Lower Chest",
+        cue: "Stay upright to emphasize triceps, lower to 90 degrees elbow bend and lockout at top.",
+        equipment: "Dip Bar / Parallel Bars",
+        targetSets: 3,
+        targetReps: "10",
       },
       {
-        name: "Lying Leg Raises / Reverse Crunches",
-        muscle: "Abs (Lower 6-Pack & Hip Flexors)",
-        cue: "Keep lower back glued to floor, raise legs to 90 degrees and curl pelvis.",
-        equipment: "HOME",
+        id: "sat_rope_pushdowns",
+        name: "Rope Pushdowns",
+        muscle: "Triceps (Lateral Horseshoe Head)",
+        cue: "Lock elbows to sides, spread rope apart forcefully at bottom contraction.",
+        equipment: "Cable & Rope",
+        targetSets: 3,
+        targetReps: "12",
+        startingWeightKg: 17.5,
+        startingWeightGuide: "approximately 15–20 kg",
       },
       {
-        name: "Plank to Shoulder Taps & Side Planks",
-        muscle: "Core (Obliques & Deep 360 Core Bracing)",
-        cue: "Brace core tight with zero hip rotation while alternating shoulder taps.",
-        equipment: "HOME",
+        id: "sat_overhead_tricep_ext",
+        name: "Overhead Tricep Extension",
+        muscle: "Triceps (Long Head / Overall Thickness)",
+        cue: "Full deep stretch behind head, keep elbows tucked, extend straight upward.",
+        equipment: "Dumbbell or Cable",
+        targetSets: 3,
+        targetReps: "10",
+        startingWeightKg: 10,
+        startingWeightGuide: "approximately 10 kg",
+      },
+      {
+        id: "sat_wrist_curls",
+        name: "Wrist Curls",
+        muscle: "Forearms (Flexors & Grip Power)",
+        cue: "Rest forearms on bench/thighs, curl weight up using wrists only, pause at top.",
+        equipment: "Barbell or Dumbbell",
+        targetSets: 3,
+        targetReps: "15",
+        startingWeightKg: 5,
+        startingWeightGuide: "approximately 5 kg",
       },
     ],
   },
 };
 
-export function getProtocolExercises(type: string, location: "GYM" | "HOME"): ExerciseDefinition[] {
-  const normType = type === "LegsCore" ? "LegsCore" : type === "Pull" ? "Pull" : "Push";
-  const locKey = location === "GYM" ? "GYM" : "HOME";
-  return PROTOCOL_EXERCISES[locKey][normType] || PROTOCOL_EXERCISES[locKey]["Push"];
+/**
+ * Returns the exact scheduled routine for a given Addis Ababa day of week (0..6).
+ */
+export function getScheduledRoutineForDayOfWeek(dayOfWeek: number): DayRoutineDefinition {
+  const norm = ((dayOfWeek % 7) + 7) % 7;
+  return WEEKLY_WORKOUT_SCHEDULE[norm] || WEEKLY_WORKOUT_SCHEDULE[0];
 }
 
-export function getExerciseMuscleInfo(name: string) {
-  // Search across both GYM and HOME
-  for (const loc of ["GYM", "HOME"] as const) {
-    for (const type of ["Push", "Pull", "LegsCore"] as const) {
-      const found = PROTOCOL_EXERCISES[loc][type].find(
-        (ex) => ex.name.toLowerCase() === name.toLowerCase()
-      );
-      if (found) {
-        return { muscle: found.muscle, cue: found.cue };
+/**
+ * Returns muscle info and form cue for any exercise name.
+ */
+export function getExerciseMuscleInfo(name: string): { muscle: string; cue: string; safetyWarning?: string } {
+  const lower = name.toLowerCase();
+  for (const day of Object.values(WEEKLY_WORKOUT_SCHEDULE)) {
+    for (const ex of day.exercises) {
+      if (
+        ex.name.toLowerCase() === lower ||
+        ex.id.toLowerCase() === lower ||
+        lower.includes(ex.name.toLowerCase()) ||
+        ex.name.toLowerCase().includes(lower)
+      ) {
+        return {
+          muscle: ex.muscle,
+          cue: ex.cue,
+          safetyWarning: ex.safetyWarning,
+        };
       }
+    }
+  }
+
+  // Check daily core
+  for (const core of DAILY_CORE_ROUTINE) {
+    if (core.name.toLowerCase() === lower || core.id.toLowerCase() === lower) {
+      return {
+        muscle: "Abdominals & Core Stability",
+        cue: core.cue,
+      };
     }
   }
 
@@ -292,4 +478,37 @@ export function getExerciseMuscleInfo(name: string) {
     muscle: "Target Muscle Group",
     cue: "Maintain controlled form and progressive tension throughout the range of motion.",
   };
+}
+
+/**
+ * Progressive Overload Evaluator (Part F):
+ * Generates a helpful suggestion when previous loads were completed consistently.
+ * NEVER automatically modifies weights in the database.
+ */
+export function getProgressiveOverloadSuggestion(
+  exerciseName: string,
+  lastSets?: Array<{ weightKg?: number | string | null; reps?: number | string | null; completed?: boolean }>,
+  targetReps?: string
+): string | null {
+  if (!lastSets || lastSets.length === 0) return null;
+
+  const allCompleted = lastSets.every((s) => s.completed);
+  if (!allCompleted) return null;
+
+  const weights = lastSets
+    .map((s) => Number(s.weightKg))
+    .filter((w) => Number.isFinite(w) && w > 0);
+
+  if (weights.length === 0) return null;
+
+  const minWeight = Math.min(...weights);
+  const maxWeight = Math.max(...weights);
+  const repNumbers = lastSets.map((s) => Number(s.reps)).filter((r) => Number.isFinite(r) && r > 0);
+  const avgReps = repNumbers.length > 0 ? repNumbers.reduce((a, b) => a + b, 0) / repNumbers.length : 0;
+
+  if (avgReps >= 10 || (targetReps && avgReps >= Number(targetReps.split("–")[0]))) {
+    return "💡 Current load was completed consistently. Consider testing a small increase next session.";
+  }
+
+  return null;
 }

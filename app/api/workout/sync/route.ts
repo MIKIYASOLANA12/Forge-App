@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getAddisNow, workoutWindowForAddisDate } from '@/lib/workoutTime';
 import { recordProgressActivity } from '@/lib/progressEngine';
+import { getScheduledRoutineForDayOfWeek, getExerciseMuscleInfo } from '@/lib/workoutMuscleTargets';
 
 type IncomingSet = {
   setNumber?: number;
@@ -11,6 +12,7 @@ type IncomingSet = {
   notes?: string;
   completed?: boolean;
   clientId?: string;
+  variant?: string;
 };
 
 function parseSetDetails(raw: unknown): IncomingSet[] {
@@ -44,6 +46,7 @@ function mergeSetDetails(existingRaw: string | null | undefined, incomingRaw: un
       notes: set.notes ?? '',
       completed: Boolean(set.completed),
       clientId: set.clientId || key,
+      variant: set.variant,
     };
   });
 
@@ -62,22 +65,38 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'workoutDayId and exerciseLogs are required' }, { status: 400 });
     }
 
+    // Ensure WorkoutDay exists in DB
+    let workoutDay = await prisma.workoutDay.findUnique({ where: { id: workoutDayId } });
+    if (!workoutDay) {
+      const dayNum = parseInt(workoutDayId.replace('day-', ''), 10);
+      const routine = getScheduledRoutineForDayOfWeek(isNaN(dayNum) ? windowInfo.startAddis.getDay() : dayNum);
+      workoutDay = await prisma.workoutDay.create({
+        data: {
+          id: workoutDayId,
+          type: routine.dayName,
+          dayOfWeek: routine.dayOfWeek,
+          location: routine.location,
+          targetBodyParts: routine.targetBodyParts,
+          isRecovery: Boolean(routine.isRecovery),
+        },
+      });
+    }
+
     let workoutLog = await prisma.workoutLog.findFirst({
       where: {
-        workoutDayId,
+        workoutDayId: workoutDay.id,
         completedAt: { gte: windowInfo.startUtc, lte: windowInfo.endUtc },
       },
       include: { exerciseLogs: true },
     });
 
     // After cutoff: still persist sets that were recorded on-device so history is not lost.
-    // Do not treat a late sync as a new submission (no XP, no submittedAt).
     const lateHistoricalSync = windowInfo.isClosed && !workoutLog;
 
     if (!workoutLog) {
       workoutLog = await prisma.workoutLog.create({
         data: {
-          workoutDayId,
+          workoutDayId: workoutDay.id,
           weekNumber: Number(weekNumber) || 1,
           notes: notes?.trim() || null,
         },
@@ -91,7 +110,22 @@ export async function POST(request: NextRequest) {
     for (const item of exerciseLogs) {
       if (!item.exerciseId) continue;
 
-      const existingExerciseLog = workoutLog.exerciseLogs.find((el) => el.exerciseId === item.exerciseId);
+      // Ensure exercise exists in DB
+      let exercise = await prisma.workoutExercise.findUnique({ where: { id: item.exerciseId } });
+      if (!exercise) {
+        const muscleInfo = getExerciseMuscleInfo(item.exerciseName || item.name || item.exerciseId);
+        exercise = await prisma.workoutExercise.create({
+          data: {
+            id: item.exerciseId,
+            workoutDayId: workoutDay.id,
+            name: item.exerciseName || item.name || item.exerciseId,
+            order: Number(item.order) || 1,
+            targetMuscle: muscleInfo.muscle,
+          },
+        });
+      }
+
+      const existingExerciseLog = workoutLog.exerciseLogs.find((el) => el.exerciseId === exercise!.id);
       const setsCompleted = Number(item.setsCompleted) || 1;
       const repsCompleted = Number(item.repsCompleted) || 8;
       const weightKg =
@@ -122,7 +156,7 @@ export async function POST(request: NextRequest) {
         await prisma.exerciseLog.create({
           data: {
             workoutLogId: workoutLog.id,
-            exerciseId: item.exerciseId,
+            exerciseId: exercise.id,
             setsCompleted,
             repsCompleted,
             weightKg,

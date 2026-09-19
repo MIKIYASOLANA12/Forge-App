@@ -750,7 +750,7 @@ export function parseNumericValue(raw: string): number | null {
   };
   let normalizedSciStr = str;
   for (const [sup, digit] of Object.entries(superscripts)) {
-    normalizedSciStr = normalizedSciStr.replaceAll(sup, digit);
+    normalizedSciStr = normalizedSciStr.split(sup).join(digit);
   }
 
   const sciMatch = normalizedSciStr.match(

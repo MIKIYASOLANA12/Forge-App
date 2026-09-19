@@ -36,19 +36,33 @@ model WorkoutProgram {
 }
 
 model WorkoutDay {
-  id        String           @id @default(cuid())
-  type      String
-  exercises WorkoutExercise[]
-  logs      WorkoutLog[]
+  id                String            @id @default(cuid())
+  type              String            // "Push", "Pull", "LegsCore", "Sunday", "Monday", etc.
+  dayOfWeek         Int?              // 0 = Sunday, 1 = Monday, ... 6 = Saturday
+  location          String?           // "HOME" | "GYM"
+  targetBodyParts   String?           // e.g. "Shoulders + Back", "Chest + Triceps"
+  intensityCategory String?           // "ACTIVE_RECOVERY" | "NORMAL" | "HIGH"
+  isRecovery        Boolean           @default(false)
+  exercises         WorkoutExercise[]
+  logs              WorkoutLog[]
 }
 
 model WorkoutExercise {
-  id           String         @id @default(cuid())
-  workoutDayId String
-  workoutDay   WorkoutDay     @relation(fields: [workoutDayId], references: [id])
-  name         String
-  order        Int
-  logs         ExerciseLog[]
+  id                    String         @id @default(cuid())
+  workoutDayId          String
+  workoutDay            WorkoutDay     @relation(fields: [workoutDayId], references: [id])
+  name                  String
+  order                 Int
+  targetMuscle          String?
+  targetSets            Int?
+  targetReps            String?        // e.g. "12", "8-10", "max", "30 seconds"
+  targetDurationSeconds Int?           // For timed exercises (e.g. 30, 45)
+  equipment             String?        // "5L Jar", "Dumbbell", "Barbell", "Bodyweight", "Cable", etc.
+  startingWeightKg      Float?         // Starting weight guideline (user editable per set)
+  exerciseVariant       String?        // e.g. "Pull-ups" | "Lat Pulldown"
+  safetyWarning         String?        // e.g. safety notice for Towel Rows
+  isTimed               Boolean        @default(false)
+  logs                  ExerciseLog[]
 }
 
 model WorkoutLog {
@@ -296,11 +310,19 @@ model PushSubscription {
 }
 
 model NotificationPreference {
-  id              String  @id @default("singleton")
-  habitReminderAt String  @default("20:00")
-  streakWarningAt String  @default("21:00")
-  planReadyAt     String  @default("07:00")
-  enabled         Boolean @default(true)
+  id                 String  @id @default("singleton")
+  habitReminderAt    String  @default("20:00")
+  streakWarningAt    String  @default("21:00")
+  planReadyAt        String  @default("07:00")
+  wakeTime           String  @default("04:02") // 04:02 AM Africa/Addis_Ababa
+  sleepTime          String  @default("23:00") // 11:00 PM Africa/Addis_Ababa
+  voiceCallsEnabled  Boolean @default(true)
+  phoneNumber        String?
+  dailyCallBudget    Int     @default(10)
+  maxWakeAttempts    Int     @default(3)
+  maxSleepAttempts   Int     @default(3)
+  maxCallDurationSec Int     @default(120)
+  enabled            Boolean @default(true)
 }
 
 model GoogleCalendarToken {
@@ -723,5 +745,55 @@ model ExamPaperQuestion {
   conceptTag       String?
   difficulty       String            @default("entrance")
   createdAt        DateTime          @default(now())
+}
+
+model DailyCoreLog {
+  id            String    @id @default(cuid())
+  date          DateTime
+  slot          String    // "MORNING" | "NIGHT"
+  completed     Boolean   @default(false)
+  exercisesJson String?   // JSON array of [{ name: "Crunches", target: "20 reps", completed: true }, ...]
+  completedAt   DateTime?
+  xpEarned      Int       @default(0)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@unique([date, slot])
+}
+
+model PhysiquePhotoLog {
+  id                String   @id @default(cuid())
+  userId            String   @default("singleton")
+  addisDate         String   // YYYY-MM-DD
+  telegramFileId    String?
+  telegramMessageId Int?
+  photoUrl          String
+  note              String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model VoiceAccountabilityEvent {
+  id                String   @id @default(cuid())
+  date              DateTime
+  eventType         String   // "WAKE" | "SLEEP"
+  scheduledTime     String   // "04:02" | "23:00"
+  status            String   // "SCHEDULED" | "ATTEMPTED" | "ANSWERED" | "CONFIRMED" | "MISSED" | "FAILED"
+  attemptNumber     Int      @default(1)
+  confirmationState String   @default("PENDING") // "PENDING" | "CONFIRMED" | "FAILED"
+  failureReason     String?
+  durationSeconds   Int      @default(0)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model VoiceCommandSession {
+  id            String   @id @default(cuid())
+  callSid       String?
+  status        String   // "ACTIVE" | "PENDING_CONFIRMATION" | "EXECUTED" | "CANCELLED"
+  pendingAction String?  // JSON string of structured action awaiting verbal confirmation
+  expiresAt     DateTime
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }
 

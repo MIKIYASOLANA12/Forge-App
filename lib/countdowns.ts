@@ -119,17 +119,17 @@ export async function getDashboardCountdowns(customNow?: Date): Promise<Countdow
 
   const bodyTransformationCard: CountdownCard = {
     id: 'body_transformation',
-    title: '7-Month Body Transformation',
-    badge: btPassed ? 'COMPLETED' : '7-MONTH CHALLENGE',
+    title: 'Physique Transformation',
+    badge: btPassed ? 'COMPLETED' : 'PHYSIQUE GOAL',
     badgeColor: 'amber',
     daysRemaining: btRemainingDays,
     totalDays: totalChallengeDays,
     progressPercent: btPassed ? 100 : btProgressPercent,
-    targetDateFormatted: 'March 10, 2027',
-    statusText: btPassed ? 'Challenge Completed 🎉' : `${btRemainingDays} days remaining`,
+    targetDateFormatted: 'Wednesday, March 10, 2027',
+    statusText: btPassed ? 'Transformation Completed 🎉' : `${btRemainingDays} DAYS REMAINING`,
     subText: btPassed
       ? `Completed on March 10, 2027 · ${completedWorkoutsCount} workouts logged`
-      : `Ends Wednesday, March 10, 2027 · ${completedWorkoutsCount} workouts logged`,
+      : `Target: Wednesday, March 10, 2027 · ${completedWorkoutsCount} workouts logged`,
     isCompleted: btPassed,
     isVisible: true,
     icon: 'Flame',

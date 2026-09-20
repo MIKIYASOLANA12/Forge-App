@@ -1,5 +1,6 @@
 import { AI_CONFIG } from '../config'
 import { AIProviderError, sanitizeError } from '../errors'
+import { extractAndParseJson } from '../cleanJson'
 import {
   AIGenerateJsonOptions,
   AIGenerateTextOptions,
@@ -158,7 +159,7 @@ export async function generateOpenRouterJson<T = unknown>(
 
     const data = await response.json()
     const text = data.choices?.[0]?.message?.content?.trim() || '{}'
-    const parsed = JSON.parse(text) as T
+    const parsed = extractAndParseJson<T>(text)
     const latencyMs = Date.now() - startTime
 
     return {

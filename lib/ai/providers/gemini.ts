@@ -1,6 +1,7 @@
 import { GoogleGenAI } from '@google/genai'
 import { AI_CONFIG } from '../config'
 import { AIProviderError, sanitizeError } from '../errors'
+import { extractAndParseJson } from '../cleanJson'
 import {
   AIDocumentOptions,
   AIGenerateJsonOptions,
@@ -112,7 +113,7 @@ export async function generateGeminiJson<T = unknown>(
     })
 
     const text = response.text?.trim() || '{}'
-    const parsed = JSON.parse(text) as T
+    const parsed = extractAndParseJson<T>(text)
     const latencyMs = Date.now() - startTime
 
     return {

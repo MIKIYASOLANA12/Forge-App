@@ -47,75 +47,96 @@ export class ForgeAIRouter {
   }
 
   /**
-   * Central text generation across any Forge AI provider with intelligent routing and fallback support.
+   * Central text generation across any Forge AI provider with intelligent multi-provider fallback support.
    */
   public async generateText(options: AIGenerateTextOptions): Promise<AIResponse> {
-    const provider = this.resolveProvider(options.taskType, options.provider)
-    const fallbackProvider = options.taskType ? TASK_PROVIDER_MAP[options.taskType]?.fallback : undefined
+    const primary = this.resolveProvider(options.taskType, options.provider)
+    const configuredProviders: AIProviderName[] = (['openrouter', 'gemini', 'groq'] as AIProviderName[]).filter(
+      (p) => AI_CONFIG[p].isConfigured()
+    )
 
-    try {
-      return await this.dispatchText(provider, options)
-    } catch (primaryError) {
-      if (fallbackProvider && fallbackProvider !== provider && AI_CONFIG[fallbackProvider].isConfigured()) {
-        console.warn(
-          `[Forge AI Router] Primary provider "${provider}" failed. Falling back to "${fallbackProvider}". Safe error: ${sanitizeError(primaryError)}`
-        )
-        try {
-          return await this.dispatchText(fallbackProvider, { ...options, provider: fallbackProvider })
-        } catch (fallbackError) {
-          throw new AIProviderError({
-            provider: fallbackProvider,
-            message: `Primary (${provider}) and fallback (${fallbackProvider}) both failed. Fallback error: ${sanitizeError(fallbackError)}`,
-            originalError: fallbackError,
-          })
+    // Build ordered list of providers to try starting with primary
+    const providerChain: AIProviderName[] = [primary]
+    const explicitFallback = options.taskType ? TASK_PROVIDER_MAP[options.taskType]?.fallback : undefined
+    if (explicitFallback && !providerChain.includes(explicitFallback) && AI_CONFIG[explicitFallback].isConfigured()) {
+      providerChain.push(explicitFallback)
+    }
+    for (const p of configuredProviders) {
+      if (!providerChain.includes(p)) {
+        providerChain.push(p)
+      }
+    }
+
+    let lastError: unknown = null
+    for (let i = 0; i < providerChain.length; i++) {
+      const currentProvider = providerChain[i]
+      try {
+        return await this.dispatchText(currentProvider, { ...options, provider: currentProvider })
+      } catch (err) {
+        lastError = err
+        const nextProvider = providerChain[i + 1]
+        if (nextProvider) {
+          console.warn(
+            `[Forge AI Router] Provider "${currentProvider}" text generation failed. Cascading to "${nextProvider}". Error: ${sanitizeError(err)}`
+          )
         }
       }
-
-      if (primaryError instanceof AIProviderError) {
-        throw primaryError
-      }
-      throw new AIProviderError({
-        provider,
-        message: `Execution failed for task "${options.taskType || 'custom'}": ${sanitizeError(primaryError)}`,
-        originalError: primaryError,
-      })
     }
+
+    if (lastError instanceof AIProviderError) {
+      throw lastError
+    }
+    throw new AIProviderError({
+      provider: primary,
+      message: `Execution failed across all configured providers for task "${options.taskType || 'custom'}": ${sanitizeError(lastError)}`,
+      originalError: lastError,
+    })
   }
 
   /**
-   * Central JSON generation with structured validation and typed output.
+   * Central JSON generation with structured validation, typed output, and multi-provider cascade fallback.
    */
   public async generateJson<T = unknown>(options: AIGenerateJsonOptions<T>): Promise<AIJsonResponse<T>> {
-    const provider = this.resolveProvider(options.taskType, options.provider)
-    const fallbackProvider = options.taskType ? TASK_PROVIDER_MAP[options.taskType]?.fallback : undefined
+    const primary = this.resolveProvider(options.taskType, options.provider)
+    const configuredProviders: AIProviderName[] = (['openrouter', 'gemini', 'groq'] as AIProviderName[]).filter(
+      (p) => AI_CONFIG[p].isConfigured()
+    )
 
-    try {
-      return await this.dispatchJson<T>(provider, options)
-    } catch (primaryError) {
-      if (fallbackProvider && fallbackProvider !== provider && AI_CONFIG[fallbackProvider].isConfigured()) {
-        console.warn(
-          `[Forge AI Router] Primary provider "${provider}" JSON generation failed. Falling back to "${fallbackProvider}". Safe error: ${sanitizeError(primaryError)}`
-        )
-        try {
-          return await this.dispatchJson<T>(fallbackProvider, { ...options, provider: fallbackProvider })
-        } catch (fallbackError) {
-          throw new AIProviderError({
-            provider: fallbackProvider,
-            message: `Primary (${provider}) and fallback (${fallbackProvider}) JSON both failed. Fallback error: ${sanitizeError(fallbackError)}`,
-            originalError: fallbackError,
-          })
+    const providerChain: AIProviderName[] = [primary]
+    const explicitFallback = options.taskType ? TASK_PROVIDER_MAP[options.taskType]?.fallback : undefined
+    if (explicitFallback && !providerChain.includes(explicitFallback) && AI_CONFIG[explicitFallback].isConfigured()) {
+      providerChain.push(explicitFallback)
+    }
+    for (const p of configuredProviders) {
+      if (!providerChain.includes(p)) {
+        providerChain.push(p)
+      }
+    }
+
+    let lastError: unknown = null
+    for (let i = 0; i < providerChain.length; i++) {
+      const currentProvider = providerChain[i]
+      try {
+        return await this.dispatchJson<T>(currentProvider, { ...options, provider: currentProvider })
+      } catch (err) {
+        lastError = err
+        const nextProvider = providerChain[i + 1]
+        if (nextProvider) {
+          console.warn(
+            `[Forge AI Router] Provider "${currentProvider}" JSON generation failed. Cascading to "${nextProvider}". Error: ${sanitizeError(err)}`
+          )
         }
       }
-
-      if (primaryError instanceof AIProviderError) {
-        throw primaryError
-      }
-      throw new AIProviderError({
-        provider,
-        message: `JSON generation failed for task "${options.taskType || 'custom'}": ${sanitizeError(primaryError)}`,
-        originalError: primaryError,
-      })
     }
+
+    if (lastError instanceof AIProviderError) {
+      throw lastError
+    }
+    throw new AIProviderError({
+      provider: primary,
+      message: `JSON generation failed across all configured providers for task "${options.taskType || 'custom'}": ${sanitizeError(lastError)}`,
+      originalError: lastError,
+    })
   }
 
   /**

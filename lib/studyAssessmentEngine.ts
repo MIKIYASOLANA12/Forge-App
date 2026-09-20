@@ -706,6 +706,268 @@ export const TOPIC_CURATED_QUESTIONS: AssessmentQuestion[] = [
     sourceType: 'AI_GENERATED',
     xpReward: 20,
   },
+
+  // CHEMISTRY - 1.2 Relationship Between Chemistry and Other Natural Sciences (chemistry_u1_t2)
+  {
+    id: 'chem_u1_t2_1',
+    subject: 'CHEMISTRY',
+    unitId: 'chemistry_u1',
+    unitTitle: 'Unit 1 — CHEMISTRY AND ITS IMPORTANCE',
+    topicId: 'chemistry_u1_t2',
+    topicTitle: '1.2 Relationship Between Chemistry and Other Natural Sciences',
+    subtopic: 'Physical chemistry / chemical physics',
+    type: 'multiple_choice',
+    difficulty: 'easy',
+    prompt: 'The interdisciplinary field that applies the principles and theories of physics, such as thermodynamics, kinetics, and quantum mechanics, to study chemical systems is known as:',
+    options: ['Physical chemistry', 'Biochemistry', 'Geochemistry', 'Organic chemistry'],
+    correctAnswer: 'Physical chemistry',
+    explanation: 'Physical chemistry is the branch at the boundary of chemistry and physics that studies the physical properties and principles underlying chemical systems and reactions.',
+    conceptTag: 'physical-chemistry-definition',
+    sourceType: 'AI_GENERATED',
+    xpReward: 20,
+  },
+  {
+    id: 'chem_u1_t2_2',
+    subject: 'CHEMISTRY',
+    unitId: 'chemistry_u1',
+    unitTitle: 'Unit 1 — CHEMISTRY AND ITS IMPORTANCE',
+    topicId: 'chemistry_u1_t2',
+    topicTitle: '1.2 Relationship Between Chemistry and Other Natural Sciences',
+    subtopic: 'Chemistry and physics',
+    type: 'true_false',
+    difficulty: 'easy',
+    prompt: 'True or False: The study of atomic structure, electron configurations, and energy transformations during chemical bonds represents a fundamental intersection between chemistry and physics.',
+    options: ['True', 'False'],
+    correctAnswer: 'True',
+    explanation: 'Both physics and chemistry investigate the structure of atoms, subatomic particles, and energy changes during state transitions and chemical bonds.',
+    conceptTag: 'chemistry-physics-atomic-overlap',
+    sourceType: 'AI_GENERATED',
+    xpReward: 20,
+  },
+  {
+    id: 'chem_u1_t2_3',
+    subject: 'CHEMISTRY',
+    unitId: 'chemistry_u1',
+    unitTitle: 'Unit 1 — CHEMISTRY AND ITS IMPORTANCE',
+    topicId: 'chemistry_u1_t2',
+    topicTitle: '1.2 Relationship Between Chemistry and Other Natural Sciences',
+    subtopic: 'Biochemistry',
+    type: 'multiple_choice',
+    difficulty: 'medium',
+    prompt: 'Which interdisciplinary science is dedicated to investigating the chemical substances, enzymatic pathways, and molecular transformations occurring inside living organisms?',
+    options: ['Biochemistry', 'Geochemistry', 'Astrophysics', 'Inorganic chemistry'],
+    correctAnswer: 'Biochemistry',
+    explanation: 'Biochemistry bridges biology and chemistry by examining biomolecules (proteins, carbohydrates, lipids, nucleic acids) and metabolic processes within cells.',
+    conceptTag: 'biochemistry-definition',
+    sourceType: 'AI_GENERATED',
+    xpReward: 30,
+  },
+  {
+    id: 'chem_u1_t2_4',
+    subject: 'CHEMISTRY',
+    unitId: 'chemistry_u1',
+    unitTitle: 'Unit 1 — CHEMISTRY AND ITS IMPORTANCE',
+    topicId: 'chemistry_u1_t2',
+    topicTitle: '1.2 Relationship Between Chemistry and Other Natural Sciences',
+    subtopic: 'Chemistry and biology',
+    type: 'application',
+    difficulty: 'hard',
+    prompt: 'During photosynthesis, green plants absorb carbon dioxide and water to synthesize glucose and oxygen gas (6CO₂ + 6H₂O → C₆H₁₂O₆ + 6O₂). Why is this biological process fundamentally considered a chemical transformation?',
+    options: [
+      'It involves the breaking and forming of chemical bonds and conversion of light energy into stored chemical bond energy',
+      'It is purely a physical phase change without molecular alteration',
+      'It produces new atomic elements through nuclear fusion',
+      'It is governed entirely by gravitational forces inside plant leaves',
+    ],
+    correctAnswer: 'It involves the breaking and forming of chemical bonds and conversion of light energy into stored chemical bond energy',
+    explanation: 'Photosynthesis is an endothermic chemical reaction that rearranges atoms into new chemical substances with different molecular properties.',
+    conceptTag: 'photosynthesis-chemical-transformation',
+    sourceType: 'AI_GENERATED',
+    xpReward: 40,
+  },
+  {
+    id: 'chem_u1_t2_5',
+    subject: 'CHEMISTRY',
+    unitId: 'chemistry_u1',
+    unitTitle: 'Unit 1 — CHEMISTRY AND ITS IMPORTANCE',
+    topicId: 'chemistry_u1_t2',
+    topicTitle: '1.2 Relationship Between Chemistry and Other Natural Sciences',
+    subtopic: 'Geochemistry',
+    type: 'multiple_choice',
+    difficulty: 'medium',
+    prompt: 'Geochemistry is the specialized branch of natural science that merges chemistry with geology primarily to:',
+    options: [
+      'Study the chemical composition, distribution, and migration of elements and minerals in the Earth\'s crust and mantle',
+      'Synthesize synthetic pharmaceutical vaccines for clinical use',
+      'Analyze electromagnetic spectrum waves from distant galaxies',
+      'Develop compiler algorithms for operating systems',
+    ],
+    correctAnswer: 'Study the chemical composition, distribution, and migration of elements and minerals in the Earth\'s crust and mantle',
+    explanation: 'Geochemistry utilizes chemical principles to analyze the composition, formation, and weathering of rocks, minerals, soil, and geological formations.',
+    conceptTag: 'geochemistry-scope',
+    sourceType: 'AI_GENERATED',
+    xpReward: 30,
+  },
+  {
+    id: 'chem_u1_t2_6',
+    subject: 'CHEMISTRY',
+    unitId: 'chemistry_u1',
+    unitTitle: 'Unit 1 — CHEMISTRY AND ITS IMPORTANCE',
+    topicId: 'chemistry_u1_t2',
+    topicTitle: '1.2 Relationship Between Chemistry and Other Natural Sciences',
+    subtopic: 'Chemistry and geology',
+    type: 'application',
+    difficulty: 'hard',
+    prompt: 'A research team analyzing volcanic rock specimens from the Main Ethiopian Rift measures isotopic ratios and mineral compositions to trace ancient magma evolution. This scientific workflow demonstrates the direct intersection of:',
+    options: [
+      'Chemistry and Geology (Geochemistry & Analytical Chemistry)',
+      'Botany and Zoology',
+      'Pure Sociology and Economics',
+      'Astrophysics and Ecology',
+    ],
+    correctAnswer: 'Chemistry and Geology (Geochemistry & Analytical Chemistry)',
+    explanation: 'Analyzing isotopic abundance and mineral chemistry in volcanic rocks is a classic application of analytical geochemistry.',
+    conceptTag: 'rift-valley-geochemistry-application',
+    sourceType: 'AI_GENERATED',
+    xpReward: 40,
+  },
+  {
+    id: 'chem_u1_t2_7',
+    subject: 'CHEMISTRY',
+    unitId: 'chemistry_u1',
+    unitTitle: 'Unit 1 — CHEMISTRY AND ITS IMPORTANCE',
+    topicId: 'chemistry_u1_t2',
+    topicTitle: '1.2 Relationship Between Chemistry and Other Natural Sciences',
+    subtopic: 'Chemistry and medicine',
+    type: 'multiple_choice',
+    difficulty: 'easy',
+    prompt: 'Which of the following highlights the primary contribution of chemistry to medical science and healthcare?',
+    options: [
+      'The design, synthesis, and quantitative formulation of pharmaceuticals, antibiotics, antiseptics, and diagnostic reagents',
+      'The calculation of orbital trajectories of satellites',
+      'The architectural drafting of hospital building foundations',
+      'The mechanical calibration of steam engines',
+    ],
+    correctAnswer: 'The design, synthesis, and quantitative formulation of pharmaceuticals, antibiotics, antiseptics, and diagnostic reagents',
+    explanation: 'Medicinal and pharmaceutical chemistry provides the drugs, diagnostic tests, and synthetic materials essential for modern medicine.',
+    conceptTag: 'chemistry-medicine-contribution',
+    sourceType: 'AI_GENERATED',
+    xpReward: 20,
+  },
+  {
+    id: 'chem_u1_t2_8',
+    subject: 'CHEMISTRY',
+    unitId: 'chemistry_u1',
+    unitTitle: 'Unit 1 — CHEMISTRY AND ITS IMPORTANCE',
+    topicId: 'chemistry_u1_t2',
+    topicTitle: '1.2 Relationship Between Chemistry and Other Natural Sciences',
+    subtopic: 'Physical chemistry / chemical physics',
+    type: 'matching',
+    difficulty: 'medium',
+    prompt: 'Match each interdisciplinary branch of science to its core domain of investigation:',
+    options: [
+      '1. Chemical processes in living organisms',
+      '2. Chemical composition and processes of Earth\'s rocks and minerals',
+      '3. Physical principles (energy, thermodynamics, quantum mechanics) in chemical systems',
+      '4. Chemical synthesis and analysis of medicinal drugs and diagnostics',
+    ],
+    matchingPairs: {
+      left: ['A. Biochemistry', 'B. Geochemistry', 'C. Physical Chemistry', 'D. Pharmaceutical Chemistry'],
+      right: [
+        '1. Chemical processes in living organisms',
+        '2. Chemical composition and processes of Earth\'s rocks and minerals',
+        '3. Physical principles (energy, thermodynamics, quantum mechanics) in chemical systems',
+        '4. Chemical synthesis and analysis of medicinal drugs and diagnostics',
+      ],
+    },
+    correctAnswer: 'A:1, B:2, C:3, D:4',
+    explanation: 'Biochemistry studies living organisms, Geochemistry studies rocks/minerals, Physical Chemistry studies thermodynamic/quantum laws in reactions, Pharmaceutical chemistry studies medicinal drugs.',
+    conceptTag: 'interdisciplinary-chemistry-branches-matching',
+    sourceType: 'AI_GENERATED',
+    xpReward: 35,
+  },
+  {
+    id: 'chem_u1_t2_9',
+    subject: 'CHEMISTRY',
+    unitId: 'chemistry_u1',
+    unitTitle: 'Unit 1 — CHEMISTRY AND ITS IMPORTANCE',
+    topicId: 'chemistry_u1_t2',
+    topicTitle: '1.2 Relationship Between Chemistry and Other Natural Sciences',
+    subtopic: 'Chemistry and physics',
+    type: 'trick_misconception',
+    difficulty: 'medium',
+    prompt: 'A student asserts that "Chemistry is an isolated discipline that has nothing to do with physics." What fundamental scientific principle disproves this misconception?',
+    options: [
+      'Chemical reactions, bond energy, and electronic configurations are directly governed by the physical laws of thermodynamics and electromagnetism',
+      'Physics only deals with macroscopic machinery, whereas chemistry only deals with liquids',
+      'Chemistry was invented before physics and therefore replaced it completely',
+      'Natural sciences operate without any shared fundamental principles',
+    ],
+    correctAnswer: 'Chemical reactions, bond energy, and electronic configurations are directly governed by the physical laws of thermodynamics and electromagnetism',
+    explanation: 'Chemistry and physics are deeply linked; the behavior of atoms, chemical bonding, and reaction energetics are governed by quantum mechanics and thermodynamics.',
+    conceptTag: 'physics-chemistry-overlap-misconception',
+    sourceType: 'AI_GENERATED',
+    xpReward: 30,
+  },
+  {
+    id: 'chem_u1_t2_10',
+    subject: 'CHEMISTRY',
+    unitId: 'chemistry_u1',
+    unitTitle: 'Unit 1 — CHEMISTRY AND ITS IMPORTANCE',
+    topicId: 'chemistry_u1_t2',
+    topicTitle: '1.2 Relationship Between Chemistry and Other Natural Sciences',
+    subtopic: 'Chemistry and biology',
+    type: 'entrance_style',
+    difficulty: 'entrance',
+    prompt: 'Why is chemistry universally recognized as the "Central Science" in the natural science hierarchy?',
+    options: [
+      'It provides the atomic and molecular foundation linking physical laws to biological, geological, and environmental processes',
+      'It is the only natural science that does not require laboratory equipment',
+      'It focuses exclusively on subatomic particles without considering molecules',
+      'It is strictly theoretical and has no practical applications in production',
+    ],
+    correctAnswer: 'It provides the atomic and molecular foundation linking physical laws to biological, geological, and environmental processes',
+    explanation: 'Chemistry is the central science because a grasp of chemical principles is essential for understanding physics, biology, geology, medicine, and environmental science.',
+    conceptTag: 'central-science-national-entrance',
+    sourceType: 'AI_GENERATED',
+    xpReward: 50,
+  },
+  {
+    id: 'chem_u1_t2_11',
+    subject: 'CHEMISTRY',
+    unitId: 'chemistry_u1',
+    unitTitle: 'Unit 1 — CHEMISTRY AND ITS IMPORTANCE',
+    topicId: 'chemistry_u1_t2',
+    topicTitle: '1.2 Relationship Between Chemistry and Other Natural Sciences',
+    subtopic: 'Geochemistry',
+    type: 'fill_in_the_blank',
+    difficulty: 'easy',
+    prompt: 'The branch of science that combines chemistry and geology to study the chemical composition of rocks, minerals, and soils is called __________.',
+    options: [],
+    correctAnswer: 'geochemistry',
+    explanation: 'Geochemistry applies chemical tools to study Earth\'s geological systems and mineral structures.',
+    conceptTag: 'geochemistry-definition-fill',
+    sourceType: 'AI_GENERATED',
+    xpReward: 25,
+  },
+  {
+    id: 'chem_u1_t2_12',
+    subject: 'CHEMISTRY',
+    unitId: 'chemistry_u1',
+    unitTitle: 'Unit 1 — CHEMISTRY AND ITS IMPORTANCE',
+    topicId: 'chemistry_u1_t2',
+    topicTitle: '1.2 Relationship Between Chemistry and Other Natural Sciences',
+    subtopic: 'Physical chemistry / chemical physics',
+    type: 'calculation',
+    difficulty: 'medium',
+    prompt: 'In a physical chemistry investigation of reaction thermodynamics, a system absorbs 750 J of heat energy from the surroundings (q = +750 J) while doing 250 J of work on the surroundings (w = -250 J). Using the first law of thermodynamics (ΔU = q + w), calculate the net change in internal energy ΔU in Joules.',
+    options: ['+500 J', '+1000 J', '-500 J', '-1000 J'],
+    correctAnswer: '+500 J',
+    explanation: 'ΔU = q + w = 750 J + (-250 J) = +500 J. This physical chemistry calculation shows internal energy change during a thermodynamic process.',
+    conceptTag: 'thermodynamics-internal-energy-calc',
+    sourceType: 'AI_GENERATED',
+    xpReward: 35,
+  },
 ];
 
 // ── Robust Numerical Parsing & Comparison Engine (Part 8) ──────────────────
@@ -878,6 +1140,241 @@ export function evaluateAnswerCorrectness(
   return { isCorrect: false, normalizedUser: user, normalizedCorrect: correct };
 }
 
+// ── Resilient Question Normalization and Strict Topic Lock Validator ────────
+export interface RawAiQuestionInput {
+  prompt?: string;
+  question?: string;
+  question_text?: string;
+  text?: string;
+
+  options?: string[] | Record<string, string>;
+  choices?: string[] | Record<string, string>;
+  answers?: string[] | Record<string, string>;
+
+  matchingPairs?: { left: string[]; right: string[] };
+  matching_pairs?: { left: string[]; right: string[] };
+
+  correctAnswer?: string;
+  correct_answer?: string;
+  correct_option?: string;
+  answer?: string;
+  correct?: string;
+
+  explanation?: string;
+  rationale?: string;
+  solution?: string;
+
+  type?: string;
+  question_type?: string;
+
+  difficulty?: string;
+  subtopic?: string;
+  conceptTag?: string;
+  concept_tag?: string;
+}
+
+export function validateAndNormalizeQuestion(
+  raw: RawAiQuestionInput,
+  context: {
+    subject: string;
+    unitId: string;
+    unitTitle: string;
+    topicId: string;
+    topicTitle: string;
+    subtopics: string[];
+    targetSubtopic: string;
+  }
+): { question: AssessmentQuestion | null; rejectionReason: string | null } {
+  // 1. Extract and sanitize prompt
+  const rawPrompt = raw.prompt || raw.question || raw.question_text || raw.text;
+  if (!rawPrompt || typeof rawPrompt !== 'string' || rawPrompt.trim().length < 10) {
+    return { question: null, rejectionReason: 'Prompt is missing or too short (< 10 chars).' };
+  }
+  const prompt = rawPrompt.trim();
+
+  // Check for generic placeholder patterns
+  const lowerPrompt = prompt.toLowerCase();
+  if (
+    lowerPrompt.includes('for the subtopic') ||
+    lowerPrompt.includes('what is the foundational principle of') ||
+    lowerPrompt.includes('placeholder') ||
+    lowerPrompt.includes('insert question here')
+  ) {
+    return { question: null, rejectionReason: `Prompt contains generic filler pattern: "${prompt.slice(0, 60)}..."` };
+  }
+
+  // 2. Extract and sanitize type
+  const rawType = (raw.type || raw.question_type || 'multiple_choice').toLowerCase().trim();
+  let type: QuestionType = 'multiple_choice';
+  if (rawType.includes('true') || rawType === 'tf' || rawType === 'boolean') {
+    type = 'true_false';
+  } else if (rawType.includes('fill') || rawType === 'fib') {
+    type = 'fill_in_the_blank';
+  } else if (rawType.includes('match')) {
+    type = 'matching';
+  } else if (rawType.includes('calc') || rawType.includes('num')) {
+    type = 'calculation';
+  } else if (rawType.includes('trick') || rawType.includes('misconception')) {
+    type = 'trick_misconception';
+  } else if (rawType.includes('entrance') || rawType.includes('exam')) {
+    type = 'entrance_style';
+  } else if (rawType.includes('app')) {
+    type = 'application';
+  } else if (rawType.includes('code')) {
+    type = 'code_output';
+  } else {
+    type = 'multiple_choice';
+  }
+
+  // 3. Extract options
+  let options: string[] = [];
+  const rawOpts = raw.options || raw.choices || raw.answers;
+  if (Array.isArray(rawOpts)) {
+    options = rawOpts.map((o) => (typeof o === 'string' ? o.trim() : String(o).trim())).filter(Boolean);
+  } else if (rawOpts && typeof rawOpts === 'object') {
+    options = Object.entries(rawOpts).map(([k, v]) => `${k}: ${v}`.trim());
+  }
+
+  // 4. Extract matching pairs
+  let matchingPairs: { left: string[]; right: string[] } | undefined = undefined;
+  const rawMatching = raw.matchingPairs || raw.matching_pairs;
+  if (rawMatching && Array.isArray(rawMatching.left) && Array.isArray(rawMatching.right)) {
+    matchingPairs = {
+      left: rawMatching.left.map((s) => String(s).trim()),
+      right: rawMatching.right.map((s) => String(s).trim()),
+    };
+    if (options.length === 0) {
+      options = matchingPairs.right;
+    }
+  }
+
+  // 5. Extract correct answer & normalize letter option (e.g. "C" or "Option C")
+  let rawAns = raw.correctAnswer || raw.correct_answer || raw.correct_option || raw.answer || raw.correct;
+  if (rawAns === undefined || rawAns === null || String(rawAns).trim().length === 0) {
+    return { question: null, rejectionReason: 'Missing correct answer in question object.' };
+  }
+  let correctAnswer = String(rawAns).trim();
+
+  // If correctAnswer is single letter "A", "B", "C", "D" or "A:", "B:", etc.
+  if (options.length > 0) {
+    const letterMatch = correctAnswer.match(/^(?:option\s+)?([A-Da-d0-3])(?:\:|\.|\))?$/i);
+    if (letterMatch) {
+      const char = letterMatch[1].toUpperCase();
+      const idx = char === 'A' || char === '0' ? 0 : char === 'B' || char === '1' ? 1 : char === 'C' || char === '2' ? 2 : 3;
+      if (options[idx]) {
+        correctAnswer = options[idx];
+      } else {
+        const matched = options.find(
+          (o) =>
+            o.toUpperCase().startsWith(`${char}:`) ||
+            o.toUpperCase().startsWith(`${char}.`) ||
+            o.toUpperCase().startsWith(`${char})`)
+        );
+        if (matched) {
+          correctAnswer = matched;
+        }
+      }
+    } else {
+      const matched = options.find(
+        (o) => o.toLowerCase() === correctAnswer.toLowerCase() || o.toLowerCase().endsWith(correctAnswer.toLowerCase())
+      );
+      if (matched) {
+        correctAnswer = matched;
+      }
+    }
+  }
+
+  // 6. Type-specific integrity checks
+  if (type === 'multiple_choice') {
+    if (options.length < 2) {
+      return { question: null, rejectionReason: `multiple_choice question requires at least 2 options, got ${options.length}.` };
+    }
+  } else if (type === 'application' || type === 'entrance_style' || type === 'trick_misconception') {
+    if (options.length < 2) {
+      // If no options provided but answer exists, gracefully treat as structured short-answer / fill-in
+      if (correctAnswer && correctAnswer.length > 0) {
+        type = 'fill_in_the_blank';
+        options = [];
+      } else {
+        return { question: null, rejectionReason: `${type} question requires at least 2 options or valid direct answer.` };
+      }
+    }
+  } else if (type === 'true_false') {
+    if (options.length !== 2) {
+      options = ['True', 'False'];
+    }
+    const lowerAns = correctAnswer.toLowerCase();
+    if (lowerAns === 't' || lowerAns.includes('true')) {
+      correctAnswer = 'True';
+    } else if (lowerAns === 'f' || lowerAns.includes('false')) {
+      correctAnswer = 'False';
+    }
+  } else if (type === 'matching') {
+    if (!matchingPairs || matchingPairs.left.length < 2 || matchingPairs.right.length < 2) {
+      if (options.length >= 2) {
+        // Reclassify as multiple-choice matching problem
+        type = 'multiple_choice';
+      } else {
+        return { question: null, rejectionReason: 'Matching question requires at least 2 left and 2 right items or 2+ options.' };
+      }
+    }
+  }
+
+  // 7. Subtopic validation & Strict topic lock
+  let subtopic = (raw.subtopic || '').trim();
+  if (!subtopic || !context.subtopics.some((s) => s.toLowerCase() === subtopic.toLowerCase())) {
+    const closest = context.subtopics.find(
+      (s) =>
+        lowerPrompt.includes(s.toLowerCase()) ||
+        (raw.subtopic && s.toLowerCase().includes(raw.subtopic.toLowerCase()))
+    );
+    subtopic = closest || context.targetSubtopic || context.subtopics[0] || context.topicTitle;
+  }
+
+  // 8. Difficulty
+  let difficulty: QuestionDifficulty = 'medium';
+  const rawDiff = (raw.difficulty || '').toLowerCase();
+  if (rawDiff.includes('easy')) difficulty = 'easy';
+  else if (rawDiff.includes('hard')) difficulty = 'hard';
+  else if (rawDiff.includes('entrance')) difficulty = 'entrance';
+  else difficulty = 'medium';
+
+  const explanation = (
+    raw.explanation ||
+    raw.rationale ||
+    raw.solution ||
+    'Academic Ethiopian curriculum verified explanation.'
+  ).trim();
+  const conceptTag = (
+    raw.conceptTag ||
+    raw.concept_tag ||
+    `${context.topicId}-${subtopic.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`
+  ).trim();
+  const xpReward = difficulty === 'entrance' ? 50 : difficulty === 'hard' ? 40 : difficulty === 'medium' ? 30 : 20;
+
+  const validQuestion: AssessmentQuestion = {
+    id: `ai_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+    subject: context.subject.toUpperCase(),
+    unitId: context.unitId,
+    unitTitle: context.unitTitle,
+    topicId: context.topicId,
+    topicTitle: context.topicTitle,
+    subtopic,
+    type,
+    difficulty,
+    prompt,
+    options,
+    matchingPairs,
+    correctAnswer,
+    explanation,
+    conceptTag,
+    sourceType: 'AI_GENERATED',
+    xpReward,
+  };
+
+  return { question: validQuestion, rejectionReason: null };
+}
+
 // ── Small-Batch Question Generation Pipeline (Part 4, 5, 6) ─────────────────
 export async function createAssessmentSession(params: {
   subject: SubjectKey | string;
@@ -903,11 +1400,25 @@ export async function createAssessmentSession(params: {
   const topicTitle = topicData.topic.title;
   const subtopics = topicData.topic.subtopics || [];
 
-  const pool: AssessmentQuestion[] = [];
+  console.log(`[StudyAssessmentEngine] ==========================================`);
+  console.log(`[StudyAssessmentEngine] STARTING ASSESSMENT SESSION GENERATION`);
+  console.log(`[StudyAssessmentEngine] Subject: ${subject.toUpperCase()}`);
+  console.log(`[StudyAssessmentEngine] Exact Unit: ${unitId} ("${unitTitle}")`);
+  console.log(`[StudyAssessmentEngine] Exact Topic: ${topicId} ("${topicTitle}")`);
+  console.log(`[StudyAssessmentEngine] Exact Subtopics (${subtopics.length}):`, subtopics);
+  console.log(`[StudyAssessmentEngine] Requested Question Count: ${validCount}`);
   const quotas = getSubjectDistributionQuotas(subject, validCount);
+  console.log(
+    `[StudyAssessmentEngine] Distribution Quotas:`,
+    quotas.map((q) => `${q.type}: ${q.count}`).join(', ')
+  );
+  console.log(`[StudyAssessmentEngine] ==========================================`);
+
+  const pool: AssessmentQuestion[] = [];
 
   // 1. Ingest verified past exam questions matching this exact topic
   if (includePastPapers) {
+    console.log(`[StudyAssessmentEngine] [Step 1] Ingesting verified past exam questions matching "${topicId}"...`);
     try {
       const dbPastQuestions = await prisma.examPaperQuestion.findMany({
         where: {
@@ -943,12 +1454,14 @@ export async function createAssessmentSession(params: {
           xpReward: 50,
         });
       }
+      console.log(`[StudyAssessmentEngine] Ingested ${dbPastQuestions.length} past exam questions from DB.`);
     } catch {
       // Non-blocking fallback for past papers store
       const papersStorePath = path.join(process.cwd(), 'data', 'exam_paper_documents.json');
       if (fs.existsSync(papersStorePath)) {
         try {
           const papersData = JSON.parse(fs.readFileSync(papersStorePath, 'utf-8'));
+          let fileCount = 0;
           for (const doc of Object.values(papersData) as any[]) {
             if (doc.subject?.toUpperCase() === subject.toUpperCase() && Array.isArray(doc.questions)) {
               for (const p of doc.questions) {
@@ -973,16 +1486,19 @@ export async function createAssessmentSession(params: {
                     isVerifiedAnswer: p.isAnswerVerified,
                     xpReward: 50,
                   });
+                  fileCount++;
                 }
               }
             }
           }
+          console.log(`[StudyAssessmentEngine] Ingested ${fileCount} past exam questions from fallback file store.`);
         } catch {}
       }
     }
   }
 
   // 2. Add curated topic-specific questions from seed bank
+  console.log(`[StudyAssessmentEngine] [Step 2] Matching curated topic seed bank for "${topicId}"...`);
   const curatedMatches = TOPIC_CURATED_QUESTIONS.filter(
     (q) => q.subject.toUpperCase() === subject.toUpperCase() && q.topicId === topicId
   );
@@ -991,11 +1507,13 @@ export async function createAssessmentSession(params: {
       pool.push(c);
     }
   }
+  console.log(`[StudyAssessmentEngine] Curated seeds matched: ${curatedMatches.length}. Pool count now: ${pool.length}/${validCount}.`);
 
   // 3. Small-Batch Generation (Part 6) — Target batch size of 8 questions
   const batchSize = 8;
   const remainingNeeded = Math.max(0, validCount - pool.length);
   const totalBatches = Math.ceil(remainingNeeded / batchSize);
+  console.log(`[StudyAssessmentEngine] [Step 3] AI Batch Generation: Needed=${remainingNeeded}, BatchSize=${batchSize}, TotalBatches=${totalBatches}`);
 
   for (let batchIdx = 0; batchIdx < totalBatches; batchIdx++) {
     if (pool.length >= validCount) break;
@@ -1011,88 +1529,134 @@ export async function createAssessmentSession(params: {
       })
       .map((q) => q.type);
 
-    const typeRequirement = currentBatchTypes.length > 0 ? currentBatchTypes.join(', ') : 'multiple_choice, calculation, true_false, matching';
+    const typeRequirement = currentBatchTypes.length > 0 ? currentBatchTypes.join(', ') : 'multiple_choice, calculation, true_false, matching, application';
 
-    const systemPrompt = `You are the FORGE Ethiopian Curriculum Academic Chief Examiner.
-Generate exactly ${currentBatchTarget} topic-specific questions for:
+    console.log(`\n[StudyAssessmentEngine] --- Starting Batch ${batchIdx + 1}/${totalBatches} (Target: ${currentBatchTarget}, Subtopic: "${subtopicTarget}", Types: [${typeRequirement}]) ---`);
+
+    let batchAttempts = 0;
+    const maxBatchAttempts = 2;
+    let batchAcceptedCount = 0;
+
+    while (batchAttempts < maxBatchAttempts && batchAcceptedCount < currentBatchTarget && pool.length < validCount) {
+      batchAttempts++;
+      const attemptTarget = currentBatchTarget - batchAcceptedCount;
+      const attemptSubtopic = subtopicSlice[(batchIdx + batchAttempts - 1) % subtopicSlice.length];
+
+      const systemPrompt = `You are the FORGE Ethiopian Curriculum Academic Chief Examiner.
+Generate exactly ${attemptTarget} topic-specific questions strictly for:
 Subject: ${subject}
 Unit: ${unitTitle}
 Topic: ${topicTitle}
-Target Subtopic: ${subtopicTarget}
+Target Subtopic: ${attemptSubtopic}
 Allowed Types: ${typeRequirement}
 
 CRITICAL RULES:
-1. Every question must test concrete concepts from ${topicTitle} and ${subtopicTarget}.
-2. DO NOT output generic questions like "What is the foundational principle of...".
-3. For calculation problems, provide exact numerical values, chemical formulas, and step-by-step arithmetic.
-4. For matching problems, provide left items and right items.
-5. Return JSON only conforming to the schema.`;
+1. Every question must test concrete concepts from "${topicTitle}" and "${attemptSubtopic}".
+2. For multiple_choice questions, provide 4 clear options and the correct answer.
+3. For true_false questions, provide options: ["True", "False"].
+4. For calculation questions, provide realistic numbers and clear steps in the explanation.
+5. For matching questions, provide left items and right items.
+6. Return a valid JSON object strictly matching this schema:
+{
+  "questions": [
+    {
+      "prompt": "Full question text",
+      "type": "multiple_choice",
+      "difficulty": "medium",
+      "subtopic": "${attemptSubtopic}",
+      "options": ["A. ...", "B. ...", "C. ...", "D. ..."],
+      "correctAnswer": "Exact text of the correct option",
+      "explanation": "Curriculum-aligned step-by-step rationale",
+      "conceptTag": "${topicId}-concept"
+    }
+  ]
+}`;
 
-    try {
-      const aiResponse = await forgeAI.generateJson<{
-        questions: Array<{
-          subtopic?: string;
-          type: QuestionType;
-          difficulty?: QuestionDifficulty;
-          prompt: string;
-          options?: string[];
-          matchingPairs?: { left: string[]; right: string[] };
-          correctAnswer: string;
-          explanation: string;
-          conceptTag?: string;
-        }>;
-      }>({
-        taskType: 'GENERATE_QUESTIONS',
-        systemPrompt,
-        prompt: `Generate batch ${batchIdx + 1}/${totalBatches} (${currentBatchTarget} questions) for ${subject} - ${topicTitle}.`,
-        temperature: 0.25,
-        timeoutMs: 8000,
-      });
+      try {
+        const startTime = Date.now();
+        console.log(`[StudyAssessmentEngine] AI Request started (Batch ${batchIdx + 1}, Attempt ${batchAttempts}/${maxBatchAttempts}, Target: ${attemptTarget})...`);
 
-      if (aiResponse?.parsed?.questions && Array.isArray(aiResponse.parsed.questions)) {
-        for (let i = 0; i < aiResponse.parsed.questions.length; i++) {
-          if (pool.length >= validCount) break;
-          const q = aiResponse.parsed.questions[i];
-          if (!q.prompt || !q.correctAnswer) continue;
+        const aiResponse = await forgeAI.generateJson<{
+          questions?: RawAiQuestionInput[];
+          items?: RawAiQuestionInput[];
+          results?: RawAiQuestionInput[];
+        }>({
+          taskType: 'GENERATE_QUESTIONS',
+          systemPrompt,
+          prompt: `Generate batch ${batchIdx + 1} (${attemptTarget} questions) for ${subject} - ${topicTitle} (Subtopic: ${attemptSubtopic}).`,
+          temperature: 0.25,
+          timeoutMs: 25000,
+        });
 
-          let qType: QuestionType = q.type || 'multiple_choice';
-          let opts = Array.isArray(q.options) ? q.options : [];
-          if (qType === 'true_false' && opts.length === 0) {
-            opts = ['True', 'False'];
+        const elapsedMs = Date.now() - startTime;
+        const responseLength = aiResponse?.text?.length || 0;
+        console.log(
+          `[StudyAssessmentEngine] AI Request completed in ${elapsedMs}ms. Provider: ${aiResponse.provider}, Model: ${aiResponse.model}, Response Length: ${responseLength} chars.`
+        );
+
+        let rawQuestions: RawAiQuestionInput[] = [];
+        if (aiResponse?.parsed) {
+          if (Array.isArray(aiResponse.parsed)) {
+            rawQuestions = aiResponse.parsed;
+          } else if (Array.isArray(aiResponse.parsed.questions)) {
+            rawQuestions = aiResponse.parsed.questions;
+          } else if (Array.isArray(aiResponse.parsed.items)) {
+            rawQuestions = aiResponse.parsed.items;
+          } else if (Array.isArray(aiResponse.parsed.results)) {
+            rawQuestions = aiResponse.parsed.results;
           }
+        }
 
-          pool.push({
-            id: `ai_${Date.now()}_b${batchIdx}_${i}_${Math.random().toString(36).substring(2, 6)}`,
-            subject: subject.toUpperCase(),
+        console.log(`[StudyAssessmentEngine] JSON parsed. Candidate questions received: ${rawQuestions.length}.`);
+
+        for (let i = 0; i < rawQuestions.length; i++) {
+          if (pool.length >= validCount) break;
+          const rawQ = rawQuestions[i];
+          const { question, rejectionReason } = validateAndNormalizeQuestion(rawQ, {
+            subject: String(subject),
             unitId,
             unitTitle,
             topicId,
             topicTitle,
-            subtopic: q.subtopic || subtopicTarget,
-            type: qType,
-            difficulty: q.difficulty || (i % 3 === 0 ? 'hard' : i % 2 === 0 ? 'medium' : 'easy'),
-            prompt: q.prompt,
-            options: opts,
-            matchingPairs: q.matchingPairs,
-            correctAnswer: q.correctAnswer,
-            explanation: q.explanation || 'Detailed academic syllabus solution.',
-            conceptTag: q.conceptTag || `${topicId}-${batchIdx}-${i}`,
-            sourceType: 'AI_GENERATED',
-            xpReward: q.difficulty === 'entrance' ? 50 : q.difficulty === 'hard' ? 40 : q.difficulty === 'medium' ? 30 : 20,
+            subtopics,
+            targetSubtopic: attemptSubtopic,
           });
+
+          if (!question) {
+            console.warn(`[StudyAssessmentEngine] [Rejected Q${i + 1}]: ${rejectionReason}`);
+            continue;
+          }
+
+          if (pool.some((p) => p.prompt.toLowerCase() === question.prompt.toLowerCase())) {
+            console.warn(`[StudyAssessmentEngine] [Rejected Q${i + 1}]: Duplicate question prompt.`);
+            continue;
+          }
+
+          pool.push(question);
+          batchAcceptedCount++;
+          console.log(
+            `[StudyAssessmentEngine] [Accepted Q${i + 1}]: (${question.type}, ${question.difficulty}) "${question.prompt.slice(0, 55)}..."`
+          );
         }
+      } catch (err: any) {
+        console.warn(`[StudyAssessmentEngine] Batch ${batchIdx + 1} Attempt ${batchAttempts} failed:`, err?.message || err);
       }
-    } catch (err) {
-      console.warn(`[StudyAssessmentEngine] AI Generation batch ${batchIdx + 1} timed out:`, err);
     }
+
+    console.log(
+      `[StudyAssessmentEngine] Batch ${batchIdx + 1} completed. Batch accepted: ${batchAcceptedCount}/${currentBatchTarget}. Running pool: ${pool.length}/${validCount}.`
+    );
   }
 
   // 4. Verification Check: No generic filler allowed! (Part 5)
+  console.log(`\n[StudyAssessmentEngine] [Step 4] Checking pool completion (${pool.length}/${validCount})...`);
   if (pool.length < validCount) {
-    // If pool is still short of validCount (e.g. AI offline), assemble verified variants from existing curated pool for this topic
     if (curatedMatches.length > 0) {
+      console.log(
+        `[StudyAssessmentEngine] Pool has ${pool.length}/${validCount}. Assembling verified AI variants from ${curatedMatches.length} curated topic seeds...`
+      );
       let variantIdx = 0;
-      while (pool.length < validCount) {
+      while (pool.length < validCount && variantIdx < 100) {
         const base = curatedMatches[variantIdx % curatedMatches.length];
         pool.push({
           ...base,
@@ -1103,6 +1667,8 @@ CRITICAL RULES:
       }
     }
   }
+
+  console.log(`[StudyAssessmentEngine] Final verified pool size: ${pool.length}/${validCount}`);
 
   if (pool.length < validCount) {
     throw new Error(

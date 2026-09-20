@@ -44,12 +44,12 @@
   "topics": {
     "CHEMISTRY_chemistry_u1_t1": {
       "status": "MASTERED",
-      "focusMinutes": 90,
+      "focusMinutes": 180,
       "accuracy": 95,
-      "attemptsCount": 2,
-      "correctCount": 1,
-      "studiedAt": "2026-09-20T20:17:57.740Z",
-      "masteredAt": "2026-09-20T20:17:57.740Z"
+      "attemptsCount": 4,
+      "correctCount": 2,
+      "studiedAt": "2026-09-20T21:35:59.550Z",
+      "masteredAt": "2026-09-20T21:35:59.550Z"
     }
   },
   "questionLogs": [],

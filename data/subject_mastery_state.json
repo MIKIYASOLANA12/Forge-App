@@ -1,12 +1,12 @@
 {
   "subjects": {
     "CHEMISTRY": {
-      "status": "ACTIVE",
-      "startDate": "2026-09-18T20:58:55.399Z",
-      "deadline": "2026-10-18T20:58:55.399Z",
+      "status": "READY",
+      "startDate": null,
+      "deadline": null,
       "completedAt": null,
-      "activeUnitId": "chemistry_u1",
-      "activeTopicId": "chemistry_u1_t2"
+      "activeUnitId": null,
+      "activeTopicId": null
     },
     "BIOLOGY": {
       "status": "LOCKED",
@@ -41,17 +41,7 @@
       "activeTopicId": null
     }
   },
-  "topics": {
-    "CHEMISTRY_chemistry_u1_t1": {
-      "status": "MASTERED",
-      "focusMinutes": 180,
-      "accuracy": 95,
-      "attemptsCount": 4,
-      "correctCount": 2,
-      "studiedAt": "2026-09-20T21:35:59.550Z",
-      "masteredAt": "2026-09-20T21:35:59.550Z"
-    }
-  },
+  "topics": {},
   "questionLogs": [],
   "sessions": []
 }

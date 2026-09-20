@@ -260,6 +260,12 @@ export default function WorkoutPage() {
   const [isOnline, setIsOnline] = useState(true);
   const [hydrated, setHydrated] = useState(false);
 
+  // Error & Timeout & Cached states
+  const [workoutError, setWorkoutError] = useState<string | null>(null);
+  const [isTimeout, setIsTimeout] = useState(false);
+  const [cachedFallbackAvailable, setCachedFallbackAvailable] = useState(false);
+  const [usingCachedProtocol, setUsingCachedProtocol] = useState(false);
+
   // Daily Core Local State
   const [morningCoreChecked, setMorningCoreChecked] = useState(false);
   const [nightCoreChecked, setNightCoreChecked] = useState(false);
@@ -352,7 +358,9 @@ export default function WorkoutPage() {
     const cached = loadCachedTodayProtocol(todayDateKey) as TodayData | null;
     const localSaved = loadLocalWorkoutState(todayDateKey);
     if (cached?.day) {
+      setCachedFallbackAvailable(true);
       setToday(cached);
+      setUsingCachedProtocol(true);
       if (cached.dailyCore) {
         setMorningCoreChecked(cached.dailyCore.morning.completed);
         setNightCoreChecked(cached.dailyCore.night.completed);
@@ -394,15 +402,40 @@ export default function WorkoutPage() {
     };
   }, [todayDateKey]);
 
+  const handleUseCachedWorkout = () => {
+    const cached = loadCachedTodayProtocol(todayDateKey) as TodayData | null;
+    const localSaved = loadLocalWorkoutState(todayDateKey);
+    if (cached?.day) {
+      setToday(cached);
+      setUsingCachedProtocol(true);
+      setWorkoutError(null);
+      if (cached.dailyCore) {
+        setMorningCoreChecked(cached.dailyCore.morning.completed);
+        setNightCoreChecked(cached.dailyCore.night.completed);
+      }
+      const built = buildInitialSets(cached, localSaved);
+      setExerciseSets(built.initialSetsState);
+      setCheckedExercises(built.initialChecked);
+      setNotes(built.notes);
+      setSyncStatus("LOCAL_ONLY");
+      setMessage("OFFLINE — Using cached workout protocol");
+    }
+  };
+
   const loadTodayData = async () => {
+    setWorkoutError(null);
+    setIsTimeout(false);
     const controller = new AbortController();
-    const timeout = window.setTimeout(() => controller.abort(), 6000);
+    const timeout = window.setTimeout(() => controller.abort(), 10000);
     try {
       const response = await fetch("/api/workout/today", { signal: controller.signal });
       if (response.ok) {
         const data = (await response.json()) as TodayData;
         cacheTodayProtocol(todayDateKey, data as unknown as Record<string, unknown>);
+        setCachedFallbackAvailable(true);
         setToday(data);
+        setUsingCachedProtocol(false);
+        setWorkoutError(null);
 
         if (data.dailyCore) {
           setMorningCoreChecked(data.dailyCore.morning.completed);
@@ -432,17 +465,20 @@ export default function WorkoutPage() {
           const res = await syncLocalWorkoutToServer(todayDateKey);
           setSyncStatus(res.status);
         }
+      } else {
+        setWorkoutError("Forge could not load today's workout protocol.");
+        const cached = loadCachedTodayProtocol(todayDateKey) as TodayData | null;
+        if (cached?.day) {
+          setCachedFallbackAvailable(true);
+        }
       }
-    } catch {
+    } catch (err: any) {
+      const isAbort = err?.name === "AbortError" || controller.signal.aborted;
+      setIsTimeout(isAbort);
+      setWorkoutError("Forge could not load today's workout protocol.");
       const cached = loadCachedTodayProtocol(todayDateKey) as TodayData | null;
-      const localSaved = loadLocalWorkoutState(todayDateKey);
-      if (cached?.day) setToday(cached);
-      if (localSaved) {
-        setExerciseSets(localSaved.exerciseSets);
-        setCheckedExercises(localSaved.checkedExercises || {});
-        setNotes(localSaved.notes || "");
-        setSyncStatus("LOCAL_ONLY");
-        setMessage("OFFLINE — Saved on this device");
+      if (cached?.day) {
+        setCachedFallbackAvailable(true);
       }
     } finally {
       window.clearTimeout(timeout);
@@ -643,6 +679,43 @@ export default function WorkoutPage() {
   };
 
   if (!today) {
+    if (workoutError) {
+      return (
+        <div className="mx-auto max-w-2xl p-6 my-12 rounded-2xl border border-rose-500/40 bg-rose-950/20 shadow-2xl text-center space-y-5 animate-fade-in">
+          <div className="mx-auto w-14 h-14 rounded-2xl bg-rose-500/20 border border-rose-500/40 flex items-center justify-center text-rose-400">
+            <AlertCircle size={30} />
+          </div>
+          <div className="space-y-2">
+            <span className="px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-rose-500/20 text-rose-300 border border-rose-500/40 inline-block">
+              {isTimeout ? "WORKOUT DATA TIMEOUT" : "⚠️ WORKOUT ENGINE ERROR"}
+            </span>
+            <h2 className="text-xl sm:text-2xl font-black text-white">
+              {isTimeout ? "Connection Timed Out" : "Workout Protocol Offline"}
+            </h2>
+            <p className="text-sm text-rose-200/80 max-w-md mx-auto">
+              {workoutError}
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+            <button
+              onClick={() => loadTodayData()}
+              className="btn btn-primary btn-md rounded-xl font-black uppercase tracking-wider flex items-center gap-2"
+            >
+              <RotateCcw size={16} /> Retry
+            </button>
+            {cachedFallbackAvailable && (
+              <button
+                onClick={handleUseCachedWorkout}
+                className="btn btn-ghost border border-slate-700 hover:bg-slate-800 text-slate-200 btn-md rounded-xl font-bold uppercase tracking-wider flex items-center gap-2"
+              >
+                <Layers size={16} /> Use Cached Workout
+              </button>
+            )}
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="flex h-72 items-center justify-center gap-3 text-sm text-[var(--text-muted)]">
         <LoaderCircle size={20} className="animate-spin text-orange-500" />
@@ -674,6 +747,13 @@ export default function WorkoutPage() {
 
   return (
     <div className="space-y-6 animate-fade-in pb-12">
+      {/* ── CACHED OFFLINE WARNING BANNER ───────────────────────────────────────── */}
+      {usingCachedProtocol && (
+        <section className="rounded-2xl border border-amber-500/40 bg-amber-950/30 p-3.5 shadow-md flex items-center gap-2.5 text-amber-300 text-xs font-bold">
+          <AlertCircle size={18} className="text-amber-400 shrink-0" />
+          <span>CACHED — NOT YET VERIFIED WITH SERVER (Saved locally on this device)</span>
+        </section>
+      )}
       {/* ── PART A: LIVE PHYSIQUE TRANSFORMATION COUNTDOWN BANNER ──────────────── */}
       {physiqueCard && (
         <section className="relative overflow-hidden rounded-2xl border border-amber-500/40 bg-gradient-to-r from-amber-950/40 via-slate-900/90 to-slate-950 p-5 shadow-xl">

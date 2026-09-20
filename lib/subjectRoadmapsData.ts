@@ -40,26 +40,9 @@ export const ORDERED_SUBJECT_KEYS: SubjectKey[] = [
   'MATHEMATICS',
 ];
 
-function loadJsonRoadmaps(): Record<SubjectKey, SubjectRoadmap> {
-  try {
-    const jsonPath = path.join(process.cwd(), 'data', 'subjectRoadmapsRaw.json');
-    if (fs.existsSync(jsonPath)) {
-      const raw = fs.readFileSync(jsonPath, 'utf-8');
-      return JSON.parse(raw);
-    }
-  } catch (err) {
-    console.error('Error loading subjectRoadmapsRaw.json:', err);
-  }
-  return {
-    CHEMISTRY: { key: 'CHEMISTRY', name: 'Chemistry', icon: '🧪', totalUnits: 16, totalTopics: 70, totalSubtopics: 359, units: [] },
-    BIOLOGY: { key: 'BIOLOGY', name: 'Biology', icon: '🧬', totalUnits: 24, totalTopics: 145, totalSubtopics: 298, units: [] },
-    PHYSICS: { key: 'PHYSICS', name: 'Physics', icon: '⚛️', totalUnits: 25, totalTopics: 150, totalSubtopics: 24, units: [] },
-    ENGLISH: { key: 'ENGLISH', name: 'English', icon: '🇬🇧', totalUnits: 0, totalTopics: 0, totalSubtopics: 0, isPendingUpload: true, units: [] },
-    MATHEMATICS: { key: 'MATHEMATICS', name: 'Mathematics', icon: '📐', totalUnits: 29, totalTopics: 145, totalSubtopics: 144, units: [] },
-  };
-}
+import rawRoadmaps from '../data/subjectRoadmapsRaw.json';
 
-export const SUBJECT_ROADMAPS = loadJsonRoadmaps();
+export const SUBJECT_ROADMAPS: Record<SubjectKey, SubjectRoadmap> = (rawRoadmaps as unknown as Record<SubjectKey, SubjectRoadmap>);
 
 export function getSubjectRoadmap(subject: SubjectKey): SubjectRoadmap {
   return SUBJECT_ROADMAPS[subject] || {

@@ -380,5 +380,127 @@
         "difficulty": "EASY"
       }
     ]
+  },
+  "doc_1789903038667_h1s4n": {
+    "id": "doc_1789903038667_h1s4n",
+    "title": "Ethiopian National Entrance Exam 2023 Chemistry Test Paper",
+    "subject": "CHEMISTRY",
+    "year": 2023,
+    "examType": "National Entrance Exam",
+    "language": "en",
+    "sourceFile": "/uploads/past-papers/doc_1789903038667_h1s4n_chem_entrance_real_test.txt",
+    "pageCount": 1,
+    "status": "PROCESSED",
+    "rawText": "1. What is the mass in grams of 2.0 moles of NaOH?\nA) 80.0 g\nB) 40.0 g\nC) 20.0 g\nD) 100.0 g\n\n2. In an unknown process, determine the energy state.\nA) High\nB) Low\nC) Zero\nD) Constant",
+    "questionsCount": 2,
+    "createdAt": "2026-09-20T11:17:18.686Z",
+    "questions": [
+      {
+        "questionNumber": 1,
+        "pageNumber": 1,
+        "subject": "CHEMISTRY",
+        "unitId": "chemistry_u2",
+        "unitTitle": "Unit 2 — MEASUREMENTS AND SCIENTIFIC METHODS",
+        "topicId": "chemistry_u2_t1",
+        "topicTitle": "2.1 Measurements and Units in Chemistry",
+        "subtopic": "Extracted Past Exam Question",
+        "questionType": "MULTIPLE_CHOICE",
+        "originalLanguage": "en",
+        "originalText": "1. What is the mass in grams of 2.0 moles of NaOH?",
+        "options": [
+          "80.0 g",
+          "40.0 g",
+          "20.0 g",
+          "100.0 g"
+        ],
+        "aiProposedAnswer": "80.0 g",
+        "isAnswerVerified": false,
+        "explanation": "Extracted from imported past examination paper.",
+        "conceptTag": "chemistry_u2_t1-past-exam",
+        "difficulty": "entrance"
+      },
+      {
+        "questionNumber": 2,
+        "pageNumber": 1,
+        "subject": "CHEMISTRY",
+        "subtopic": "Unmapped — Review Required",
+        "questionType": "MULTIPLE_CHOICE",
+        "originalLanguage": "en",
+        "originalText": "2. In an unknown process, determine the energy state.",
+        "options": [
+          "High",
+          "Low",
+          "Zero",
+          "Constant"
+        ],
+        "aiProposedAnswer": "High",
+        "isAnswerVerified": false,
+        "explanation": "Extracted from imported past examination paper.",
+        "conceptTag": "chemistry-unmapped-past-exam",
+        "difficulty": "entrance"
+      }
+    ]
+  },
+  "doc_1789903038702_7g7dd": {
+    "id": "doc_1789903038702_7g7dd",
+    "title": "Real Binary PDF Chemistry Exam Fixture",
+    "subject": "CHEMISTRY",
+    "year": 2024,
+    "examType": "National Entrance Exam",
+    "language": "en",
+    "sourceFile": "/uploads/past-papers/doc_1789903038702_7g7dd_real_fixture_chem_exam.pdf",
+    "pageCount": 1,
+    "status": "PROCESSED",
+    "rawText": "ETHIOPIAN UNIVERSITY ENTRANCE EXAMINATION (EUEE)\nCHEMISTRY EXAMINATION\n1. Calculate the molarity of a solution containing 4.0 g of NaOH in 500 mL of solution.\nA) 0.20 M\nB) 0.10 M\nC) 0.40 M\nD) 0.80 M\n2. What is the conjugate base of HSO4-?\nA) SO4 2-\nB) H2SO4\nC) H3O+\nD) OH-\n\n-- 1 of 1 --\n\n",
+    "questionsCount": 2,
+    "createdAt": "2026-09-20T11:17:27.881Z",
+    "questions": [
+      {
+        "questionNumber": 1,
+        "pageNumber": 1,
+        "subject": "CHEMISTRY",
+        "unitId": "chemistry_u7",
+        "unitTitle": "Unit 2 — SOLUTIONS",
+        "topicId": "chemistry_u7_t4",
+        "topicTitle": "2.4 Ways of Expressing Concentration of Solutions",
+        "questionType": "MULTIPLE_CHOICE",
+        "originalLanguage": "en",
+        "originalText": "Calculate the molarity of a solution containing 4.0 g of NaOH in 500 mL of solution.",
+        "options": [
+          "A) 0.20 M",
+          "B) 0.10 M",
+          "C) 0.40 M",
+          "D) 0.80 M"
+        ],
+        "aiProposedAnswer": "A",
+        "isAnswerVerified": false,
+        "explanation": "Molar mass of NaOH = 23 + 16 + 1 = 40 g/mol. Moles of NaOH = 4.0 g / 40 g/mol = 0.10 mol. Volume = 500 mL = 0.50 L. Molarity = Moles of solute / Volume of solution in liters = 0.10 mol / 0.50 L = 0.20 M.",
+        "conceptTag": "Molarity",
+        "difficulty": "EASY"
+      },
+      {
+        "questionNumber": 2,
+        "pageNumber": 1,
+        "subject": "CHEMISTRY",
+        "unitId": "chemistry_u12",
+        "unitTitle": "Unit 1 — ACID-BASE EQUILIBRIA",
+        "topicId": "chemistry_u12_t1",
+        "topicTitle": "1.1 Acid-Base Concepts",
+        "questionType": "MULTIPLE_CHOICE",
+        "originalLanguage": "en",
+        "originalText": "What is the conjugate base of HSO4-?",
+        "options": [
+          "A) SO4 2-",
+          "B) H2SO4",
+          "C) H3O+",
+          "D) OH-"
+        ],
+        "aiProposedAnswer": "A",
+        "isAnswerVerified": false,
+        "explanation": "According to the Brønsted-Lowry theory, a conjugate base is the species formed when an acid donates a proton (H+). When HSO4- donates H+, it becomes SO4 2-.",
+        "conceptTag": "Conjugate Acid-Base Pair",
+        "difficulty": "EASY"
+      }
+    ]
   }
 }

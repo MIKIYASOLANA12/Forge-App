@@ -11,13 +11,15 @@ import {
 } from '@/lib/workoutTime';
 import {
   WEEKLY_WORKOUT_SCHEDULE,
-  DAILY_CORE_ROUTINE,
+  CORE_ROUTINE_A,
+  CORE_ROUTINE_B,
+  getCoreRoutineForDayOfWeek,
   getScheduledRoutineForDayOfWeek,
   getExerciseMuscleInfo,
   getProgressiveOverloadSuggestion,
+  isDeloadWeek,
 } from '@/lib/workoutMuscleTargets';
 import { detectMissedActivities } from '@/lib/accountabilityRecheck';
-import { getHolidayWorkoutStatus } from '@/lib/holidayWorkout';
 import { getDashboardCountdowns } from '@/lib/countdowns';
 
 export async function GET(req: NextRequest) {
@@ -27,7 +29,6 @@ export async function GET(req: NextRequest) {
   }
 
   const addisNow = getAddisNow();
-  const holidayStatus = getHolidayWorkoutStatus(addisNow);
   const countdowns = await getDashboardCountdowns(addisNow);
   const windowInfo = workoutWindowForAddisDate(addisNow);
   const day300 = getDayOfJourney300(addisNow);
@@ -58,6 +59,7 @@ export async function GET(req: NextRequest) {
 
   const week = program ? getCurrentWeek(program.startDate) : 1;
   const phase = getPhase(week);
+  const isDeload = isDeloadWeek(week);
 
   // Exact 7-day schedule lookup by day of week (0..6)
   const todayDayOfWeek = windowInfo.startAddis.getDay();
@@ -66,12 +68,19 @@ export async function GET(req: NextRequest) {
   const nextDayOfWeek = (todayDayOfWeek + 1) % 7;
   const nextRoutine = getScheduledRoutineForDayOfWeek(nextDayOfWeek);
 
-  // Fetch previous logs for all exercises in today's routine to provide per-set reference
-  const exerciseNames = todayRoutine.exercises.map((e) => e.name);
+  // Core routine scheduled for today (Core A or Core B)
+  const todayCoreRoutine = getCoreRoutineForDayOfWeek(todayDayOfWeek);
+
+  // Fetch previous logs for all exercises in today's routine & home substitute to provide per-set reference
+  const allCandidateNames = [
+    ...todayRoutine.exercises.map((e) => e.name),
+    ...(todayRoutine.homeSubstitute?.exercises.map((e) => e.name) || []),
+  ];
+
   const previousLogs = await prisma.exerciseLog.findMany({
     where: {
       exercise: {
-        name: { in: exerciseNames },
+        name: { in: allCandidateNames },
       },
     },
     orderBy: { workoutLog: { completedAt: 'desc' } },
@@ -79,7 +88,7 @@ export async function GET(req: NextRequest) {
       workoutLog: { select: { completedAt: true, submittedAt: true } },
       exercise: true,
     },
-    take: 40,
+    take: 60,
   });
 
   const lastByExerciseName = new Map<string, (typeof previousLogs)[number]>();
@@ -121,6 +130,8 @@ export async function GET(req: NextRequest) {
     }
 
     const overloadSuggestion = getProgressiveOverloadSuggestion(def.name, parsedLastSets, def.targetReps);
+    // If deload week, reduce target sets by 1 (or by ~40%)
+    const effectiveTargetSets = isDeload ? Math.max(2, Math.round(def.targetSets * 0.6)) : def.targetSets;
 
     return {
       id: def.id,
@@ -129,7 +140,7 @@ export async function GET(req: NextRequest) {
       targetMuscle: def.muscle,
       masterCue: def.cue,
       equipment: def.equipment,
-      targetSets: def.targetSets,
+      targetSets: effectiveTargetSets,
       targetReps: def.targetReps,
       targetDurationSeconds: def.targetDurationSeconds,
       startingWeightKg: def.startingWeightKg,
@@ -138,7 +149,9 @@ export async function GET(req: NextRequest) {
       defaultVariant: def.defaultVariant,
       safetyWarning: def.safetyWarning,
       isTimed: def.isTimed,
-      overloadSuggestion,
+      isOptional: def.isOptional,
+      isPrimaryCompound: def.isPrimaryCompound,
+      overloadSuggestion: overloadSuggestion ? overloadSuggestion.suggestion : null,
       lastLog: lastLog
         ? {
             setsCompleted: lastLog.setsCompleted,
@@ -159,6 +172,56 @@ export async function GET(req: NextRequest) {
         : null,
     };
   });
+
+  // Home Substitute exercise list if available
+  const homeSubstituteList = todayRoutine.homeSubstitute
+    ? todayRoutine.homeSubstitute.exercises.map((def, idx) => {
+        const lastLog = lastByExerciseName.get(def.name) || null;
+        const todayExerciseLog = todayLog?.exerciseLogs.find(
+          (el) => el.exerciseId === def.id || el.exercise?.name === def.name
+        ) ?? null;
+
+        const effectiveTargetSets = isDeload ? Math.max(2, Math.round(def.targetSets * 0.6)) : def.targetSets;
+
+        return {
+          id: def.id,
+          name: def.name,
+          order: idx + 1,
+          targetMuscle: def.muscle,
+          masterCue: def.cue,
+          equipment: def.equipment,
+          targetSets: effectiveTargetSets,
+          targetReps: def.targetReps,
+          targetDurationSeconds: def.targetDurationSeconds,
+          startingWeightKg: def.startingWeightKg,
+          startingWeightGuide: def.startingWeightGuide,
+          variants: def.variants,
+          defaultVariant: def.defaultVariant,
+          safetyWarning: def.safetyWarning,
+          isTimed: def.isTimed,
+          isOptional: def.isOptional,
+          isPrimaryCompound: def.isPrimaryCompound,
+          lastLog: lastLog
+            ? {
+                setsCompleted: lastLog.setsCompleted,
+                repsCompleted: lastLog.repsCompleted,
+                weightKg: lastLog.weightKg,
+                setDetails: lastLog.setDetails,
+              }
+            : null,
+          todayLog: todayExerciseLog
+            ? {
+                setsCompleted: todayExerciseLog.setsCompleted,
+                repsCompleted: todayExerciseLog.repsCompleted,
+                weightKg: todayExerciseLog.weightKg,
+                checked: todayExerciseLog.checked,
+                setDetails: todayExerciseLog.setDetails,
+                clientId: todayExerciseLog.clientId,
+              }
+            : null,
+        };
+      })
+    : null;
 
   const allExercisesChecked =
     Boolean(todayLog) &&
@@ -205,6 +268,10 @@ export async function GET(req: NextRequest) {
     isRecovery: Boolean(todayRoutine.isRecovery),
     recoveryNotice: todayRoutine.recoveryNotice,
     equipmentSummary: todayRoutine.equipmentSummary,
+    isDeloadWeek: isDeload,
+    deloadNotice: isDeload
+      ? `DELOAD WEEK (Week ${week}) · Total volume reduced by ~40% to allow systemic, tendon, and joint recovery.`
+      : null,
     todayLog: todayLog
       ? {
           id: todayLog.id,
@@ -224,10 +291,20 @@ export async function GET(req: NextRequest) {
       isRecovery: Boolean(todayRoutine.isRecovery),
       recoveryNotice: todayRoutine.recoveryNotice,
       equipmentSummary: todayRoutine.equipmentSummary,
+      shortSessionExerciseIds: todayRoutine.shortSessionExerciseIds,
       exercises: activeExerciseList,
+      homeSubstitute: todayRoutine.homeSubstitute
+        ? {
+            ...todayRoutine.homeSubstitute,
+            exercises: homeSubstituteList || [],
+          }
+        : null,
     },
     dailyCore: {
-      routine: DAILY_CORE_ROUTINE,
+      routine: todayCoreRoutine.exercises,
+      routineType: todayCoreRoutine.type,
+      routineTitle: todayCoreRoutine.title,
+      routineDescription: todayCoreRoutine.description,
       morning: {
         completed: morningCoreCompleted,
         completedAt: morningCoreLog?.completedAt || null,
@@ -261,7 +338,7 @@ export async function GET(req: NextRequest) {
         targetMuscle: e.muscle,
         masterCue: e.cue,
         equipment: e.equipment,
-        targetSets: e.targetSets,
+        targetSets: isDeloadWeek(week) ? Math.max(2, Math.round(e.targetSets * 0.6)) : e.targetSets,
         targetReps: e.targetReps,
         targetDurationSeconds: e.targetDurationSeconds,
         startingWeightGuide: e.startingWeightGuide,
@@ -272,8 +349,6 @@ export async function GET(req: NextRequest) {
     weekNumber: week,
     phase,
     isNewPhase: week > 1 && phase.weeks[0] === week,
-    isHolidayWorkout: holidayStatus.isHolidayPeriod,
-    holiday: holidayStatus,
     countdowns,
     yesterday: {
       dateFormatted: yesterdayWindow.startAddis.toLocaleDateString('en-US', {

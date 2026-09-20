@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSessionUserFromRequest } from '@/lib/auth';
-import { getAddisNow, workoutWindowForAddisDate } from '@/lib/workoutTime';
+import { getAddisNow, workoutWindowForAddisDate, getAddisTimeComponents } from '@/lib/workoutTime';
 import { recordProgressActivity } from '@/lib/progressEngine';
-import { DAILY_CORE_ROUTINE } from '@/lib/workoutMuscleTargets';
+import { getCoreRoutineForDayOfWeek } from '@/lib/workoutMuscleTargets';
 
 export async function POST(req: NextRequest) {
   try {
@@ -20,6 +20,7 @@ export async function POST(req: NextRequest) {
     }
 
     const addisNow = getAddisNow();
+    const addisTime = getAddisTimeComponents(addisNow);
     const windowInfo = workoutWindowForAddisDate(addisNow);
     const normalizedDate = new Date(
       Date.UTC(windowInfo.startAddis.getFullYear(), windowInfo.startAddis.getMonth(), windowInfo.startAddis.getDate())
@@ -38,7 +39,10 @@ export async function POST(req: NextRequest) {
     const xpReward = 25;
     const xpToAward = isNewlyCompleted ? xpReward : 0;
 
-    const exercisesJsonStr = exercises ? JSON.stringify(exercises) : JSON.stringify(DAILY_CORE_ROUTINE.map(c => ({ id: c.id, name: c.name, target: c.target, completed: Boolean(completed) })));
+    const coreRoutine = getCoreRoutineForDayOfWeek(addisTime.dayOfWeek);
+    const exercisesJsonStr = exercises
+      ? JSON.stringify(exercises)
+      : JSON.stringify(coreRoutine.exercises.map((c: any) => ({ id: c.id, name: c.name, target: c.target, completed: Boolean(completed) })));
 
     const log = await prisma.dailyCoreLog.upsert({
       where: {

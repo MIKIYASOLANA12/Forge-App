@@ -2,7 +2,7 @@ import assert from 'assert';
 import { BODY_TRANSFORMATION_END_KEY, calculateDaysRemaining } from '../lib/countdowns';
 import {
   WEEKLY_WORKOUT_SCHEDULE,
-  DAILY_CORE_ROUTINE,
+  getCoreRoutineForDayOfWeek,
   getScheduledRoutineForDayOfWeek,
   getProgressiveOverloadSuggestion,
   WorkoutExerciseDefinition,
@@ -94,19 +94,15 @@ async function runTests() {
 
   console.log('✓ Test 2 Passed: Full 7-day schedule, locations, starting weights, and safety warnings verified');
 
-  // Test 3: Daily Core Routine
-  console.log('Test 3: Daily Core Routine specification');
-  assert.strictEqual(DAILY_CORE_ROUTINE.length, 4);
-  const [crunches, legRaises, plank, bicycle] = DAILY_CORE_ROUTINE;
-  assert.strictEqual(crunches.name, 'Crunches');
-  assert.strictEqual(crunches.target, '20 reps');
-  assert.strictEqual(legRaises.name, 'Leg Raises');
-  assert.strictEqual(legRaises.target, '15 reps');
-  assert.strictEqual(plank.name, 'Plank');
-  assert.strictEqual(plank.targetDurationSeconds, 45);
-  assert.strictEqual(bicycle.name, 'Bicycle Crunches');
-  assert.strictEqual(bicycle.target, '20 each side');
-  console.log('✓ Test 3 Passed: Daily Core Routine verified (Morning & Night)');
+  // Test 3: Progressive Core Program (A/B Rotation)
+  console.log('Test 3: Progressive Core Program specification');
+  const coreA = getCoreRoutineForDayOfWeek(0); // Sunday: Core A
+  const coreB = getCoreRoutineForDayOfWeek(1); // Monday: Core B
+  assert.strictEqual(coreA.type, 'CORE_A');
+  assert.strictEqual(coreB.type, 'CORE_B');
+  assert(coreA.exercises.length >= 3, 'Core A must have at least 3 exercises');
+  assert(coreB.exercises.length >= 3, 'Core B must have at least 3 exercises');
+  console.log('✓ Test 3 Passed: Progressive Core Routines verified (Core A & Core B)');
 
   // Test 4: Progressive Overload Suggestions
   console.log('Test 4: Progressive Overload calculations');
@@ -117,17 +113,18 @@ async function runTests() {
       { weightKg: 40, reps: 10, completed: true },
       { weightKg: 40, reps: 10, completed: true },
     ],
-    '10'
+    '8–10'
   );
   assert(suggestion1 !== null);
-  assert(suggestion1.includes('💡 Current load was completed consistently'));
+  assert(suggestion1.isReady === true);
+  assert(suggestion1.suggestion.includes('PROGRESSION READY'));
 
   const suggestion2 = getProgressiveOverloadSuggestion(
     'Bench Press',
     [
       { weightKg: 40, reps: 6, completed: false },
     ],
-    '10'
+    '8–10'
   );
   assert.strictEqual(suggestion2, null);
   console.log('✓ Test 4 Passed: Overload suggestions calculate correctly without auto-mutating input weights');

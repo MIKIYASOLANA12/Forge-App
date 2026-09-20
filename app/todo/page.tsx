@@ -209,35 +209,64 @@ type RoastData = {
   isPerfectDay: boolean;
 };
 
-function CountdownClock({ targetTimestamp, isClosed }: { targetTimestamp: number; isClosed: boolean }) {
-  const [timeLeft, setTimeLeft] = useState<{ hours: number; minutes: number; seconds: number } | null>(null);
+function CountdownClock({
+  closeTimestamp,
+  nextUnlockTimestamp,
+  isOpen,
+  isClosed,
+  onRefresh,
+}: {
+  closeTimestamp: number;
+  nextUnlockTimestamp: number;
+  isOpen: boolean;
+  isClosed: boolean;
+  onRefresh?: () => void;
+}) {
+  const [now, setNow] = useState<number>(Date.now());
 
   useEffect(() => {
-    const update = () => {
-      const diff = targetTimestamp - Date.now();
-      if (diff <= 0) {
-        setTimeLeft({ hours: 0, minutes: 0, seconds: 0 });
-        return;
-      }
-      const hours = Math.floor(diff / (1000 * 60 * 60));
-      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-      setTimeLeft({ hours, minutes, seconds });
-    };
-
-    update();
-    const interval = setInterval(update, 1000);
+    const interval = setInterval(() => {
+      setNow(Date.now());
+    }, 1000);
     return () => clearInterval(interval);
-  }, [targetTimestamp]);
+  }, []);
 
-  if (!timeLeft) return <span className="font-mono">--:--:--</span>;
+  const currentlyPastClose = now >= closeTimestamp;
+  const effectivelyClosed = isClosed || currentlyPastClose;
+
+  // At exact cutoff boundary (within 3 seconds of crossing closeTimestamp)
+  const isExactCutoff = currentlyPastClose && (now - closeTimestamp) <= 3000 && !isClosed;
+
+  const target = effectivelyClosed ? nextUnlockTimestamp : closeTimestamp;
+  const diff = Math.max(0, target - now);
+
+  const hours = Math.floor(diff / (1000 * 60 * 60));
+  const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+  const seconds = Math.floor((diff % (1000 * 60)) / 1000);
 
   const pad = (n: number) => String(n).padStart(2, "0");
 
+  if (isExactCutoff) {
+    return (
+      <div className="flex items-center gap-1.5 font-mono text-xs font-black">
+        <span className="px-2.5 py-1 rounded-md border bg-rose-950/80 text-rose-300 border-rose-500/60 animate-pulse tracking-wide">
+          WINDOW CLOSED
+        </span>
+      </div>
+    );
+  }
+
   return (
     <div className="flex items-center gap-1.5 font-mono text-sm font-black">
-      <span className={clsx("px-2 py-1 rounded-md border", isClosed ? "bg-rose-950/40 text-rose-400 border-rose-500/30" : "bg-orange-950/40 text-orange-400 border-orange-500/30")}>
-        {pad(timeLeft.hours)}h : {pad(timeLeft.minutes)}m : {pad(timeLeft.seconds)}s
+      <span
+        className={clsx(
+          "px-2 py-1 rounded-md border",
+          effectivelyClosed
+            ? "bg-rose-950/40 text-rose-400 border-rose-500/30"
+            : "bg-orange-950/40 text-orange-400 border-orange-500/30"
+        )}
+      >
+        {pad(hours)}h : {pad(minutes)}m : {pad(seconds)}s
       </span>
     </div>
   );
@@ -570,8 +599,11 @@ export default function TodoPage() {
               {todayData?.isClosed ? "Unlocks in:" : "Closes in:"}
             </span>
             <CountdownClock
-              targetTimestamp={todayData?.isClosed ? todayData.nextUnlockTimestamp : todayData?.closeTimestamp || Date.now()}
+              closeTimestamp={todayData?.closeTimestamp || Date.now()}
+              nextUnlockTimestamp={todayData?.nextUnlockTimestamp || Date.now()}
+              isOpen={Boolean(todayData?.isOpen)}
               isClosed={Boolean(todayData?.isClosed)}
+              onRefresh={loadData}
             />
           </div>
 

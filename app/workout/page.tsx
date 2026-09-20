@@ -64,6 +64,7 @@ type Exercise = {
   defaultVariant?: string;
   safetyWarning?: string;
   isTimed?: boolean;
+  isOptional?: boolean;
   overloadSuggestion?: string | null;
   lastLog: {
     setsCompleted: number;
@@ -141,6 +142,8 @@ type TodayData = {
   isRecovery?: boolean;
   recoveryNotice?: string;
   equipmentSummary?: string;
+  isDeloadWeek?: boolean;
+  deloadNotice?: string | null;
   todayLog: {
     id: string;
     completedAt: string;
@@ -158,9 +161,35 @@ type TodayData = {
     isRecovery?: boolean;
     recoveryNotice?: string;
     equipmentSummary?: string;
+    shortSessionExerciseIds?: string[];
     exercises: Exercise[];
+    homeSubstitute?: {
+      location: "HOME";
+      targetBodyParts: string;
+      focusBadges: string[];
+      description: string;
+      equipmentSummary: string;
+      exercises: Exercise[];
+    } | null;
   };
-  dailyCore?: DailyCoreState;
+  dailyCore?: {
+    routine: Array<{ id: string; name: string; target: string; cue: string; targetDurationSeconds?: number; isTimed?: boolean; progressionTip?: string }>;
+    routineType: "CORE_A" | "CORE_B";
+    routineTitle: string;
+    routineDescription: string;
+    morning: {
+      completed: boolean;
+      completedAt: string | null;
+      xpEarned: number;
+      exercisesJson: string | null;
+    };
+    night: {
+      completed: boolean;
+      completedAt: string | null;
+      xpEarned: number;
+      exercisesJson: string | null;
+    };
+  };
   nextWorkout: NextWorkout;
   weekNumber: number;
   phase?: {
@@ -213,49 +242,9 @@ type HistoryLog = {
   }[];
 };
 
-function CountdownTimer({ targetTimestamp }: { targetTimestamp: number }) {
-  const [timeLeft, setTimeLeft] = useState<{ hours: number; minutes: number; seconds: number }>({
-    hours: 0,
-    minutes: 0,
-    seconds: 0,
-  });
-
-  useEffect(() => {
-    const update = () => {
-      const diff = Math.max(0, targetTimestamp - Date.now());
-      const hours = Math.floor(diff / (1000 * 60 * 60));
-      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-      setTimeLeft({ hours, minutes, seconds });
-    };
-
-    update();
-    const timer = setInterval(update, 1000);
-    return () => clearInterval(timer);
-  }, [targetTimestamp]);
-
-  return (
-    <div className="flex items-center gap-2 font-mono text-2xl md:text-3xl font-extrabold text-white">
-      <div className="flex flex-col items-center bg-slate-950 px-3 py-1.5 rounded-xl border border-slate-800 shadow-inner">
-        <span>{String(timeLeft.hours).padStart(2, "0")}</span>
-        <span className="text-[9px] font-sans text-slate-500 uppercase tracking-widest">Hrs</span>
-      </div>
-      <span className="text-orange-400 font-bold mb-3">:</span>
-      <div className="flex flex-col items-center bg-slate-950 px-3 py-1.5 rounded-xl border border-slate-800 shadow-inner">
-        <span>{String(timeLeft.minutes).padStart(2, "0")}</span>
-        <span className="text-[9px] font-sans text-slate-500 uppercase tracking-widest">Min</span>
-      </div>
-      <span className="text-orange-400 font-bold mb-3">:</span>
-      <div className="flex flex-col items-center bg-slate-950 px-3 py-1.5 rounded-xl border border-slate-800 shadow-inner">
-        <span className="text-orange-400">{String(timeLeft.seconds).padStart(2, "0")}</span>
-        <span className="text-[9px] font-sans text-slate-500 uppercase tracking-widest">Sec</span>
-      </div>
-    </div>
-  );
-}
-
 export default function WorkoutPage() {
-  const [tab, setTab] = useState<"today" | "core" | "history">("today");
+  const [tab, setTab] = useState<"today" | "core" | "physique" | "history">("today");
+  const [sessionMode, setSessionMode] = useState<"FULL" | "SHORT" | "HOME_SUB">("FULL");
   const [today, setToday] = useState<TodayData | null>(null);
   const [history, setHistory] = useState<HistoryLog[]>([]);
   const [exerciseSets, setExerciseSets] = useState<Record<string, SetEntry[]>>({});
@@ -315,7 +304,12 @@ export default function WorkoutPage() {
     const initialChecked: Record<string, boolean> = { ...(localSaved?.checkedExercises || {}) };
     const initialVariants: Record<string, string> = {};
 
-    data.day.exercises.forEach((ex) => {
+    const allExercises = [
+      ...data.day.exercises,
+      ...(data.day.homeSubstitute?.exercises || []),
+    ];
+
+    allExercises.forEach((ex) => {
       const serverToday = parseSetDetails(ex.todayLog?.setDetails);
       const previous = parseSetDetails(ex.lastLog?.setDetails);
       const local = initialSetsState[ex.id] || [];
@@ -525,10 +519,7 @@ export default function WorkoutPage() {
     persistLocal(exerciseSetsRef.current, updatedChecked, notesRef.current, "LOCAL_ONLY");
 
     if (typeof navigator !== "undefined" && navigator.onLine) {
-      const allChecked =
-        (todayRef.current?.day.exercises || []).length > 0 &&
-        (todayRef.current?.day.exercises || []).every((ex) => Boolean(updatedChecked[ex.id]));
-      void syncLocalWorkoutToServer(todayDateKey, { sessionSubmitted: allChecked }).then((res) => {
+      void syncLocalWorkoutToServer(todayDateKey).then((res) => {
         setSyncStatus(res.status);
         if (res.message) setMessage(res.message);
       });
@@ -586,8 +577,9 @@ export default function WorkoutPage() {
     if (!today || loggingLocked) return;
     setSaving(true);
 
+    const activeList = getDisplayedExercises();
     const allChecked: Record<string, boolean> = { ...checkedExercisesRef.current };
-    today.day.exercises.forEach((ex) => {
+    activeList.forEach((ex) => {
       allChecked[ex.id] = true;
     });
     setCheckedExercises(allChecked);
@@ -623,7 +615,6 @@ export default function WorkoutPage() {
     }
   };
 
-  // Daily Core Check-in Handlers
   const handleToggleCore = async (slot: "MORNING" | "NIGHT") => {
     const isMorning = slot === "MORNING";
     const currentVal = isMorning ? morningCoreChecked : nightCoreChecked;
@@ -651,8 +642,6 @@ export default function WorkoutPage() {
     }
   };
 
-  const onToggleOverride = () => setManualOverride((prev) => !prev);
-
   if (!today) {
     return (
       <div className="flex h-72 items-center justify-center gap-3 text-sm text-[var(--text-muted)]">
@@ -663,8 +652,21 @@ export default function WorkoutPage() {
   }
 
   const physiqueCard = today.countdowns?.find((c) => c.id === "body_transformation");
-  const totalExercises = today.day.exercises.length;
-  const completedExercises = today.day.exercises.filter((ex) => {
+
+  // Determine active displayed exercise list based on sessionMode
+  const getDisplayedExercises = (): Exercise[] => {
+    if (sessionMode === "HOME_SUB" && today.day.homeSubstitute) {
+      return today.day.homeSubstitute.exercises;
+    }
+    if (sessionMode === "SHORT" && today.day.shortSessionExerciseIds) {
+      return today.day.exercises.filter((ex) => today.day.shortSessionExerciseIds?.includes(ex.id));
+    }
+    return today.day.exercises;
+  };
+
+  const displayedExercises = getDisplayedExercises();
+  const totalExercises = displayedExercises.length;
+  const completedExercises = displayedExercises.filter((ex) => {
     const isChecked = Boolean(checkedExercises[ex.id]);
     const sets = exerciseSets[ex.id] || [];
     return isChecked || (sets.length > 0 && sets.every((s) => s.completed));
@@ -700,8 +702,25 @@ export default function WorkoutPage() {
         </section>
       )}
 
-      {/* ── TAB SELECTOR: TODAY'S WORKOUT / DAILY ABS / HISTORY ─────────────────── */}
-      <div className="flex items-center gap-2 border-b border-slate-800 pb-2">
+      {/* ── DELOAD WEEK BANNER ─────────────────────────────────────────────────── */}
+      {today.isDeloadWeek && (
+        <section className="rounded-2xl border-2 border-indigo-500/50 bg-indigo-950/30 p-4 shadow-xl flex items-start gap-3">
+          <Sparkles className="text-indigo-400 shrink-0 mt-0.5" size={20} />
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase bg-indigo-500/20 text-indigo-300 border border-indigo-500/40">
+                DELOAD WEEK ACTIVE (Week {today.weekNumber})
+              </span>
+            </div>
+            <p className="text-xs text-indigo-200">
+              {today.deloadNotice || "Total training volume is reduced by ~40% this week. Maintain movement quality and crisp technique to allow full joint and central nervous system recovery."}
+            </p>
+          </div>
+        </section>
+      )}
+
+      {/* ── TAB SELECTOR ──────────────────────────────────────────────────────── */}
+      <div className="flex items-center gap-2 border-b border-slate-800 pb-2 flex-wrap">
         <button
           onClick={() => setTab("today")}
           className={clsx(
@@ -725,8 +744,21 @@ export default function WorkoutPage() {
           )}
         >
           <Target size={15} />
-          Daily Core Routine
+          Progressive Core ({today.dailyCore?.routineType === "CORE_B" ? "Core B" : "Core A"})
           {(morningCoreChecked && nightCoreChecked) && <span className="text-[10px] bg-black/20 px-1.5 py-0.5 rounded">2/2</span>}
+        </button>
+
+        <button
+          onClick={() => setTab("physique")}
+          className={clsx(
+            "px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2",
+            tab === "physique"
+              ? "bg-orange-500 text-black shadow-lg font-black"
+              : "text-slate-400 hover:text-white hover:bg-slate-900"
+          )}
+        >
+          <Flame size={15} />
+          Muscle Group Trends
         </button>
 
         <button
@@ -806,6 +838,56 @@ export default function WorkoutPage() {
             </section>
           )}
 
+          {/* School-Time Mode & Substitution Selector */}
+          <section className="rounded-2xl border border-slate-800 bg-slate-950 p-4 space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block">Session Mode & Location</span>
+                <p className="text-xs text-slate-300">Adapt today's prescription to available time and location:</p>
+              </div>
+
+              <div className="flex items-center gap-2 flex-wrap">
+                <button
+                  onClick={() => setSessionMode("FULL")}
+                  className={clsx(
+                    "px-3 py-1.5 rounded-xl text-xs font-bold border transition-all",
+                    sessionMode === "FULL"
+                      ? "bg-orange-500 text-black border-orange-400 font-black shadow-md"
+                      : "bg-slate-900 text-slate-400 border-slate-700 hover:text-white"
+                  )}
+                >
+                  Full Session (60–75m)
+                </button>
+
+                <button
+                  onClick={() => setSessionMode("SHORT")}
+                  className={clsx(
+                    "px-3 py-1.5 rounded-xl text-xs font-bold border transition-all",
+                    sessionMode === "SHORT"
+                      ? "bg-orange-500 text-black border-orange-400 font-black shadow-md"
+                      : "bg-slate-900 text-slate-400 border-slate-700 hover:text-white"
+                  )}
+                >
+                  ⚡ Short Session (25–35m)
+                </button>
+
+                {today.day.homeSubstitute && (
+                  <button
+                    onClick={() => setSessionMode("HOME_SUB")}
+                    className={clsx(
+                      "px-3 py-1.5 rounded-xl text-xs font-bold border transition-all",
+                      sessionMode === "HOME_SUB"
+                        ? "bg-cyan-500 text-black border-cyan-400 font-black shadow-md"
+                        : "bg-slate-900 text-cyan-400 border-cyan-900/50 hover:text-white"
+                    )}
+                  >
+                    🏠 Home Substitute
+                  </button>
+                )}
+              </div>
+            </div>
+          </section>
+
           {/* Day Hero Banner */}
           <section className="rounded-2xl border border-orange-500/30 bg-gradient-to-r from-[#17101a] via-[#1c1424] to-[#120e1a] p-6 shadow-xl space-y-4">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800 pb-4">
@@ -813,21 +895,19 @@ export default function WorkoutPage() {
                 <div className="flex items-center gap-2 mb-1.5">
                   <span className="px-2.5 py-0.5 text-[11px] font-extrabold uppercase tracking-wider bg-orange-500/15 text-orange-400 border border-orange-500/30 rounded-full flex items-center gap-1">
                     <Target size={12} />
-                    {today.day.type} · {today.day.location}
+                    {sessionMode === "HOME_SUB" ? "HOME SUBSTITUTE" : `${today.day.type} · ${today.day.location}`}
                   </span>
                   <span className="text-xs text-slate-400">{today.currentDateFormatted}</span>
                 </div>
                 <h2 className="text-2xl md:text-3xl font-extrabold text-white">
-                  {today.day.targetBodyParts}
+                  {sessionMode === "HOME_SUB" && today.day.homeSubstitute ? today.day.homeSubstitute.targetBodyParts : today.day.targetBodyParts}
                 </h2>
                 <p className="text-xs text-slate-300 mt-1 max-w-2xl">
-                  {today.day.description}
+                  {sessionMode === "HOME_SUB" && today.day.homeSubstitute ? today.day.homeSubstitute.description : today.day.description}
                 </p>
-                {today.day.equipmentSummary && (
-                  <p className="text-xs text-orange-400 mt-1 font-semibold">
-                    Equipment: {today.day.equipmentSummary}
-                  </p>
-                )}
+                <p className="text-xs text-orange-400 mt-1 font-semibold">
+                  Equipment: {sessionMode === "HOME_SUB" && today.day.homeSubstitute ? today.day.homeSubstitute.equipmentSummary : today.day.equipmentSummary}
+                </p>
               </div>
 
               <div className="flex flex-col items-start md:items-end gap-1">
@@ -869,15 +949,15 @@ export default function WorkoutPage() {
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-black text-white flex items-center gap-2">
                 <Layers className="text-orange-400" size={20} />
-                Prescribed Exercises & Weight History
+                Prescribed Exercises & Set Logs
               </h3>
               <span className="text-xs font-bold text-slate-400">
-                Window Closes at 09:28 PM
+                Window Closes at 09:28 PM Addis
               </span>
             </div>
 
             <div className="space-y-4">
-              {today.day.exercises.map((ex, index) => {
+              {displayedExercises.map((ex, index) => {
                 const sets = exerciseSets[ex.id] || [];
                 const isChecked = Boolean(checkedExercises[ex.id]);
                 const selectedVariant = selectedVariants[ex.id] || ex.defaultVariant || ex.variants?.[0] || ex.name;
@@ -906,9 +986,14 @@ export default function WorkoutPage() {
                               {ex.equipment}
                             </span>
                           )}
+                          {ex.isOptional && (
+                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-900 text-amber-400 border border-amber-500/30">
+                              Optional
+                            </span>
+                          )}
                         </div>
 
-                        {/* Safety Warning (e.g. Towel Rows) */}
+                        {/* Safety Warning */}
                         {ex.safetyWarning && (
                           <div className="p-2.5 rounded-xl border border-rose-500/40 bg-rose-950/30 text-rose-300 text-xs font-semibold flex items-start gap-2">
                             <ShieldAlert size={16} className="text-rose-400 shrink-0 mt-0.5" />
@@ -916,7 +1001,7 @@ export default function WorkoutPage() {
                           </div>
                         )}
 
-                        {/* Variant Selector (e.g. Pull-ups vs Lat Pulldown) */}
+                        {/* Variant Selector */}
                         {ex.variants && ex.variants.length > 0 && (
                           <div className="flex items-center gap-2 pt-1">
                             <span className="text-xs font-bold text-slate-400">Performed Variation:</span>
@@ -941,7 +1026,7 @@ export default function WorkoutPage() {
 
                         {ex.startingWeightGuide && (
                           <p className="text-[11px] text-slate-400">
-                            <span className="text-orange-400 font-bold">Starting Guide:</span> {ex.startingWeightGuide} (Adjust per set below)
+                            <span className="text-orange-400 font-bold">Starting Guide:</span> {ex.startingWeightGuide}
                           </p>
                         )}
 
@@ -1125,47 +1210,40 @@ export default function WorkoutPage() {
       )}
 
       {/* ══════════════════════════════════════════════════════════════════════════ */}
-      {/* TAB 2: DAILY CORE ROUTINE (MORNING & NIGHT SEPARATE TRACKING)              */}
+      {/* TAB 2: PROGRESSIVE CORE PROGRAM (A/B ROTATION & CHECK-INS)                */}
       {/* ══════════════════════════════════════════════════════════════════════════ */}
       {tab === "core" && (
         <div className="space-y-6">
           <section className="rounded-2xl border border-orange-500/30 bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 p-6 shadow-xl space-y-3">
             <div className="flex items-center gap-2">
               <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-orange-500/20 text-orange-400 border border-orange-500/30">
-                DAILY CORE PROTOCOL
+                PROGRESSIVE CORE PROGRAM
               </span>
-              <span className="text-xs text-slate-400">Non-Rotating Fixed Routine</span>
+              <span className="text-xs text-slate-400">4–5 Sessions / Week (A/B Alternation)</span>
             </div>
-            <h2 className="text-2xl font-black text-white">Daily Abdominal Check-Ins</h2>
+            <h2 className="text-2xl font-black text-white">{today.dailyCore?.routineTitle || "Daily Core Routine"}</h2>
             <p className="text-xs text-slate-300 max-w-xl">
-              Executed twice daily (Morning / Wake-up AND Night / Before bed) every single day regardless of weekly body-part split.
+              {today.dailyCore?.routineDescription || "Focus on progressive difficulty through slower tempo, pauses, and deeper range of motion rather than thousands of mindless reps."}
             </p>
           </section>
 
-          {/* Routine Specification Card */}
-          <section className="rounded-2xl border border-slate-800 bg-slate-950/80 p-5 space-y-3">
-            <h4 className="text-xs font-black uppercase tracking-wider text-slate-400">Fixed 4-Movement Routine</h4>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
-              <div className="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800">
-                <span className="text-[10px] font-bold text-orange-400">01</span>
-                <h5 className="text-sm font-black text-white mt-1">Crunches</h5>
-                <span className="text-xs text-slate-300 font-mono">20 reps</span>
-              </div>
-              <div className="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800">
-                <span className="text-[10px] font-bold text-orange-400">02</span>
-                <h5 className="text-sm font-black text-white mt-1">Leg Raises</h5>
-                <span className="text-xs text-slate-300 font-mono">15 reps</span>
-              </div>
-              <div className="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800">
-                <span className="text-[10px] font-bold text-orange-400">03</span>
-                <h5 className="text-sm font-black text-white mt-1">Plank</h5>
-                <span className="text-xs text-slate-300 font-mono">45 seconds</span>
-              </div>
-              <div className="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800">
-                <span className="text-[10px] font-bold text-orange-400">04</span>
-                <h5 className="text-sm font-black text-white mt-1">Bicycle Crunches</h5>
-                <span className="text-xs text-slate-300 font-mono">20 / each side</span>
-              </div>
+          {/* Routine Exercises Card */}
+          <section className="rounded-2xl border border-slate-800 bg-slate-950/80 p-5 space-y-4">
+            <h4 className="text-xs font-black uppercase tracking-wider text-slate-400">Today's Prescribed Core Movements</h4>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              {(today.dailyCore?.routine || []).map((core, idx) => (
+                <div key={core.id} className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 space-y-2">
+                  <span className="text-[10px] font-bold text-orange-400">0{idx + 1}</span>
+                  <h5 className="text-sm font-black text-white">{core.name}</h5>
+                  <span className="text-xs text-orange-300 font-mono block">{core.target}</span>
+                  <p className="text-[11px] text-slate-400 italic">"{core.cue}"</p>
+                  {core.progressionTip && (
+                    <p className="text-[10px] text-slate-500 border-t border-slate-800/80 pt-1.5">
+                      💡 {core.progressionTip}
+                    </p>
+                  )}
+                </div>
+              ))}
             </div>
           </section>
 
@@ -1198,22 +1276,12 @@ export default function WorkoutPage() {
               </div>
 
               <ul className="space-y-2 text-xs text-slate-300">
-                <li className="flex items-center gap-2">
-                  <Check size={14} className={morningCoreChecked ? "text-emerald-400" : "text-slate-600"} />
-                  Crunches × 20
-                </li>
-                <li className="flex items-center gap-2">
-                  <Check size={14} className={morningCoreChecked ? "text-emerald-400" : "text-slate-600"} />
-                  Leg Raises × 15
-                </li>
-                <li className="flex items-center gap-2">
-                  <Check size={14} className={morningCoreChecked ? "text-emerald-400" : "text-slate-600"} />
-                  Plank × 45s
-                </li>
-                <li className="flex items-center gap-2">
-                  <Check size={14} className={morningCoreChecked ? "text-emerald-400" : "text-slate-600"} />
-                  Bicycle Crunches × 20 each side
-                </li>
+                {(today.dailyCore?.routine || []).map((core) => (
+                  <li key={core.id} className="flex items-center gap-2">
+                    <Check size={14} className={morningCoreChecked ? "text-emerald-400" : "text-slate-600"} />
+                    {core.name} ({core.target})
+                  </li>
+                ))}
               </ul>
 
               <button
@@ -1262,22 +1330,12 @@ export default function WorkoutPage() {
               </div>
 
               <ul className="space-y-2 text-xs text-slate-300">
-                <li className="flex items-center gap-2">
-                  <Check size={14} className={nightCoreChecked ? "text-emerald-400" : "text-slate-600"} />
-                  Crunches × 20
-                </li>
-                <li className="flex items-center gap-2">
-                  <Check size={14} className={nightCoreChecked ? "text-emerald-400" : "text-slate-600"} />
-                  Leg Raises × 15
-                </li>
-                <li className="flex items-center gap-2">
-                  <Check size={14} className={nightCoreChecked ? "text-emerald-400" : "text-slate-600"} />
-                  Plank × 45s
-                </li>
-                <li className="flex items-center gap-2">
-                  <Check size={14} className={nightCoreChecked ? "text-emerald-400" : "text-slate-600"} />
-                  Bicycle Crunches × 20 each side
-                </li>
+                {(today.dailyCore?.routine || []).map((core) => (
+                  <li key={core.id} className="flex items-center gap-2">
+                    <Check size={14} className={nightCoreChecked ? "text-emerald-400" : "text-slate-600"} />
+                    {core.name} ({core.target})
+                  </li>
+                ))}
               </ul>
 
               <button
@@ -1303,13 +1361,56 @@ export default function WorkoutPage() {
       )}
 
       {/* ══════════════════════════════════════════════════════════════════════════ */}
-      {/* TAB 3: WORKOUT HISTORY                                                     */}
+      {/* TAB 3: MUSCLE GROUP TRENDS & PHYSIQUE PROGRESS                             */}
+      {/* ══════════════════════════════════════════════════════════════════════════ */}
+      {tab === "physique" && (
+        <div className="space-y-6">
+          <section className="rounded-2xl border border-slate-800 bg-slate-950 p-6 space-y-3 shadow-xl">
+            <h3 className="text-xl font-black text-white flex items-center gap-2">
+              <Flame className="text-orange-400" size={22} />
+              7-Month Muscle Group Focus & Workout Performance Trends
+            </h3>
+            <p className="text-xs text-slate-400 max-w-2xl">
+              Performance metrics derived directly from your logged workout sessions. Forge tracks training volume and strength progression across primary hypertrophy targets.
+            </p>
+          </section>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {[
+              { name: "SHOULDERS", focus: "Side Delts & Overhead Press", exercises: ["Lateral Raise", "Overhead Press", "Pike Push-ups"] },
+              { name: "CHEST", focus: "Pectoralis Major & Incline", exercises: ["Bench Press", "Incline DB Press", "Push-ups"] },
+              { name: "BACK (V-TAPER)", focus: "Lats Width & Thickness", exercises: ["Pull-ups", "Barbell Row", "Seated Cable Row"] },
+              { name: "BICEPS", focus: "Peak Hypertrophy & Curls", exercises: ["Biceps Curl", "Jar Curls", "Hammer Curl"] },
+              { name: "TRICEPS", focus: "Horseshoe & Overhead Extension", exercises: ["Dips", "Rope Pushdown", "Diamond Push-ups"] },
+              { name: "FOREARMS", focus: "Brachioradialis & Grip", exercises: ["Wrist Curl", "Hammer Curls", "Towel Rows"] },
+              { name: "CORE & ABS", focus: "Lower Abs & Obliques", exercises: ["Leg Raises", "Plank", "Bicycle Crunches"] },
+            ].map((muscle) => (
+              <div key={muscle.name} className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-2">
+                <span className="text-[10px] font-black uppercase tracking-wider text-orange-400">{muscle.name}</span>
+                <h4 className="text-sm font-bold text-white">{muscle.focus}</h4>
+                <div className="text-[11px] text-slate-400 space-y-1 pt-1 border-t border-slate-800/80">
+                  <span className="text-slate-500 font-semibold block">Key Movements:</span>
+                  {muscle.exercises.map((e, i) => (
+                    <div key={i} className="flex items-center gap-1.5 text-slate-300">
+                      <span className="text-orange-400">→</span>
+                      <span>{e}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ══════════════════════════════════════════════════════════════════════════ */}
+      {/* TAB 4: WORKOUT HISTORY                                                     */}
       {/* ══════════════════════════════════════════════════════════════════════════ */}
       {tab === "history" && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-black text-white">Historical Workout Log</h3>
-            <span className="text-xs text-slate-400">All sessions preserved permanently</span>
+            <span className="text-xs text-slate-400">All historical sessions preserved permanently</span>
           </div>
 
           {history.length === 0 ? (

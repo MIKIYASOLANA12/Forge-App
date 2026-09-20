@@ -243,7 +243,7 @@ type HistoryLog = {
 };
 
 export default function WorkoutPage() {
-  const [tab, setTab] = useState<"today" | "core" | "physique" | "history">("today");
+  const [tab, setTab] = useState<"today" | "weekly" | "core" | "physique" | "history">("today");
   const [sessionMode, setSessionMode] = useState<"FULL" | "SHORT" | "HOME_SUB">("FULL");
   const [today, setToday] = useState<TodayData | null>(null);
   const [history, setHistory] = useState<HistoryLog[]>([]);
@@ -735,6 +735,19 @@ export default function WorkoutPage() {
         </button>
 
         <button
+          onClick={() => setTab("weekly")}
+          className={clsx(
+            "px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2",
+            tab === "weekly"
+              ? "bg-orange-500 text-black shadow-lg font-black"
+              : "text-slate-400 hover:text-white hover:bg-slate-900"
+          )}
+        >
+          <Calendar size={15} />
+          Weekly Training Plan
+        </button>
+
+        <button
           onClick={() => setTab("core")}
           className={clsx(
             "px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2",
@@ -744,7 +757,7 @@ export default function WorkoutPage() {
           )}
         >
           <Target size={15} />
-          Progressive Core ({today.dailyCore?.routineType === "CORE_B" ? "Core B" : "Core A"})
+          Progressive Core ({today.dailyCore?.routineType === "CORE_B" ? "Core B" : today.dailyCore?.routineType === "CORE_A" ? "Core A" : "Rest"})
           {(morningCoreChecked && nightCoreChecked) && <span className="text-[10px] bg-black/20 px-1.5 py-0.5 rounded">2/2</span>}
         </button>
 
@@ -1206,6 +1219,201 @@ export default function WorkoutPage() {
               </button>
             </div>
           </section>
+        </div>
+      )}
+
+      {/* ══════════════════════════════════════════════════════════════════════════ */}
+      {/* TAB: WEEKLY 7-DAY TRAINING SCHEDULE (HOME OR GYM)                          */}
+      {/* ══════════════════════════════════════════════════════════════════════════ */}
+      {tab === "weekly" && (
+        <div className="space-y-6">
+          <section className="rounded-2xl border border-orange-500/30 bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 p-6 shadow-xl space-y-2">
+            <div className="flex items-center gap-2">
+              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-orange-500/20 text-orange-400 border border-orange-500/30">
+                ACTIVE WEEKLY TRAINING ARCHITECTURE
+              </span>
+              <span className="text-xs text-slate-400">7-Day Split · Home & Gym Hybrid</span>
+            </div>
+            <h2 className="text-2xl md:text-3xl font-black text-white">Exact Weekly Training Split</h2>
+            <p className="text-xs text-slate-300 max-w-2xl">
+              Strictly scheduled distribution targeting progressive hypertrophy, V-taper symmetry, arm thickness, and strategic active recovery.
+            </p>
+          </section>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {[
+              {
+                day: "Sunday",
+                dayOfWeek: 0,
+                location: "HOME",
+                focus: "Shoulders + Back",
+                isRecovery: false,
+                exercises: [
+                  "Jar Lateral Raise — 3 × 12–15",
+                  "Jar Shoulder Press — 3 × 10–15",
+                  "Jar Bent-Over Row — 3 × 12–15",
+                  "Rear-Delt Fly — 3 × 12–15",
+                  "Superman Hold — 3 × 30 sec",
+                ],
+                core: "CORE A (Leg Raises, Slow/Weighted Crunch, Plank)",
+              },
+              {
+                day: "Monday",
+                dayOfWeek: 1,
+                location: "HOME",
+                focus: "Chest + Triceps",
+                isRecovery: false,
+                exercises: [
+                  "Push-Ups — 3 sets near failure",
+                  "Diamond Push-Ups — 3 × 10–15",
+                  "Feet-Elevated Push-Ups — 3 × 8–15",
+                  "Pike Push-Ups — 3 × 8–12",
+                  "Jar Overhead Triceps Extension — 3 × 12–15",
+                ],
+                core: "CORE B (Reverse Crunch, Bicycle Crunch, Side Plank)",
+              },
+              {
+                day: "Tuesday",
+                dayOfWeek: 2,
+                location: "HOME",
+                focus: "Biceps + Back",
+                isRecovery: false,
+                exercises: [
+                  "Jar Curls — 3 × 12–20",
+                  "Hammer Curls — 3 × 12–20",
+                  "Jar Rows — 3 × 12–20",
+                  "Towel Rows — 3 × 8–15",
+                  "Superman Rows — 3 × 12–15",
+                  "Pull-Ups — 3 sets (Optional if safe bar available)",
+                ],
+                core: "Rest / Active Recovery (No hard core)",
+              },
+              {
+                day: "Wednesday",
+                dayOfWeek: 3,
+                location: "GYM",
+                focus: "Chest + Shoulders",
+                isRecovery: false,
+                exercises: [
+                  "Bench Press — 4 × 8–10",
+                  "Incline Dumbbell Press — 3 × 8–12",
+                  "Lateral Raise — 4 × 12–15",
+                  "Overhead Press — 3 × 8–10",
+                  "Rear-Delt Exercise — 3 × 12–15",
+                ],
+                core: "CORE A (Leg Raises, Slow/Weighted Crunch, Plank)",
+              },
+              {
+                day: "Thursday",
+                dayOfWeek: 4,
+                location: "HOME",
+                focus: "Active Recovery",
+                isRecovery: true,
+                recoveryTag: "ACTIVE RECOVERY",
+                exercises: [
+                  "Push-Ups — 2 × 15",
+                  "Jar Curls — 2 × 15",
+                  "Plank — 2 × 45 sec",
+                ],
+                core: "Light Plank only (Genuinely light active recovery)",
+              },
+              {
+                day: "Friday",
+                dayOfWeek: 5,
+                location: "GYM",
+                focus: "Back + Biceps",
+                isRecovery: false,
+                exercises: [
+                  "Pull-Ups OR Lat Pulldown — 4 × 8–10",
+                  "Barbell Row — 4 × 8–10",
+                  "Seated Cable Row — 3 × 10–12",
+                  "Biceps Curl — 3 × 10–12",
+                  "Hammer Curl — 3 × 10–12",
+                ],
+                core: "CORE B (Reverse Crunch, Bicycle Crunch, Side Plank)",
+              },
+              {
+                day: "Saturday",
+                dayOfWeek: 6,
+                location: "GYM",
+                focus: "Triceps + Arms + Forearms",
+                isRecovery: false,
+                exercises: [
+                  "Dips — 3 × 8–12",
+                  "Rope Pushdown — 3 × 10–15",
+                  "Overhead Triceps Extension — 3 × 10–15",
+                  "Wrist Curls — 3 × 12–20",
+                  "Hammer Curls — 2 × 10–12",
+                ],
+                core: "CORE A (Leg Raises, Slow/Weighted Crunch, Plank)",
+              },
+            ].map((scheduleDay) => {
+              const isToday = today?.day?.dayOfWeek === scheduleDay.dayOfWeek;
+              return (
+                <article
+                  key={scheduleDay.day}
+                  className={clsx(
+                    "rounded-2xl border p-5 space-y-3.5 transition-all shadow-lg",
+                    isToday
+                      ? "border-orange-500 bg-orange-950/20 ring-1 ring-orange-500/50"
+                      : scheduleDay.isRecovery
+                      ? "border-emerald-500/30 bg-emerald-950/10"
+                      : "border-slate-800 bg-slate-950/80 hover:border-slate-700"
+                  )}
+                >
+                  <div className="flex items-center justify-between border-b border-slate-800/80 pb-2.5">
+                    <div className="flex items-center gap-2">
+                      <span className="text-base font-extrabold text-white">{scheduleDay.day}</span>
+                      {isToday && (
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase bg-orange-500 text-black animate-pulse">
+                          Today
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-1.5">
+                      <span
+                        className={clsx(
+                          "px-2.5 py-0.5 rounded-full text-[11px] font-black tracking-wider border",
+                          scheduleDay.location === "HOME"
+                            ? "bg-cyan-500/15 text-cyan-300 border-cyan-500/30"
+                            : "bg-purple-500/15 text-purple-300 border-purple-500/30"
+                        )}
+                      >
+                        {scheduleDay.location}
+                      </span>
+                      {scheduleDay.isRecovery && (
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                          Active Recovery
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Focus Area</span>
+                    <h4 className="text-sm font-black text-orange-400">{scheduleDay.focus}</h4>
+                  </div>
+
+                  <div className="space-y-1.5 pt-1 border-t border-slate-900">
+                    <span className="text-[10px] font-bold uppercase text-slate-400 block">Prescribed Movements:</span>
+                    <ul className="space-y-1 text-xs text-slate-300">
+                      {scheduleDay.exercises.map((ex, i) => (
+                        <li key={i} className="flex items-start gap-1.5">
+                          <span className="text-orange-400 font-bold shrink-0">•</span>
+                          <span>{ex}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <div className="p-2.5 rounded-xl bg-slate-900/90 border border-slate-800 text-[11px] text-slate-300">
+                    <strong className="text-orange-300">Core Protocol:</strong> {scheduleDay.core}
+                  </div>
+                </article>
+              );
+            })}
+          </div>
         </div>
       )}
 

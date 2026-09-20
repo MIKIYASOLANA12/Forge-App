@@ -98,10 +98,10 @@ async function runTests() {
   console.log('Test 3: Progressive Core Program specification');
   const coreA = getCoreRoutineForDayOfWeek(0); // Sunday: Core A
   const coreB = getCoreRoutineForDayOfWeek(1); // Monday: Core B
-  assert.strictEqual(coreA.type, 'CORE_A');
-  assert.strictEqual(coreB.type, 'CORE_B');
-  assert(coreA.exercises.length >= 3, 'Core A must have at least 3 exercises');
-  assert(coreB.exercises.length >= 3, 'Core B must have at least 3 exercises');
+  assert(coreA && coreA.type === 'CORE_A');
+  assert(coreB && coreB.type === 'CORE_B');
+  assert(coreA && coreA.exercises.length >= 3, 'Core A must have at least 3 exercises');
+  assert(coreB && coreB.exercises.length >= 3, 'Core B must have at least 3 exercises');
   console.log('✓ Test 3 Passed: Progressive Core Routines verified (Core A & Core B)');
 
   // Test 4: Progressive Overload Suggestions

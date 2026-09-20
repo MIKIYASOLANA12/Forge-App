@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { getSessionUserFromRequest } from '@/lib/auth';
 import { getAddisNow, workoutWindowForAddisDate, getAddisTimeComponents } from '@/lib/workoutTime';
 import { recordProgressActivity } from '@/lib/progressEngine';
-import { getCoreRoutineForDayOfWeek } from '@/lib/workoutMuscleTargets';
+import { getCoreRoutineForDayOfWeek, CORE_ROUTINE_A } from '@/lib/workoutMuscleTargets';
 
 export async function POST(req: NextRequest) {
   try {
@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
     const xpReward = 25;
     const xpToAward = isNewlyCompleted ? xpReward : 0;
 
-    const coreRoutine = getCoreRoutineForDayOfWeek(addisTime.dayOfWeek);
+    const coreRoutine = getCoreRoutineForDayOfWeek(addisTime.dayOfWeek) || CORE_ROUTINE_A;
     const exercisesJsonStr = exercises
       ? JSON.stringify(exercises)
       : JSON.stringify(coreRoutine.exercises.map((c: any) => ({ id: c.id, name: c.name, target: c.target, completed: Boolean(completed) })));

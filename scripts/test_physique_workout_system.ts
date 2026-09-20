@@ -58,7 +58,7 @@ function runTests() {
   const wedCore = getCoreRoutineForDayOfWeek(3); // Wednesday: Core B
   const friCore = getCoreRoutineForDayOfWeek(5); // Friday: Core A
   const satCore = getCoreRoutineForDayOfWeek(6); // Saturday: Core B
-  console.log(`Core Rotations -> Sun: ${sunCore.type}, Mon: ${monCore.type}, Wed: ${wedCore.type}, Fri: ${friCore.type}, Sat: ${satCore.type}`);
+  console.log(`Core Rotations -> Sun: ${sunCore?.type}, Mon: ${monCore?.type}, Wed: ${wedCore?.type}, Fri: ${friCore?.type}, Sat: ${satCore?.type}`);
 
   // Test 5: Deload Week
   console.log("Week 1 deload?", isDeloadWeek(1)); // false

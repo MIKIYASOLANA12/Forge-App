@@ -129,13 +129,20 @@ export const CORE_ROUTINE_B: CoreRoutineDefinition = {
 
 /**
  * Returns scheduled Core Routine (A or B) for day of week.
- * 4–5 planned sessions per week:
- * Sunday: Core A, Monday: Core B, Tuesday: Core A, Wednesday: Core B, Friday: Core A, Saturday: Core B, Thursday: Rest/Light
+ * Exactly 4–5 planned hard sessions per week (Alternating Core A & Core B):
+ * - Sunday (0): Core A
+ * - Monday (1): Core B
+ * - Tuesday (2): Rest / No hard core
+ * - Wednesday (3): Core A
+ * - Thursday (4): Active Recovery (Light Plank only in main routine)
+ * - Friday (5): Core B
+ * - Saturday (6): Core A
  */
-export function getCoreRoutineForDayOfWeek(dayOfWeek: number): CoreRoutineDefinition {
+export function getCoreRoutineForDayOfWeek(dayOfWeek: number): CoreRoutineDefinition | null {
   const norm = ((dayOfWeek % 7) + 7) % 7;
-  // Sunday (0): Core A, Monday (1): Core B, Tuesday (2): Core A, Wednesday (3): Core B, Friday (5): Core A, Saturday (6): Core B, Thursday (4): Core A
-  return (norm === 1 || norm === 3 || norm === 6) ? CORE_ROUTINE_B : CORE_ROUTINE_A;
+  if (norm === 0 || norm === 3 || norm === 6) return CORE_ROUTINE_A;
+  if (norm === 1 || norm === 5) return CORE_ROUTINE_B;
+  return null;
 }
 
 // ── AUTHORITATIVE 7-DAY WORKOUT SCHEDULE (Sunday to Saturday) ─────────────────
@@ -183,7 +190,7 @@ export const WEEKLY_WORKOUT_SCHEDULE: Record<number, DayRoutineDefinition> = {
       },
       {
         id: "sun_jar_rear_delt_fly",
-        name: "Jar/Bent-Over Rear-Delt Fly",
+        name: "Rear-Delt Fly",
         muscle: "Shoulders (Posterior Rear Delts & Upper Back)",
         cue: "Hinge at hips, raise arms outward with elbows slightly bent, squeezing rear deltoids.",
         equipment: "5L Jar / Bodyweight",
@@ -210,7 +217,7 @@ export const WEEKLY_WORKOUT_SCHEDULE: Record<number, DayRoutineDefinition> = {
     dayName: "Monday",
     location: "HOME",
     targetBodyParts: "Chest + Triceps",
-    focusBadges: ["Push-ups (Near Failure)", "Diamond Lockout", "Incline Upper Chest", "Pike Overhead"],
+    focusBadges: ["Push-ups (Near Failure)", "Diamond Lockout", "Incline Upper Chest", "Pike Overhead", "Triceps Extension"],
     description: "High-intensity bodyweight pressing for pectoral thickness, upper chest, and triceps horseshoe development.",
     equipmentSummary: "Bodyweight + optional 5L jar",
     shortSessionExerciseIds: ["mon_pushups", "mon_feet_elevated_pushups", "mon_diamond_pushups"],
@@ -222,7 +229,7 @@ export const WEEKLY_WORKOUT_SCHEDULE: Record<number, DayRoutineDefinition> = {
         cue: "Tuck elbows 45 degrees, chest to floor on every rep, near failure with clean form.",
         equipment: "Bodyweight",
         targetSets: 3,
-        targetReps: "Near failure (clean form)",
+        targetReps: "Near failure",
         isPrimaryCompound: true,
       },
       {
@@ -260,9 +267,8 @@ export const WEEKLY_WORKOUT_SCHEDULE: Record<number, DayRoutineDefinition> = {
         muscle: "Triceps (Long Head Thickness)",
         cue: "Hold 5L jar overhead with both hands, lower behind head with elbows tucked, extend upward.",
         equipment: "5L Jar",
-        targetSets: 2,
+        targetSets: 3,
         targetReps: "12–15",
-        isOptional: true,
       },
     ],
   },
@@ -290,7 +296,7 @@ export const WEEKLY_WORKOUT_SCHEDULE: Record<number, DayRoutineDefinition> = {
       },
       {
         id: "tue_jar_hammer_curls",
-        name: "Jar Hammer Curls",
+        name: "Hammer Curls",
         muscle: "Biceps & Forearms (Brachialis & Brachioradialis)",
         cue: "Neutral grip with thumbs upward; controlled 2-second negative descent for arm thickness.",
         equipment: "5L Jar",
@@ -329,6 +335,16 @@ export const WEEKLY_WORKOUT_SCHEDULE: Record<number, DayRoutineDefinition> = {
         targetSets: 3,
         targetReps: "12–15",
       },
+      {
+        id: "tue_pullups_opt",
+        name: "Pull-Ups",
+        muscle: "Back (Lats Width) & Biceps",
+        cue: "Execute 3 strict sets only if a SAFE, firmly anchored pull-up bar is available.",
+        equipment: "Pull-up Bar (Safe)",
+        targetSets: 3,
+        targetReps: "6–10 / max",
+        isOptional: true,
+      },
     ],
   },
 
@@ -338,7 +354,7 @@ export const WEEKLY_WORKOUT_SCHEDULE: Record<number, DayRoutineDefinition> = {
     dayName: "Wednesday",
     location: "GYM",
     targetBodyParts: "Chest + Shoulders",
-    focusBadges: ["Barbell Bench", "Incline Dumbbell", "Lateral Raises", "Overhead Press"],
+    focusBadges: ["Barbell Bench", "Incline Dumbbell", "Lateral Raises", "Overhead Press", "Rear-Delt"],
     description: "Heavy compound gym pushing for pectoral thickness, upper chest fullness, and 3D shoulder deltoids.",
     equipmentSummary: "Barbell, Dumbbells, Bench",
     shortSessionExerciseIds: ["wed_bench_press", "wed_incline_db_press", "wed_lateral_raises"],
@@ -393,15 +409,14 @@ export const WEEKLY_WORKOUT_SCHEDULE: Record<number, DayRoutineDefinition> = {
       },
       {
         id: "wed_rear_delt_work",
-        name: "Rear-Delt Fly",
+        name: "Rear-Delt Exercise",
         muscle: "Shoulders (Posterior Delts)",
         cue: "Hinge at hips, pull dumbbells out and back with soft elbows, squeezing rear delts.",
         equipment: "Dumbbells or Cable",
-        targetSets: 2,
+        targetSets: 3,
         targetReps: "12–15",
         startingWeightKg: 5,
         startingWeightGuide: "approximately 4–6 kg",
-        isOptional: true,
       },
     ],
     homeSubstitute: {
@@ -673,7 +688,7 @@ export const WEEKLY_WORKOUT_SCHEDULE: Record<number, DayRoutineDefinition> = {
       },
       {
         id: "sat_wrist_curls",
-        name: "Wrist Curl",
+        name: "Wrist Curls",
         muscle: "Forearms (Flexors & Grip Power)",
         cue: "Rest forearms on bench/thighs, curl weight up using wrists only, pause at top.",
         equipment: "Barbell or Dumbbell",
@@ -683,16 +698,15 @@ export const WEEKLY_WORKOUT_SCHEDULE: Record<number, DayRoutineDefinition> = {
         startingWeightGuide: "approximately 5 kg",
       },
       {
-        id: "sat_hammer_curl_opt",
-        name: "Hammer Curl (Arm Volume)",
+        id: "sat_hammer_curls",
+        name: "Hammer Curls",
         muscle: "Biceps & Brachialis",
-        cue: "Neutral grip strict curls for additional arm volume if needed.",
+        cue: "Neutral grip strict curls for arm thickness and forearm synergy.",
         equipment: "Dumbbells",
         targetSets: 2,
         targetReps: "10–12",
         startingWeightKg: 10,
         startingWeightGuide: "approximately 10 kg",
-        isOptional: true,
       },
     ],
     homeSubstitute: {

@@ -300,24 +300,61 @@ export async function GET(req: NextRequest) {
           }
         : null,
     },
-    dailyCore: {
-      routine: todayCoreRoutine.exercises,
-      routineType: todayCoreRoutine.type,
-      routineTitle: todayCoreRoutine.title,
-      routineDescription: todayCoreRoutine.description,
-      morning: {
-        completed: morningCoreCompleted,
-        completedAt: morningCoreLog?.completedAt || null,
-        xpEarned: morningCoreLog?.xpEarned || 0,
-        exercisesJson: morningCoreLog?.exercisesJson || null,
-      },
-      night: {
-        completed: nightCoreCompleted,
-        completedAt: nightCoreLog?.completedAt || null,
-        xpEarned: nightCoreLog?.xpEarned || 0,
-        exercisesJson: nightCoreLog?.exercisesJson || null,
-      },
-    },
+    dailyCore: todayCoreRoutine
+      ? {
+          routine: todayCoreRoutine.exercises,
+          routineType: todayCoreRoutine.type,
+          routineTitle: todayCoreRoutine.title,
+          routineDescription: todayCoreRoutine.description,
+          morning: {
+            completed: morningCoreCompleted,
+            completedAt: morningCoreLog?.completedAt || null,
+            xpEarned: morningCoreLog?.xpEarned || 0,
+            exercisesJson: morningCoreLog?.exercisesJson || null,
+          },
+          night: {
+            completed: nightCoreCompleted,
+            completedAt: nightCoreLog?.completedAt || null,
+            xpEarned: nightCoreLog?.xpEarned || 0,
+            exercisesJson: nightCoreLog?.exercisesJson || null,
+          },
+        }
+      : {
+          routine: [],
+          routineType: "REST" as any,
+          routineTitle: "Core Rest / Active Recovery Day",
+          routineDescription: "Hard core training is scheduled for 5 focused sessions per week (Sun, Mon, Wed, Fri, Sat) alternating Core A and Core B. No hard duplicate training today.",
+          morning: {
+            completed: morningCoreCompleted,
+            completedAt: morningCoreLog?.completedAt || null,
+            xpEarned: morningCoreLog?.xpEarned || 0,
+            exercisesJson: morningCoreLog?.exercisesJson || null,
+          },
+          night: {
+            completed: nightCoreCompleted,
+            completedAt: nightCoreLog?.completedAt || null,
+            xpEarned: nightCoreLog?.xpEarned || 0,
+            exercisesJson: nightCoreLog?.exercisesJson || null,
+          },
+        },
+    weeklySchedule: Object.values(WEEKLY_WORKOUT_SCHEDULE).map((d) => ({
+      dayOfWeek: d.dayOfWeek,
+      dayName: d.dayName,
+      location: d.location,
+      targetBodyParts: d.targetBodyParts,
+      focusBadges: d.focusBadges,
+      isRecovery: Boolean(d.isRecovery),
+      recoveryNotice: d.recoveryNotice,
+      exercisesCount: d.exercises.length,
+      exercises: d.exercises.map((e) => ({
+        name: e.name,
+        targetSets: e.targetSets,
+        targetReps: e.targetReps,
+        equipment: e.equipment,
+        isOptional: e.isOptional,
+      })),
+      coreRoutine: getCoreRoutineForDayOfWeek(d.dayOfWeek)?.type || "REST",
+    })),
     nextWorkout: {
       dateFormatted: nextUnlockFormatted,
       unlockTimestamp: windowInfo.nextUnlockUtc.getTime(),

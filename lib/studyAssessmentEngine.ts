@@ -225,49 +225,215 @@ function saveFallbackSession(session: AssessmentSessionState) {
   }
 }
 
-// ── Subject Specific 40-Question Distribution Matrix ────────────────────────
+// ── Subject & Topic Specific 40-Question Distribution Matrix ───────────────
 export interface SubjectDistributionQuota {
   type: QuestionType;
   count: number;
 }
 
-export function getSubjectDistributionQuotas(subject: string, totalCount: number = 40): SubjectDistributionQuota[] {
+export interface TopicContext {
+  subject: string;
+  topicId?: string;
+  topicTitle?: string;
+  unitTitle?: string;
+  subtopics?: string[];
+}
+
+/**
+ * Determines whether a given topic is quantitative (requires calculation questions)
+ * or conceptual / non-quantitative (must NOT force calculation questions).
+ */
+export function isQuantitativeTopic(ctx: TopicContext): boolean {
+  const normSubject = (ctx.subject || '').toUpperCase();
+  const textToScan = [
+    ctx.topicId || '',
+    ctx.topicTitle || '',
+    ctx.unitTitle || '',
+    ...(ctx.subtopics || []),
+  ].join(' ').toLowerCase();
+
+  // 1. Explicit conceptual / non-quantitative overrides
+  const conceptualKeywords = [
+    'definition and scope',
+    'relationship between chemistry and other',
+    'relationship between chemistry and',
+    'role of chemistry in production and in society',
+    'role of chemistry in production and society',
+    'role chemistry plays in production',
+    'chemical industries in ethiopia',
+    'safety in the chemical laboratory',
+    'hazard symbols',
+    'environmental pollution',
+    'green chemistry',
+    'historical development',
+    'historical atomic',
+    'discovery of subatomic',
+    'periodic table and periodic law',
+    'classification of elements',
+    'types of chemical bonding',
+    'polymers and macromolecules',
+  ];
+
+  if (conceptualKeywords.some((kw) => textToScan.includes(kw))) {
+    return false;
+  }
+
+  // 2. Explicit quantitative triggers
+  const quantitativeKeywords = [
+    'stoichiometry',
+    'mole concept',
+    'molar mass',
+    'formula mass',
+    'empirical formula',
+    'molecular formula',
+    'limiting reactant',
+    'percentage yield',
+    'molarity',
+    'molality',
+    'normality',
+    'concentration',
+    'dilution',
+    'titration',
+    'ph and poh',
+    'ph calculation',
+    'poh',
+    'acid-base equilibria',
+    'ionization constant',
+    'ka and kb',
+    'buffer solution',
+    'electrochemistry',
+    'faraday',
+    'electrolysis',
+    'cell potential',
+    'nernst',
+    'thermochemistry',
+    'enthalpy',
+    'hess',
+    'calorimetry',
+    'bond energy',
+    'gibbs free energy',
+    'chemical kinetics',
+    'reaction rate',
+    'rate law',
+    'half-life',
+    'chemical equilibrium',
+    'equilibrium constant',
+    'gas law',
+    'ideal gas',
+    'partial pressure',
+    'effusion',
+    'radioactive decay',
+    'mass defect',
+  ];
+
+  if (quantitativeKeywords.some((kw) => textToScan.includes(kw))) {
+    return true;
+  }
+
+  // 3. Subject default rules
+  if (normSubject.includes('CHEM')) {
+    return (
+      textToScan.includes('calculation') ||
+      textToScan.includes('quantitative') ||
+      textToScan.includes('stoichiomet') ||
+      textToScan.includes('mole') ||
+      textToScan.includes('molar') ||
+      textToScan.includes('rate law') ||
+      textToScan.includes('enthalpy') ||
+      textToScan.includes('equilibrium constant')
+    );
+  }
+
+  if (normSubject.includes('PHYS') || normSubject.includes('MATH')) {
+    return true;
+  }
+
+  return false;
+}
+
+export function getSubjectDistributionQuotas(
+  subject: string,
+  totalCount: number = 40,
+  topicContext?: { topicId?: string; topicTitle?: string; unitTitle?: string; subtopics?: string[] }
+): SubjectDistributionQuota[] {
   const norm = subject.toUpperCase();
   const f = totalCount / 40;
+  const isQuantitative = isQuantitativeTopic({ subject, ...topicContext });
 
   if (norm.includes('CHEM')) {
-    return [
-      { type: 'multiple_choice', count: Math.round(8 * f) },
-      { type: 'true_false', count: Math.round(4 * f) },
-      { type: 'fill_in_the_blank', count: Math.round(4 * f) },
-      { type: 'matching', count: Math.round(4 * f) },
-      { type: 'calculation', count: Math.round(6 * f) },
-      { type: 'application', count: Math.round(4 * f) },
-      { type: 'trick_misconception', count: Math.round(4 * f) },
-      { type: 'entrance_style', count: Math.round(6 * f) },
-    ];
+    if (isQuantitative) {
+      // Quantitative Chemistry (Calculations included) -> Total = 40
+      return [
+        { type: 'multiple_choice', count: Math.round(8 * f) },
+        { type: 'true_false', count: Math.round(4 * f) },
+        { type: 'fill_in_the_blank', count: Math.round(4 * f) },
+        { type: 'matching', count: Math.round(4 * f) },
+        { type: 'calculation', count: Math.round(6 * f) },
+        { type: 'application', count: Math.round(4 * f) },
+        { type: 'trick_misconception', count: Math.round(4 * f) },
+        { type: 'entrance_style', count: Math.round(6 * f) },
+      ];
+    } else {
+      // Conceptual Chemistry (No forced calculations, redistributed quota) -> Total = 40
+      return [
+        { type: 'multiple_choice', count: Math.round(10 * f) },
+        { type: 'true_false', count: Math.round(5 * f) },
+        { type: 'fill_in_the_blank', count: Math.round(5 * f) },
+        { type: 'matching', count: Math.round(4 * f) },
+        { type: 'calculation', count: 0 },
+        { type: 'application', count: Math.round(5 * f) },
+        { type: 'trick_misconception', count: Math.round(4 * f) },
+        { type: 'entrance_style', count: Math.round(7 * f) },
+      ];
+    }
   } else if (norm.includes('PHYS')) {
-    return [
-      { type: 'multiple_choice', count: Math.round(6 * f) },
-      { type: 'true_false', count: Math.round(4 * f) },
-      { type: 'fill_in_the_blank', count: Math.round(4 * f) },
-      { type: 'matching', count: Math.round(4 * f) },
-      { type: 'calculation', count: Math.round(10 * f) },
-      { type: 'application', count: Math.round(4 * f) },
-      { type: 'trick_misconception', count: Math.round(4 * f) },
-      { type: 'entrance_style', count: Math.round(4 * f) },
-    ];
+    if (isQuantitative) {
+      return [
+        { type: 'multiple_choice', count: Math.round(6 * f) },
+        { type: 'true_false', count: Math.round(4 * f) },
+        { type: 'fill_in_the_blank', count: Math.round(4 * f) },
+        { type: 'matching', count: Math.round(4 * f) },
+        { type: 'calculation', count: Math.round(10 * f) },
+        { type: 'application', count: Math.round(4 * f) },
+        { type: 'trick_misconception', count: Math.round(4 * f) },
+        { type: 'entrance_style', count: Math.round(4 * f) },
+      ];
+    } else {
+      return [
+        { type: 'multiple_choice', count: Math.round(9 * f) },
+        { type: 'true_false', count: Math.round(6 * f) },
+        { type: 'fill_in_the_blank', count: Math.round(5 * f) },
+        { type: 'matching', count: Math.round(4 * f) },
+        { type: 'calculation', count: 0 },
+        { type: 'application', count: Math.round(6 * f) },
+        { type: 'trick_misconception', count: Math.round(5 * f) },
+        { type: 'entrance_style', count: Math.round(5 * f) },
+      ];
+    }
   } else if (norm.includes('BIO')) {
-    return [
-      { type: 'multiple_choice', count: Math.round(8 * f) },
-      { type: 'true_false', count: Math.round(6 * f) },
-      { type: 'fill_in_the_blank', count: Math.round(4 * f) },
-      { type: 'matching', count: Math.round(6 * f) },
-      { type: 'calculation', count: Math.round(2 * f) },
-      { type: 'application', count: Math.round(6 * f) },
-      { type: 'trick_misconception', count: Math.round(4 * f) },
-      { type: 'entrance_style', count: Math.round(4 * f) },
-    ];
+    if (isQuantitative) {
+      return [
+        { type: 'multiple_choice', count: Math.round(8 * f) },
+        { type: 'true_false', count: Math.round(6 * f) },
+        { type: 'fill_in_the_blank', count: Math.round(4 * f) },
+        { type: 'matching', count: Math.round(6 * f) },
+        { type: 'calculation', count: Math.round(2 * f) },
+        { type: 'application', count: Math.round(6 * f) },
+        { type: 'trick_misconception', count: Math.round(4 * f) },
+        { type: 'entrance_style', count: Math.round(4 * f) },
+      ];
+    } else {
+      return [
+        { type: 'multiple_choice', count: Math.round(9 * f) },
+        { type: 'true_false', count: Math.round(6 * f) },
+        { type: 'fill_in_the_blank', count: Math.round(5 * f) },
+        { type: 'matching', count: Math.round(6 * f) },
+        { type: 'calculation', count: 0 },
+        { type: 'application', count: Math.round(6 * f) },
+        { type: 'trick_misconception', count: Math.round(4 * f) },
+        { type: 'entrance_style', count: Math.round(4 * f) },
+      ];
+    }
   } else if (norm.includes('MATH')) {
     return [
       { type: 'multiple_choice', count: Math.round(6 * f) },
@@ -296,10 +462,10 @@ export function getSubjectDistributionQuotas(subject: string, totalCount: number
     { type: 'true_false', count: Math.round(6 * f) },
     { type: 'fill_in_the_blank', count: Math.round(6 * f) },
     { type: 'matching', count: Math.round(4 * f) },
-    { type: 'calculation', count: Math.round(4 * f) },
-    { type: 'application', count: Math.round(4 * f) },
+    { type: 'calculation', count: isQuantitative ? Math.round(4 * f) : 0 },
+    { type: 'application', count: isQuantitative ? Math.round(4 * f) : Math.round(6 * f) },
     { type: 'trick_misconception', count: Math.round(3 * f) },
-    { type: 'entrance_style', count: Math.round(3 * f) },
+    { type: 'entrance_style', count: isQuantitative ? Math.round(3 * f) : Math.round(5 * f) },
   ];
 }
 
@@ -654,14 +820,19 @@ export const TOPIC_CURATED_QUESTIONS: AssessmentQuestion[] = [
     unitTitle: 'Unit 1 — CHEMISTRY AND ITS IMPORTANCE',
     topicId: 'chemistry_u1_t1',
     topicTitle: '1.1 Definition and Scope of Chemistry',
-    subtopic: 'Calculations in Chemistry (Density & SI)',
-    type: 'calculation',
+    subtopic: 'Macroscopic vs Microscopic Domain',
+    type: 'multiple_choice',
     difficulty: 'medium',
-    prompt: 'A sample of an unknown liquid has a mass of 45.0 g and occupies a volume of 37.5 mL. Calculate its density in g/cm³.',
-    options: ['1.20 g/cm³', '0.833 g/cm³', '1.50 g/cm³', '0.900 g/cm³'],
-    correctAnswer: '1.20 g/cm³',
-    explanation: 'Density = Mass / Volume = 45.0 g / 37.5 cm³ = 1.20 g/cm³.',
-    conceptTag: 'density-calculation',
+    prompt: 'When a chemist describes the visible color and boiling point of liquid bromine, they operate in the __________ domain; when explaining diatomic Br₂ molecules undergoing covalent bond dissociation, they operate in the __________ domain.',
+    options: [
+      'macroscopic; microscopic',
+      'microscopic; macroscopic',
+      'symbolic; macroscopic',
+      'microscopic; symbolic',
+    ],
+    correctAnswer: 'macroscopic; microscopic',
+    explanation: 'The macroscopic domain encompasses visible bulk physical properties, while the microscopic domain explains phenomena in terms of atoms, ions, and molecules.',
+    conceptTag: 'macroscopic-microscopic-domains',
     sourceType: 'AI_GENERATED',
     xpReward: 30,
   },
@@ -958,13 +1129,13 @@ export const TOPIC_CURATED_QUESTIONS: AssessmentQuestion[] = [
     topicId: 'chemistry_u1_t2',
     topicTitle: '1.2 Relationship Between Chemistry and Other Natural Sciences',
     subtopic: 'Physical chemistry / chemical physics',
-    type: 'calculation',
+    type: 'application',
     difficulty: 'medium',
-    prompt: 'In a physical chemistry investigation of reaction thermodynamics, a system absorbs 750 J of heat energy from the surroundings (q = +750 J) while doing 250 J of work on the surroundings (w = -250 J). Using the first law of thermodynamics (ΔU = q + w), calculate the net change in internal energy ΔU in Joules.',
-    options: ['+500 J', '+1000 J', '-500 J', '-1000 J'],
-    correctAnswer: '+500 J',
-    explanation: 'ΔU = q + w = 750 J + (-250 J) = +500 J. This physical chemistry calculation shows internal energy change during a thermodynamic process.',
-    conceptTag: 'thermodynamics-internal-energy-calc',
+    prompt: 'Which interdisciplinary branch of chemistry directly applies physical laws, quantum mechanics, and thermodynamic principles to analyze reaction mechanisms and the energetic changes of chemical systems?',
+    options: ['Physical Chemistry', 'Analytical Chemistry', 'Synthetic Polymer Chemistry', 'Petrochemistry'],
+    correctAnswer: 'Physical Chemistry',
+    explanation: 'Physical chemistry bridges physics and chemistry by investigating reaction mechanisms, rates, spectroscopy, and chemical thermodynamics using fundamental physical laws.',
+    conceptTag: 'physical-chemistry-interdisciplinary',
     sourceType: 'AI_GENERATED',
     xpReward: 35,
   },
@@ -1197,18 +1368,13 @@ export const TOPIC_CURATED_QUESTIONS: AssessmentQuestion[] = [
     topicId: 'chemistry_u1_t3',
     topicTitle: '1.3 The Role Chemistry Plays in Production and in Society',
     subtopic: 'Agriculture',
-    type: 'calculation',
+    type: 'entrance_style',
     difficulty: 'hard',
-    prompt: 'A standard bag of urea fertilizer [CO(NH₂)₂] weighs 50.0 kg. What is the theoretical percentage by mass of nitrogen (N) in pure urea, and how many kilograms of nitrogen are supplied per bag? (Atomic masses: C = 12.01, O = 16.00, N = 14.01, H = 1.01 g/mol)',
-    options: [
-      '46.7% N, supplying ~23.3 kg N',
-      '28.0% N, supplying ~14.0 kg N',
-      '60.0% N, supplying ~30.0 kg N',
-      '35.0% N, supplying ~17.5 kg N',
-    ],
-    correctAnswer: '46.7% N, supplying ~23.3 kg N',
-    explanation: 'Molar mass of CO(NH₂)₂ = 12.01 + 16.00 + 2(14.01) + 4(1.01) = 60.07 g/mol. % N = (28.02 / 60.07) × 100% = 46.65% ≈ 46.7%. In 50 kg: 50.0 × 0.4665 = 23.32 kg ≈ 23.3 kg N.',
-    conceptTag: 'urea-nitrogen-percentage-calc',
+    prompt: 'In modern industrial chemistry, synthetic nitrogenous fertilizers such as urea and ammonium nitrate depend upon which foundational chemical process that fixes inert atmospheric nitrogen into ammonia gas?',
+    options: ['Haber-Bosch process', 'Contact process', 'Ostwald process', 'Solvay process'],
+    correctAnswer: 'Haber-Bosch process',
+    explanation: 'The Haber-Bosch process combines atmospheric nitrogen gas with hydrogen gas to produce ammonia (NH₃), which is the essential precursor for virtually all synthetic nitrogen fertilizers in world agriculture.',
+    conceptTag: 'haber-bosch-fertilizer-role',
     sourceType: 'AI_GENERATED',
     xpReward: 40,
   },
@@ -1493,6 +1659,11 @@ export function validateAndNormalizeQuestion(
     type = 'multiple_choice';
   }
 
+  // Prevent forced calculation questions on conceptual topics
+  if (type === 'calculation' && !isQuantitativeTopic(context)) {
+    type = 'multiple_choice';
+  }
+
   // 3. Extract options
   let options: string[] = [];
   const rawOpts = raw.options || raw.choices || raw.answers;
@@ -1674,7 +1845,20 @@ export async function createAssessmentSession(params: {
   console.log(`[StudyAssessmentEngine] Exact Topic: ${topicId} ("${topicTitle}")`);
   console.log(`[StudyAssessmentEngine] Exact Subtopics (${subtopics.length}):`, subtopics);
   console.log(`[StudyAssessmentEngine] Requested Question Count: ${validCount}`);
-  const quotas = getSubjectDistributionQuotas(subject, validCount);
+  const isQuantitative = isQuantitativeTopic({
+    subject: String(subject),
+    topicId,
+    topicTitle,
+    unitTitle,
+    subtopics,
+  });
+  const quotas = getSubjectDistributionQuotas(String(subject), validCount, {
+    topicId,
+    topicTitle,
+    unitTitle,
+    subtopics,
+  });
+  console.log(`[StudyAssessmentEngine] Topic Nature: ${isQuantitative ? 'QUANTITATIVE (Calculations Included)' : 'CONCEPTUAL (No Forced Calculations)'}`);
   console.log(
     `[StudyAssessmentEngine] Distribution Quotas:`,
     quotas.map((q) => `${q.type}: ${q.count}`).join(', ')
@@ -1698,6 +1882,10 @@ export async function createAssessmentSession(params: {
       });
 
       for (const p of dbPastQuestions) {
+        let qType = (p.questionType?.toLowerCase() as QuestionType) || 'entrance_style';
+        if (qType === 'calculation' && !isQuantitative) {
+          qType = 'entrance_style';
+        }
         pool.push({
           id: `past_db_${p.id}`,
           subject: p.subject,
@@ -1706,7 +1894,7 @@ export async function createAssessmentSession(params: {
           topicId: p.topicId || topicId,
           topicTitle: p.topicTitle || topicTitle,
           subtopic: p.subtopic || (subtopics[0] || 'Past Paper Problem'),
-          type: (p.questionType?.toLowerCase() as QuestionType) || 'entrance_style',
+          type: qType,
           difficulty: (p.difficulty as QuestionDifficulty) || 'entrance',
           prompt: p.originalText,
           options: p.optionsJson ? JSON.parse(p.optionsJson) : ['Option A', 'Option B', 'Option C', 'Option D'],
@@ -1733,6 +1921,10 @@ export async function createAssessmentSession(params: {
             if (doc.subject?.toUpperCase() === subject.toUpperCase() && Array.isArray(doc.questions)) {
               for (const p of doc.questions) {
                 if (p.topicId === topicId) {
+                  let qType = (p.questionType?.toLowerCase() as QuestionType) || 'entrance_style';
+                  if (qType === 'calculation' && !isQuantitative) {
+                    qType = 'entrance_style';
+                  }
                   pool.push({
                     id: `past_file_${doc.id}_${pool.length}`,
                     subject: p.subject,
@@ -1741,7 +1933,7 @@ export async function createAssessmentSession(params: {
                     topicId: p.topicId || topicId,
                     topicTitle: p.topicTitle || topicTitle,
                     subtopic: p.subtopic || (subtopics[0] || 'Past Paper Problem'),
-                    type: (p.questionType?.toLowerCase() as QuestionType) || 'entrance_style',
+                    type: qType,
                     difficulty: (p.difficulty as QuestionDifficulty) || 'entrance',
                     prompt: p.originalText,
                     options: Array.isArray(p.options) && p.options.length > 0 ? p.options : ['Option A', 'Option B', 'Option C', 'Option D'],
@@ -1768,7 +1960,12 @@ export async function createAssessmentSession(params: {
   console.log(`[StudyAssessmentEngine] [Step 2] Matching curated topic seed bank for "${topicId}"...`);
   const curatedMatches = TOPIC_CURATED_QUESTIONS.filter(
     (q) => q.subject.toUpperCase() === subject.toUpperCase() && q.topicId === topicId
-  );
+  ).map((q) => {
+    if (q.type === 'calculation' && !isQuantitative) {
+      return { ...q, type: 'multiple_choice' as QuestionType };
+    }
+    return q;
+  });
   for (const c of curatedMatches) {
     if (!pool.some((p) => p.prompt.toLowerCase() === c.prompt.toLowerCase())) {
       pool.push(c);
@@ -1796,7 +1993,12 @@ export async function createAssessmentSession(params: {
       })
       .map((q) => q.type);
 
-    const typeRequirement = currentBatchTypes.length > 0 ? currentBatchTypes.join(', ') : 'multiple_choice, calculation, true_false, matching, application';
+    const typeRequirement =
+      currentBatchTypes.length > 0
+        ? currentBatchTypes.join(', ')
+        : (isQuantitative
+            ? 'multiple_choice, calculation, true_false, matching, application'
+            : 'multiple_choice, true_false, fill_in_the_blank, matching, application, trick_misconception, entrance_style');
 
     console.log(`\n[StudyAssessmentEngine] --- Starting Batch ${batchIdx + 1}/${totalBatches} (Target: ${currentBatchTarget}, Subtopic: "${subtopicTarget}", Types: [${typeRequirement}]) ---`);
 
@@ -1821,7 +2023,7 @@ CRITICAL RULES:
 1. Every question must test concrete concepts from "${topicTitle}" and "${attemptSubtopic}".
 2. For multiple_choice questions, provide 4 clear options and the correct answer.
 3. For true_false questions, provide options: ["True", "False"].
-4. For calculation questions, provide realistic numbers and clear steps in the explanation.
+${isQuantitative ? '4. For calculation questions, provide realistic numbers and clear steps in the explanation.' : '4. Do NOT generate calculation questions for this non-quantitative/conceptual topic. Focus purely on conceptual, application, matching, fill-in, and entrance style questions.'}
 5. For matching questions, provide left items and right items.
 6. Return a valid JSON object strictly matching this schema:
 {

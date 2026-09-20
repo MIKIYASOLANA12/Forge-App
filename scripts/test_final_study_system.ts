@@ -8,6 +8,7 @@ import {
   submitAnswerToSession,
   toClientAssessmentSession,
   getSubjectDistributionQuotas,
+  isQuantitativeTopic,
 } from '../lib/studyAssessmentEngine';
 import {
   getSubjectMasteryOverview,
@@ -120,13 +121,59 @@ async function runSystemVerification() {
   console.log('✓ Test 5 Passed: JavaScript starting location verified at Lesson 3: Conditionals (Quiz: Checking Your Balance) -> Lesson 4: Loops');
   passedTests++;
 
-  // 6. QUESTION ENGINE: 40 QUESTIONS DISTRIBUTION & ZERO CLIENT KEY LEAKAGE
-  console.log('\\nTEST 6: 40-Question Assessment Generation & Client-Safe DTO');
-  const chemQuotas = getSubjectDistributionQuotas('CHEMISTRY', 40);
-  const quotaTotal = chemQuotas.reduce((acc, q) => acc + q.count, 0);
-  assert.strictEqual(quotaTotal, 40, 'Total questions quota must equal 40');
-  assert(chemQuotas.some((q) => q.type === 'calculation'), 'Chemistry must include calculation questions');
+  // 6. QUESTION ENGINE: DYNAMIC TOPIC-DEPENDENT DISTRIBUTION & 40 QUESTIONS LOCK
+  console.log('\nTEST 6: Dynamic Topic-Dependent Question Distribution & Topic-Locking Verification');
 
+  // A. Conceptual Topics vs Quantitative Topics Classification
+  const isStoichQuant = isQuantitativeTopic({
+    subject: 'CHEMISTRY',
+    topicId: 'chemistry_u6_t5',
+    topicTitle: '1.5 Molecular and Formula Masses, the Mole Concept and Chemical Formulas',
+  });
+  assert.strictEqual(isStoichQuant, true, 'Stoichiometry must be classified as quantitative');
+
+  const isScopeQuant = isQuantitativeTopic({
+    subject: 'CHEMISTRY',
+    topicId: 'chemistry_u1_t1',
+    topicTitle: '1.1 Definition and Scope of Chemistry',
+  });
+  assert.strictEqual(isScopeQuant, false, 'Definition and Scope of Chemistry must be classified as conceptual');
+
+  const isRelQuant = isQuantitativeTopic({
+    subject: 'CHEMISTRY',
+    topicId: 'chemistry_u1_t2',
+    topicTitle: '1.2 Relationship Between Chemistry and Other Natural Sciences',
+  });
+  assert.strictEqual(isRelQuant, false, 'Relationship Between Chemistry and Other Natural Sciences must be classified as conceptual');
+
+  const isRoleQuant = isQuantitativeTopic({
+    subject: 'CHEMISTRY',
+    topicId: 'chemistry_u1_t3',
+    topicTitle: '1.3 The Role Chemistry Plays in Production and in Society',
+  });
+  assert.strictEqual(isRoleQuant, false, 'Role of Chemistry in Production and Society must be classified as conceptual');
+
+  // B. Quota Verification for Quantitative Topic (Calculations Included)
+  const quantQuotas = getSubjectDistributionQuotas('CHEMISTRY', 40, {
+    topicId: 'chemistry_u6_t5',
+    topicTitle: '1.5 Molecular and Formula Masses, the Mole Concept and Chemical Formulas',
+  });
+  const quantTotal = quantQuotas.reduce((acc, q) => acc + q.count, 0);
+  assert.strictEqual(quantTotal, 40, 'Quantitative total quota must be exactly 40');
+  const quantCalcQuota = quantQuotas.find((q) => q.type === 'calculation')?.count || 0;
+  assert(quantCalcQuota >= 6, 'Quantitative topic must include calculation quota (>= 6)');
+
+  // C. Quota Verification for Conceptual Topic (NO Forced Calculations, Total = Exactly 40)
+  const conceptQuotas = getSubjectDistributionQuotas('CHEMISTRY', 40, {
+    topicId: 'chemistry_u1_t1',
+    topicTitle: '1.1 Definition and Scope of Chemistry',
+  });
+  const conceptTotal = conceptQuotas.reduce((acc, q) => acc + q.count, 0);
+  assert.strictEqual(conceptTotal, 40, 'Conceptual total quota must be exactly 40');
+  const conceptCalcQuota = conceptQuotas.find((q) => q.type === 'calculation')?.count || 0;
+  assert.strictEqual(conceptCalcQuota, 0, 'Conceptual topic must have ZERO forced calculation quota (count === 0)');
+
+  // D. Session Generation for Conceptual Topic (chemistry_u1_t1)
   const session = await createAssessmentSession({
     subject: 'CHEMISTRY',
     topicId: 'chemistry_u1_t1',
@@ -138,7 +185,44 @@ async function runSystemVerification() {
   assert.strictEqual(session.currentIndex, 0);
   assert.strictEqual(session.status, 'IN_PROGRESS');
 
-  // Verify Client DTO never leaks correctAnswer, explanation, or grading keys
+  // Assert NO calculation questions forced in conceptual session
+  const calcQuestionsInConcept = session.questions.filter((q) => q.type === 'calculation');
+  assert.strictEqual(
+    calcQuestionsInConcept.length,
+    0,
+    `Conceptual topic session must contain 0 calculation questions, found: ${calcQuestionsInConcept.length}`
+  );
+
+  // Assert all questions are topic-locked
+  for (const q of session.questions) {
+    assert.strictEqual(q.subject, 'CHEMISTRY');
+    assert.strictEqual(q.topicId, 'chemistry_u1_t1');
+    assert.strictEqual(q.unitId, 'chemistry_u1');
+  }
+
+  // E. Session Generation for Quantitative Topic (chemistry_u6_t5)
+  const quantSession = await createAssessmentSession({
+    subject: 'CHEMISTRY',
+    topicId: 'chemistry_u6_t5',
+    count: 40,
+    userId: 'test_user_forge',
+  });
+
+  assert.strictEqual(quantSession.questions.length, 40, 'Quantitative session must generate exactly 40 questions');
+  const calcQuestionsInQuant = quantSession.questions.filter((q) => q.type === 'calculation');
+  assert(
+    calcQuestionsInQuant.length > 0,
+    `Quantitative topic session must contain calculation questions, found: ${calcQuestionsInQuant.length}`
+  );
+
+  // Assert all questions in quantitative session are topic-locked
+  for (const q of quantSession.questions) {
+    assert.strictEqual(q.subject, 'CHEMISTRY');
+    assert.strictEqual(q.topicId, 'chemistry_u6_t5');
+    assert.strictEqual(q.unitId, 'chemistry_u6');
+  }
+
+  // F. Client-Safe DTO Verification (Zero Answer Key Leakage)
   const clientDto = toClientAssessmentSession(session);
   assert.strictEqual(clientDto.questions.length, 40);
   for (const q of clientDto.questions) {
@@ -146,7 +230,12 @@ async function runSystemVerification() {
     assert.strictEqual((q as any).explanation, undefined, 'Client DTO must NEVER contain explanation');
   }
 
-  console.log('✓ Test 6 Passed: 40 questions generated with 8 distinct question types and zero client key leakage');
+  console.log('✓ Test 6 Passed: Dynamic distribution verified:');
+  console.log('    - Quantitative topics (Stoichiometry) -> Calculations included (> 0)');
+  console.log('    - Conceptual topics (Definition & Scope) -> Zero forced calculations (=== 0)');
+  console.log('    - Total questions for both = EXACTLY 40');
+  console.log('    - All questions strictly topic-locked');
+  console.log('    - Client DTO zero-leakage verified');
   passedTests++;
 
   // 7. ANSWER RECORDING & WEAK CONCEPT FOCUS AREA

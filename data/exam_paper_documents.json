@@ -502,5 +502,145 @@
         "difficulty": "EASY"
       }
     ]
+  },
+  "doc_1789906074822_w1teq": {
+    "id": "doc_1789906074822_w1teq",
+    "title": "Ethiopian National Entrance Exam 2023 Chemistry Test Paper",
+    "subject": "CHEMISTRY",
+    "year": 2023,
+    "examType": "National Entrance Exam",
+    "language": "en",
+    "sourceFile": "/uploads/past-papers/doc_1789906074822_w1teq_chem_entrance_real_test.txt",
+    "pageCount": 1,
+    "status": "PROCESSED",
+    "rawText": "1. What is the mass in grams of 2.0 moles of NaOH?\nA) 80.0 g\nB) 40.0 g\nC) 20.0 g\nD) 100.0 g\n\n2. In an unknown process, determine the energy state.\nA) High\nB) Low\nC) Zero\nD) Constant",
+    "questionsCount": 2,
+    "createdAt": "2026-09-20T12:07:54.826Z",
+    "questions": [
+      {
+        "questionNumber": 1,
+        "pageNumber": 1,
+        "subject": "CHEMISTRY",
+        "unitId": "chemistry_u2",
+        "unitTitle": "Unit 2 — MEASUREMENTS AND SCIENTIFIC METHODS",
+        "topicId": "chemistry_u2_t1",
+        "topicTitle": "2.1 Measurements and Units in Chemistry",
+        "subtopic": "Extracted Past Exam Question",
+        "questionType": "MULTIPLE_CHOICE",
+        "originalLanguage": "en",
+        "originalText": "1. What is the mass in grams of 2.0 moles of NaOH?",
+        "options": [
+          "80.0 g",
+          "40.0 g",
+          "20.0 g",
+          "100.0 g"
+        ],
+        "aiProposedAnswer": "80.0 g",
+        "isAnswerVerified": false,
+        "explanation": "Extracted from imported past examination paper.",
+        "conceptTag": "chemistry_u2_t1-past-exam",
+        "difficulty": "entrance"
+      },
+      {
+        "questionNumber": 2,
+        "pageNumber": 1,
+        "subject": "CHEMISTRY",
+        "subtopic": "Unmapped — Review Required",
+        "questionType": "MULTIPLE_CHOICE",
+        "originalLanguage": "en",
+        "originalText": "2. In an unknown process, determine the energy state.",
+        "options": [
+          "High",
+          "Low",
+          "Zero",
+          "Constant"
+        ],
+        "aiProposedAnswer": "High",
+        "isAnswerVerified": false,
+        "explanation": "Extracted from imported past examination paper.",
+        "conceptTag": "chemistry-unmapped-past-exam",
+        "difficulty": "entrance"
+      }
+    ]
+  },
+  "doc_1789906074839_e2esb": {
+    "id": "doc_1789906074839_e2esb",
+    "title": "Real Binary PDF Chemistry Exam Fixture",
+    "subject": "CHEMISTRY",
+    "year": 2024,
+    "examType": "National Entrance Exam",
+    "language": "en",
+    "sourceFile": "/uploads/past-papers/doc_1789906074839_e2esb_real_fixture_chem_exam.pdf",
+    "pageCount": 1,
+    "status": "PROCESSED",
+    "rawText": "ETHIOPIAN UNIVERSITY ENTRANCE EXAMINATION (EUEE)\nCHEMISTRY EXAMINATION\n1. Calculate the molarity of a solution containing 4.0 g of NaOH in 500 mL of solution.\nA) 0.20 M\nB) 0.10 M\nC) 0.40 M\nD) 0.80 M\n2. What is the conjugate base of HSO4-?\nA) SO4 2-\nB) H2SO4\nC) H3O+\nD) OH-\n\n-- 1 of 1 --\n\n",
+    "questionsCount": 3,
+    "createdAt": "2026-09-20T12:07:56.360Z",
+    "questions": [
+      {
+        "questionNumber": 1,
+        "pageNumber": 1,
+        "subject": "CHEMISTRY",
+        "subtopic": "Unmapped — Review Required",
+        "questionType": "CALCULATION",
+        "originalLanguage": "en",
+        "originalText": "ETHIOPIAN UNIVERSITY ENTRANCE EXAMINATION (EUEE)",
+        "options": [
+          "Option A",
+          "Option B",
+          "Option C",
+          "Option D"
+        ],
+        "aiProposedAnswer": "A",
+        "isAnswerVerified": false,
+        "explanation": "Extracted from imported past examination paper.",
+        "conceptTag": "chemistry-unmapped-past-exam",
+        "difficulty": "entrance"
+      },
+      {
+        "questionNumber": 2,
+        "pageNumber": 1,
+        "subject": "CHEMISTRY",
+        "unitId": "chemistry_u16",
+        "unitTitle": "Unit 5 — INTRODUCTION TO ENVIRONMENTAL CHEMISTRY",
+        "topicId": "chemistry_u16_t4",
+        "topicTitle": "5.4 Green Chemistry and Cleaner Production",
+        "subtopic": "Extracted Past Exam Question",
+        "questionType": "MULTIPLE_CHOICE",
+        "originalLanguage": "en",
+        "originalText": "1. Calculate the molarity of a solution containing 4.0 g of NaOH in 500 mL of solution.",
+        "options": [
+          "0.20 M",
+          "0.10 M",
+          "0.40 M",
+          "0.80 M"
+        ],
+        "aiProposedAnswer": "0.20 M",
+        "isAnswerVerified": false,
+        "explanation": "Extracted from imported past examination paper.",
+        "conceptTag": "chemistry_u16_t4-past-exam",
+        "difficulty": "entrance"
+      },
+      {
+        "questionNumber": 3,
+        "pageNumber": 1,
+        "subject": "CHEMISTRY",
+        "subtopic": "Unmapped — Review Required",
+        "questionType": "MULTIPLE_CHOICE",
+        "originalLanguage": "en",
+        "originalText": "2. What is the conjugate base of HSO4-?",
+        "options": [
+          "SO4 2-",
+          "H2SO4",
+          "H3O+",
+          "OH-"
+        ],
+        "aiProposedAnswer": "SO4 2-",
+        "isAnswerVerified": false,
+        "explanation": "Extracted from imported past examination paper.",
+        "conceptTag": "chemistry-unmapped-past-exam",
+        "difficulty": "entrance"
+      }
+    ]
   }
 }

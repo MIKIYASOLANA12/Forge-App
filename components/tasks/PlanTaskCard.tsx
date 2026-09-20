@@ -35,12 +35,18 @@ export interface PlanTaskCardProps {
     isEntrancePriority?: boolean;
     isLocked?: boolean;
     subtopics?: string[];
+    subject?: string | null;
+    topicId?: string | null;
+    topic?: string | null;
+    unitId?: string | null;
+    unitTitle?: string | null;
   };
   index?: number;
   isDone?: boolean;
   onToggle?: (id: string) => void;
   onStartFocus?: (task: any) => void;
   onLockIn?: (task: any) => void;
+  onTestKnowledge?: (task: any) => void;
   compact?: boolean;
 }
 
@@ -51,6 +57,7 @@ export function PlanTaskCard({
   onToggle,
   onStartFocus,
   onLockIn,
+  onTestKnowledge,
   compact = false,
 }: PlanTaskCardProps) {
   const [expanded, setExpanded] = useState(true);
@@ -287,6 +294,17 @@ export function PlanTaskCard({
             {/* 2. CHEMISTRY CARD SPECIFICATION */}
             {meta.category === "CHEMISTRY" && (
               <div className="space-y-3">
+                {meta.unitTitle && (
+                  <div>
+                    <span className="font-extrabold uppercase tracking-wider text-slate-400 block text-[11px]">
+                      Unit:
+                    </span>
+                    <span className="text-slate-200 font-semibold text-xs">
+                      {meta.unitTitle}
+                    </span>
+                  </div>
+                )}
+
                 {meta.topic && (
                   <div>
                     <span className="font-extrabold uppercase tracking-wider text-slate-400 block text-[11px]">
@@ -301,7 +319,7 @@ export function PlanTaskCard({
                 {meta.subtopics && meta.subtopics.length > 0 && (
                   <div>
                     <span className="font-extrabold uppercase tracking-wider text-slate-400 block text-[11px] mb-1.5">
-                      Today&apos;s topics:
+                      Subtopics:
                     </span>
                     <div className="rounded-xl bg-slate-950/70 border border-slate-800/80 p-3">
                       <ul className="space-y-1.5">
@@ -316,6 +334,15 @@ export function PlanTaskCard({
                   </div>
                 )}
 
+                <div className="rounded-xl bg-blue-950/30 border border-blue-500/25 p-3 space-y-1">
+                  <span className="font-black uppercase tracking-wider text-blue-400 block text-[10px]">
+                    Today&apos;s target:
+                  </span>
+                  <p className="text-slate-200 text-xs font-semibold">
+                    1 topic module · {task.minutesTarget || meta.targetMinutes} minutes · 40 questions after completion
+                  </p>
+                </div>
+
                 {meta.practiceTarget && (
                   <div>
                     <span className="font-extrabold uppercase tracking-wider text-slate-400 block text-[11px]">
@@ -327,21 +354,10 @@ export function PlanTaskCard({
                   </div>
                 )}
 
-                {meta.reviewTarget && (
-                  <div>
-                    <span className="font-extrabold uppercase tracking-wider text-slate-400 block text-[11px]">
-                      Review:
-                    </span>
-                    <span className="text-slate-200 font-medium">
-                      {meta.reviewTarget}
-                    </span>
-                  </div>
-                )}
-
                 {meta.sessionBreakdown && (
                   <div className="rounded-xl bg-slate-950/80 border border-slate-800 p-3 space-y-1.5">
                     <span className="font-black uppercase tracking-wider text-blue-400 block text-[10px] mb-1">
-                      Study session:
+                      Study session breakdown:
                     </span>
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-slate-300">
                       {meta.sessionBreakdown.learnMins ? (
@@ -357,21 +373,28 @@ export function PlanTaskCard({
                         <div>Practice: <span className="font-bold text-white">{meta.sessionBreakdown.practiceMins} min</span></div>
                       ) : null}
                       {meta.sessionBreakdown.oldTopicRecallMins ? (
-                        <div>Old Topic Recall: <span className="font-bold text-white">{meta.sessionBreakdown.oldTopicRecallMins} min</span></div>
+                        <div>Old Recall: <span className="font-bold text-white">{meta.sessionBreakdown.oldTopicRecallMins} min</span></div>
                       ) : null}
                     </div>
                   </div>
                 )}
 
-                <div className="flex items-center justify-between pt-1">
-                  <div className="text-slate-400">
-                    <span className="font-bold text-slate-300">Total:</span> {task.minutesTarget || meta.targetMinutes} min
-                  </div>
+                {/* TEST MY KNOWLEDGE ACTION BUTTON */}
+                <div className="pt-2 flex flex-wrap items-center justify-between gap-3 border-t border-slate-800/60">
+                  <button
+                    type="button"
+                    onClick={() => onTestKnowledge && onTestKnowledge(task)}
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-extrabold text-xs shadow-lg shadow-blue-950/50 active:scale-95 transition-all"
+                  >
+                    <Sparkles size={14} className="text-amber-300" />
+                    <span>🧠 TEST MY KNOWLEDGE (40 Questions)</span>
+                  </button>
+
                   <Link
-                    href="/learn"
+                    href="/subjects"
                     className="text-blue-400 hover:text-blue-300 font-bold inline-flex items-center gap-1 underline text-xs"
                   >
-                    Open Chemistry Roadmap <ArrowRight size={12} />
+                    Mastery & Exam Roadmap <ArrowRight size={12} />
                   </Link>
                 </div>
               </div>

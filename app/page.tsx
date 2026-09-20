@@ -39,7 +39,7 @@ import { DailyMotivation } from "@/components/dashboard/DailyMotivation";
 
 import { clsx } from "clsx";
 import { CommandCenterGreeting } from "@/components/dashboard/CommandCenterGreeting";
-import { formatTaskForDisplay } from "@/lib/planParser";
+import { formatTaskForDisplay, parsePlanMetadata } from "@/lib/planParser";
 import { SmartScheduleCard } from "@/components/dashboard/SmartScheduleCard";
 import { CountdownsGrid } from "@/components/dashboard/CountdownsGrid";
 import { HolidayWorkoutCard } from "@/components/dashboard/HolidayWorkoutCard";
@@ -787,6 +787,13 @@ export default function Home() {
                     isDone={isDone}
                     onToggle={() => toggleTask(task.id)}
                     onStartFocus={() => setRunning(!running)}
+                    onTestKnowledge={(t) => {
+                      const meta = parsePlanMetadata(t.description, t);
+                      setActiveQuiz({
+                        subject: meta.subject || (meta.category === 'CODING' ? 'JavaScript' : 'CHEMISTRY'),
+                        topicId: meta.topicId || (meta.category === 'CODING' ? 'js-3-conditionals' : 'chemistry_u1_t1'),
+                      });
+                    }}
                   />
                 );
               })

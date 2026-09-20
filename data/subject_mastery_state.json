@@ -6,7 +6,7 @@
       "deadline": "2026-10-18T20:58:55.399Z",
       "completedAt": null,
       "activeUnitId": "chemistry_u1",
-      "activeTopicId": "chemistry_u1_t1"
+      "activeTopicId": "chemistry_u1_t2"
     },
     "BIOLOGY": {
       "status": "LOCKED",
@@ -41,7 +41,17 @@
       "activeTopicId": null
     }
   },
-  "topics": {},
+  "topics": {
+    "CHEMISTRY_chemistry_u1_t1": {
+      "status": "MASTERED",
+      "focusMinutes": 90,
+      "accuracy": 95,
+      "attemptsCount": 2,
+      "correctCount": 1,
+      "studiedAt": "2026-09-20T20:17:57.740Z",
+      "masteredAt": "2026-09-20T20:17:57.740Z"
+    }
+  },
   "questionLogs": [],
   "sessions": []
 }

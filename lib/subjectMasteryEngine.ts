@@ -407,9 +407,9 @@ export async function getSubjectMasteryOverview(): Promise<SubjectMasteryOvervie
       todayTarget: activeTopic && activeUnit ? {
         unit: activeUnit.title,
         topic: activeTopic.title,
-        subtopics: activeTopic.subtopics.slice(0, 4),
+        subtopics: activeTopic.subtopics.slice(0, 5),
         targetMinutes: 90,
-        questionsCount: 10,
+        questionsCount: 40,
       } : null,
       strongAreas: strongList.slice(0, 5),
       weakAreas: weakList.slice(0, 5),

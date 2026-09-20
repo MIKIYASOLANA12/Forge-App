@@ -55,6 +55,7 @@ export interface ParsedVoiceCommand {
     | 'MOVE_TASK'
     | 'DELETE_TASK'
     | 'ADD_TASK'
+    | 'PLAN_TOMORROW'
     | 'CONFIRM_PENDING_ACTION'
     | 'UNKNOWN';
   targetSubject?: string;

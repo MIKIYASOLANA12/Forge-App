@@ -222,7 +222,11 @@ export default function ProgressDashboard() {
     xp: d.xpEarned,
     workout: d.workout.score,
     tasks: d.tasks.percentage,
-    study: d.study.score,
+    study: d.study.minutes,
+    topics: Math.round(d.tasks.completed),
+    questions: d.study.score >= 50 ? 40 : (d.study.score > 0 ? 20 : 0),
+    accuracy: d.study.score,
+    mastery: Math.min(100, Math.round((d.study.score * 0.6) + (d.consistencyScore * 0.4))),
     coding: d.coding.score,
     reading: d.reading.score,
     nutrition: d.nutrition.score,
@@ -375,16 +379,18 @@ export default function ProgressDashboard() {
 
           <div className="flex flex-wrap items-center gap-2">
             {/* Metric Selector */}
-            <div className="flex items-center bg-[var(--bg-elevated)] p-1 rounded-lg border border-[var(--border)] text-xs">
+            <div className="flex flex-wrap items-center bg-[var(--bg-elevated)] p-1 rounded-lg border border-[var(--border)] text-xs">
               {[
                 { id: "consistency", label: "Consistency" },
+                { id: "study", label: "Study Minutes" },
+                { id: "topics", label: "Topics Done" },
+                { id: "questions", label: "Questions" },
+                { id: "accuracy", label: "Accuracy" },
+                { id: "mastery", label: "Mastery" },
+                { id: "xp", label: "XP" },
                 { id: "workout", label: "Workout" },
-                { id: "tasks", label: "Tasks" },
-                { id: "study", label: "Study" },
                 { id: "coding", label: "Coding" },
                 { id: "reading", label: "Reading" },
-                { id: "nutrition", label: "Nutrition" },
-                { id: "xp", label: "XP" },
               ].map((m) => (
                 <button
                   key={m.id}
@@ -406,9 +412,9 @@ export default function ProgressDashboard() {
               {[
                 { days: 7, label: "7D" },
                 { days: 30, label: "30D" },
-                { days: 90, label: "3M" },
-                { days: 180, label: "6M" },
-                { days: 365, label: "1Y" },
+                { days: 90, label: "90D" },
+                { days: 180, label: "180D" },
+                { days: 300, label: "300D" },
               ].map((r) => (
                 <button
                   key={r.days}

@@ -905,6 +905,14 @@ export default function TodoPage() {
                       isDone={task.completed}
                       onToggle={() => handleToggleTask(task)}
                       onLockIn={(t) => handleStartLockIn(t)}
+                      onTestKnowledge={(t) => {
+                        const meta = parsePlanMetadata(t.description, t);
+                        const subj = meta.subject || (meta.category === 'CODING' ? 'JavaScript' : 'CHEMISTRY');
+                        const topId = meta.topicId || (meta.category === 'CODING' ? 'js-3-conditionals' : 'chemistry_u1_t1');
+                        setAssessmentTopicInfo({ subject: subj, topicId: topId });
+                        setActiveAssessmentSession(null);
+                        setAssessmentModalOpen(true);
+                      }}
                     />
                   ))}
                 </div>

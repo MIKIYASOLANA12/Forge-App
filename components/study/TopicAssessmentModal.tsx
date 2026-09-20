@@ -592,9 +592,26 @@ export function TopicAssessmentModal({
                     )}
                   </div>
 
-                  <p className="text-xs text-slate-300 leading-relaxed whitespace-pre-wrap">
-                    {lastResult.explanation}
-                  </p>
+                  {!lastResult.isCorrect ? (
+                    <div className="space-y-1.5 my-2 text-xs">
+                      <div className="p-2.5 rounded-lg bg-rose-950/40 border border-rose-500/30 text-rose-200">
+                        <span className="font-extrabold uppercase tracking-wider text-rose-400 block text-[10px] mb-0.5">
+                          FOCUS AREA:
+                        </span>
+                        <span className="font-bold text-white">{lastResult.conceptTag || "Core Concept Mastery"}</span>
+                      </div>
+                      <div className="p-2.5 rounded-lg bg-slate-900/60 border border-slate-800 text-slate-300">
+                        <span className="font-extrabold uppercase tracking-wider text-amber-400 block text-[10px] mb-0.5">
+                          WHY:
+                        </span>
+                        <p className="leading-relaxed whitespace-pre-wrap">{lastResult.explanation}</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-xs text-slate-300 leading-relaxed whitespace-pre-wrap">
+                      {lastResult.explanation}
+                    </p>
+                  )}
 
                   <div className="mt-3 flex justify-end">
                     <button

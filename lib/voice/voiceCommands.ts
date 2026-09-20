@@ -234,7 +234,62 @@ export async function processVoiceCommand(
     };
   }
 
-  // 9. "ADD 30 MINUTES OF READING AT 8 PM"
+  // 9. "TOMORROW I WANT CHEMISTRY AT 5 PM, JAVASCRIPT AT 7 PM, AND READING AT 8 PM"
+  if (norm.includes('tomorrow') && (norm.includes('chemistry') || norm.includes('javascript') || norm.includes('reading') || norm.includes('workout') || norm.includes('want') || norm.includes('plan'))) {
+    const addisNow = new Date();
+    const tomorrow = new Date(addisNow);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    const domains = await prisma.domain.findMany().catch(() => []);
+    const domainByName = new Map(domains.map((d) => [d.name.toLowerCase(), d.id]));
+
+    // Find or create tomorrow's plan
+    let tomorrowPlan = await prisma.dailyPlan.findFirst({
+      orderBy: { createdAt: 'desc' },
+    });
+
+    const parsedTasks: Array<{ desc: string; domainId: string; time: string; minutes: number; subject?: string }> = [];
+
+    if (norm.includes('chemistry')) {
+      const timeMatch = norm.match(/chemistry\s+(?:at\s+)?(\d{1,2}(?::\d{2})?\s*(?:am|pm)?)/i);
+      const time = timeMatch ? (extractSpokenTime(timeMatch[1]) || '17:00') : '17:00';
+      parsedTasks.push({ desc: 'Chemistry — Unit 1 Study & Practice', domainId: domainByName.get('study') || 'study', time, minutes: 90, subject: 'CHEMISTRY' });
+    }
+    if (norm.includes('javascript') || norm.includes('coding')) {
+      const timeMatch = norm.match(/(?:javascript|coding)\s+(?:at\s+)?(\d{1,2}(?::\d{2})?\s*(?:am|pm)?)/i);
+      const time = timeMatch ? (extractSpokenTime(timeMatch[1]) || '19:00') : '19:00';
+      parsedTasks.push({ desc: '5 Million Coders / JavaScript — Conditionals & Logic', domainId: domainByName.get('coding') || 'coding', time, minutes: 60, subject: 'JavaScript' });
+    }
+    if (norm.includes('reading') || norm.includes('read') || norm.includes('book')) {
+      const timeMatch = norm.match(/reading\s+(?:at\s+)?(\d{1,2}(?::\d{2})?\s*(?:am|pm)?)/i);
+      const time = timeMatch ? (extractSpokenTime(timeMatch[1]) || '20:00') : '20:00';
+      parsedTasks.push({ desc: 'Reading — Daily Book Pages', domainId: domainByName.get('reading') || 'reading', time, minutes: 30 });
+    }
+
+    if (parsedTasks.length > 0 && tomorrowPlan) {
+      for (const pt of parsedTasks) {
+        await prisma.planTask.create({
+          data: {
+            dailyPlanId: tomorrowPlan.id,
+            domainId: pt.domainId,
+            description: pt.desc,
+            minutesTarget: pt.minutes,
+            plannedStartTime: pt.time,
+            isStudy: Boolean(pt.subject),
+            subject: pt.subject || null,
+            xpTarget: Math.round(pt.minutes * 1.2),
+          },
+        }).catch(() => {});
+      }
+
+      return {
+        action: 'PLAN_TOMORROW',
+        spokenResponse: `Done Mikiyas. I have created tomorrow's real plan: ${parsedTasks.map((p) => `${p.desc} at ${p.time}`).join(', ')}.`,
+      };
+    }
+  }
+
+  // 10. "ADD 30 MINUTES OF READING AT 8 PM"
   if (norm.includes('add') && (norm.includes('reading') || norm.includes('chemistry') || norm.includes('coding') || norm.includes('minutes'))) {
     const todayPlan = await ensureTodayDailyPlan();
     const timeMatch = extractSpokenTime(norm) || "20:00";

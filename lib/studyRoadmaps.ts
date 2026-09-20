@@ -43,10 +43,23 @@ export const MASTERY_LEVELS = [
   { level: 4, name: 'Mastered', badge: '🏆 Mastered / Entrance', desc: 'Can solve tricky entrance/exam problems with >=80% accuracy', thresholdAccuracy: 80 },
 ];
 
-// ── 1. EXACT 154 JAVASCRIPT ROADMAP ITEMS (5 MILLION CODERS) ──────────────────
+// ── 1. EXACT JAVASCRIPT ROADMAP ITEMS (5 MILLION CODERS) ──────────────────────
 export const JAVASCRIPT_COURSE_NAME = '5 Million Coders / JavaScript';
 
 export const JAVASCRIPT_154_ITEMS: JsRoadmapItem[] = [
+  // MODULE 3 — CONDITIONALS (Starting known location)
+  { id: 101, moduleNumber: 3, moduleName: 'Module 3 — Conditionals', title: 'Flow Control & Decisions', isQuizOrExercise: false },
+  { id: 102, moduleNumber: 3, moduleName: 'Module 3 — Conditionals', title: 'if...else Statements', isQuizOrExercise: false },
+  { id: 103, moduleNumber: 3, moduleName: 'Module 3 === Conditionals', title: 'else if Statements & Chaining', isQuizOrExercise: false },
+  { id: 104, moduleNumber: 3, moduleName: 'Module 3 — Conditionals', title: 'Logical Operators (&&, ||, !)', isQuizOrExercise: false },
+  { id: 105, moduleNumber: 3, moduleName: 'Module 3 — Conditionals', title: 'Truthy and Falsy Values', isQuizOrExercise: false },
+  { id: 106, moduleNumber: 3, moduleName: 'Module 3 — Conditionals', title: 'Ternary Operator (? :)', isQuizOrExercise: false },
+  { id: 107, moduleNumber: 3, moduleName: 'Module 3 — Conditionals', title: 'Switch Statements', isQuizOrExercise: false },
+  { id: 108, moduleNumber: 3, moduleName: 'Module 3 — Conditionals', title: 'Quiz: Checking Your Balance', isQuizOrExercise: true },
+  { id: 109, moduleNumber: 3, moduleName: 'Module 3 — Conditionals', title: 'Quiz: Ice Cream Ordering', isQuizOrExercise: true },
+  { id: 110, moduleNumber: 3, moduleName: 'Module 3 — Conditionals', title: 'Quiz: What do I wear?', isQuizOrExercise: true },
+  { id: 111, moduleNumber: 3, moduleName: 'Module 3 — Conditionals', title: 'Lesson 3 Summary & Edge Cases', isQuizOrExercise: false },
+
   // MODULE 4 — LOOPS (Items 1 to 16)
   { id: 1, moduleNumber: 4, moduleName: 'Module 4 — Loops', title: 'intro to loops', isQuizOrExercise: false },
   { id: 2, moduleNumber: 4, moduleName: 'Module 4 — Loops', title: 'while Loops', isQuizOrExercise: false },

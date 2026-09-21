@@ -154,13 +154,13 @@ export async function ensureReadingCurriculum() {
  * Calculates pacing metrics for a book.
  */
 export function calculateBookPacing(book: {
-  currentPage: number;
-  totalPages: number;
-  startPage: number;
-  deadlineDays: number;
-  startDate: Date | null;
-  targetFinishDate: Date | null;
-  status: string;
+  currentPage?: number;
+  totalPages?: number;
+  startPage?: number;
+  deadlineDays?: number;
+  startDate?: Date | string | null;
+  targetFinishDate?: Date | string | null;
+  status?: string;
 }) {
   const totalPages = Math.max(1, book.totalPages || 320);
   const currentPage = Math.max(0, book.currentPage || 0);
@@ -235,6 +235,10 @@ export async function getReadingSystemStatus() {
     actionRecommendation: item.actionRecommendation,
     status: idx === 0 ? 'reading' : 'queued',
     order: item.order,
+    startDate: idx === 0 ? new Date() : null,
+    targetFinishDate: idx === 0 ? new Date(Date.now() + item.deadlineDays * 86400000) : null,
+    createdAt: new Date(),
+    updatedAt: new Date(),
     reflections: [],
   }));
 
@@ -243,7 +247,7 @@ export async function getReadingSystemStatus() {
   const queue = effectiveBooks.filter((b) => b.id !== activeBook?.id);
   const finishedBooks = effectiveBooks.filter((b) => b.status === 'finished');
 
-  const pacing = activeBook ? calculateBookPacing(activeBook as any) : null;
+  const pacing = activeBook ? calculateBookPacing(activeBook) : null;
   const deadline2027 = get2027DeadlineMetrics();
 
   // Competency Progress aggregation

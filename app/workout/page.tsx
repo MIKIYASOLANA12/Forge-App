@@ -47,6 +47,18 @@ import {
   mergeSetsByClientId,
   ensureSetClientId,
 } from "@/lib/offlineWorkoutStore";
+import {
+  WEEKLY_WORKOUT_SCHEDULE,
+  getScheduledRoutineForDayOfWeek,
+  getCoreRoutineForDayOfWeek,
+  isDeloadWeek,
+} from "@/lib/workoutMuscleTargets";
+import {
+  getAddisNow,
+  workoutWindowForAddisDate,
+  getDayOfJourney300,
+} from "@/lib/workoutTime";
+import { getCurrentWeek, getPhase } from "@/lib/workout";
 
 type Exercise = {
   id: string;
@@ -305,15 +317,169 @@ export default function WorkoutPage() {
     }
   };
 
+  const buildDefaultTodayProtocol = (dateKey: string): TodayData => {
+    const addisNow = getAddisNow();
+    const windowInfo = workoutWindowForAddisDate(addisNow);
+    const day300 = getDayOfJourney300(addisNow);
+    const week = 1;
+    const phase = getPhase(week);
+    const isDeload = isDeloadWeek(week);
+
+    const todayDayOfWeek = windowInfo.startAddis.getDay();
+    const todayRoutine = getScheduledRoutineForDayOfWeek(todayDayOfWeek);
+    const nextDayOfWeek = (todayDayOfWeek + 1) % 7;
+    const nextRoutine = getScheduledRoutineForDayOfWeek(nextDayOfWeek);
+    const todayCoreRoutine = getCoreRoutineForDayOfWeek(todayDayOfWeek);
+
+    const currentDayName = windowInfo.startAddis.toLocaleDateString("en-US", { weekday: "long" });
+    const currentDateFormatted = windowInfo.startAddis.toLocaleDateString("en-US", {
+      weekday: "long",
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+    });
+
+    const activeExerciseList: Exercise[] = (todayRoutine.exercises || []).map((def, idx) => ({
+      id: def.id,
+      name: def.name,
+      order: idx + 1,
+      targetMuscle: def.muscle,
+      masterCue: def.cue,
+      equipment: def.equipment,
+      targetSets: isDeload ? Math.max(2, Math.round(def.targetSets * 0.6)) : def.targetSets,
+      targetReps: def.targetReps,
+      targetDurationSeconds: def.targetDurationSeconds,
+      startingWeightKg: def.startingWeightKg,
+      startingWeightGuide: def.startingWeightGuide,
+      variants: def.variants,
+      defaultVariant: def.defaultVariant,
+      safetyWarning: def.safetyWarning,
+      isTimed: def.isTimed,
+      isOptional: def.isOptional,
+      lastLog: null,
+      todayLog: null,
+    }));
+
+    const homeSubList: Exercise[] = todayRoutine.homeSubstitute
+      ? (todayRoutine.homeSubstitute.exercises || []).map((def, idx) => ({
+          id: def.id,
+          name: def.name,
+          order: idx + 1,
+          targetMuscle: def.muscle,
+          masterCue: def.cue,
+          equipment: def.equipment,
+          targetSets: isDeload ? Math.max(2, Math.round(def.targetSets * 0.6)) : def.targetSets,
+          targetReps: def.targetReps,
+          targetDurationSeconds: def.targetDurationSeconds,
+          startingWeightKg: def.startingWeightKg,
+          startingWeightGuide: def.startingWeightGuide,
+          variants: def.variants,
+          defaultVariant: def.defaultVariant,
+          safetyWarning: def.safetyWarning,
+          isTimed: def.isTimed,
+          isOptional: def.isOptional,
+          lastLog: null,
+          todayLog: null,
+        }))
+      : [];
+
+    return {
+      currentDayName,
+      currentDateFormatted,
+      completedToday: false,
+      missedToday: windowInfo.isClosed,
+      targetBodyParts: todayRoutine.targetBodyParts,
+      focusBadges: todayRoutine.focusBadges,
+      targetDescription: todayRoutine.description,
+      isRecovery: Boolean(todayRoutine.isRecovery),
+      recoveryNotice: todayRoutine.recoveryNotice,
+      equipmentSummary: todayRoutine.equipmentSummary,
+      isDeloadWeek: isDeload,
+      deloadNotice: isDeload ? `DELOAD WEEK (Week ${week})` : null,
+      todayLog: null,
+      day: {
+        id: `day-${todayRoutine.dayOfWeek}`,
+        dayOfWeek: todayRoutine.dayOfWeek,
+        type: todayRoutine.dayName,
+        location: todayRoutine.location,
+        targetBodyParts: todayRoutine.targetBodyParts,
+        focusBadges: todayRoutine.focusBadges,
+        description: todayRoutine.description,
+        isRecovery: Boolean(todayRoutine.isRecovery),
+        recoveryNotice: todayRoutine.recoveryNotice,
+        equipmentSummary: todayRoutine.equipmentSummary,
+        shortSessionExerciseIds: todayRoutine.shortSessionExerciseIds,
+        exercises: activeExerciseList,
+        homeSubstitute: todayRoutine.homeSubstitute
+          ? {
+              ...todayRoutine.homeSubstitute,
+              exercises: homeSubList,
+            }
+          : null,
+      },
+      dailyCore: todayCoreRoutine
+        ? {
+            routine: todayCoreRoutine.exercises,
+            routineType: todayCoreRoutine.type,
+            routineTitle: todayCoreRoutine.title,
+            routineDescription: todayCoreRoutine.description,
+            morning: { completed: false, completedAt: null, xpEarned: 0, exercisesJson: null },
+            night: { completed: false, completedAt: null, xpEarned: 0, exercisesJson: null },
+          }
+        : undefined,
+      nextWorkout: {
+        dateFormatted: windowInfo.nextUnlockAddis.toLocaleDateString("en-US", {
+          weekday: "long",
+          month: "long",
+          day: "numeric",
+          year: "numeric",
+        }),
+        unlockTimestamp: windowInfo.nextUnlockUtc.getTime(),
+        dayOfWeek: nextRoutine.dayOfWeek,
+        type: nextRoutine.dayName,
+        location: nextRoutine.location,
+        targetBodyParts: nextRoutine.targetBodyParts,
+        focusBadges: nextRoutine.focusBadges,
+        description: nextRoutine.description,
+        isRecovery: Boolean(nextRoutine.isRecovery),
+        recoveryNotice: nextRoutine.recoveryNotice,
+        equipmentSummary: nextRoutine.equipmentSummary,
+        phase,
+        exercises: (nextRoutine.exercises || []).map((e, idx) => ({
+          id: e.id,
+          name: e.name,
+          order: idx + 1,
+          targetMuscle: e.muscle,
+          masterCue: e.cue,
+          equipment: e.equipment,
+          targetSets: e.targetSets,
+          targetReps: e.targetReps,
+          targetDurationSeconds: e.targetDurationSeconds,
+          startingWeightGuide: e.startingWeightGuide,
+          safetyWarning: e.safetyWarning,
+          isTimed: e.isTimed,
+        })),
+      },
+      weekNumber: week,
+      phase,
+      isNewPhase: false,
+      isOpen: windowInfo.isOpen,
+      isClosed: windowInfo.isClosed,
+      isMissed: windowInfo.isClosed,
+      sessionInProgress: false,
+      closeTimestamp: windowInfo.closeUtc.getTime(),
+      countdowns: [],
+    };
+  };
+
   const buildInitialSets = (data: TodayData, localSaved: ReturnType<typeof loadLocalWorkoutState>) => {
     const initialSetsState: Record<string, SetEntry[]> = { ...(localSaved?.exerciseSets || {}) };
     const initialChecked: Record<string, boolean> = { ...(localSaved?.checkedExercises || {}) };
     const initialVariants: Record<string, string> = {};
 
-    const allExercises = [
-      ...data.day.exercises,
-      ...(data.day.homeSubstitute?.exercises || []),
-    ];
+    const exercisesList = Array.isArray(data?.day?.exercises) ? data.day.exercises : [];
+    const homeList = Array.isArray(data?.day?.homeSubstitute?.exercises) ? data.day.homeSubstitute.exercises : [];
+    const allExercises = [...exercisesList, ...homeList];
 
     allExercises.forEach((ex) => {
       const serverToday = parseSetDetails(ex.todayLog?.setDetails);
@@ -351,31 +517,29 @@ export default function WorkoutPage() {
     });
 
     setSelectedVariants((prev) => ({ ...initialVariants, ...prev }));
-    return { initialSetsState, initialChecked, notes: localSaved?.notes || data.todayLog?.notes || "" };
+    return { initialSetsState, initialChecked, notes: localSaved?.notes || data?.todayLog?.notes || "" };
   };
 
   useEffect(() => {
     const cached = loadCachedTodayProtocol(todayDateKey) as TodayData | null;
     const localSaved = loadLocalWorkoutState(todayDateKey);
-    if (cached?.day) {
-      setCachedFallbackAvailable(true);
-      setToday(cached);
-      setUsingCachedProtocol(true);
-      if (cached.dailyCore) {
-        setMorningCoreChecked(cached.dailyCore.morning.completed);
-        setNightCoreChecked(cached.dailyCore.night.completed);
-      }
-      const built = buildInitialSets(cached, localSaved);
-      setExerciseSets(built.initialSetsState);
-      setCheckedExercises(built.initialChecked);
-      setNotes(built.notes);
-      setSyncStatus(localSaved?.syncStatus || (typeof navigator !== "undefined" && !navigator.onLine ? "LOCAL_ONLY" : "SYNCED"));
-    } else if (localSaved) {
-      setExerciseSets(localSaved.exerciseSets);
-      setCheckedExercises(localSaved.checkedExercises || {});
-      setNotes(localSaved.notes || "");
-      setSyncStatus(localSaved.syncStatus || "LOCAL_ONLY");
+    const activeData = cached?.day?.exercises?.length ? cached : buildDefaultTodayProtocol(todayDateKey);
+
+    setCachedFallbackAvailable(true);
+    setToday(activeData);
+    setUsingCachedProtocol(Boolean(cached?.day?.exercises?.length));
+
+    if (activeData.dailyCore) {
+      setMorningCoreChecked(activeData.dailyCore.morning.completed);
+      setNightCoreChecked(activeData.dailyCore.night.completed);
     }
+
+    const built = buildInitialSets(activeData, localSaved);
+    setExerciseSets(built.initialSetsState);
+    setCheckedExercises(built.initialChecked);
+    setNotes(built.notes);
+    setSyncStatus(localSaved?.syncStatus || (typeof navigator !== "undefined" && !navigator.onLine ? "LOCAL_ONLY" : "SYNCED"));
+
     if (typeof navigator !== "undefined") setIsOnline(navigator.onLine);
     setHydrated(true);
   }, [todayDateKey]);
@@ -405,68 +569,70 @@ export default function WorkoutPage() {
   const handleUseCachedWorkout = () => {
     const cached = loadCachedTodayProtocol(todayDateKey) as TodayData | null;
     const localSaved = loadLocalWorkoutState(todayDateKey);
-    if (cached?.day) {
-      setToday(cached);
-      setUsingCachedProtocol(true);
-      setWorkoutError(null);
-      if (cached.dailyCore) {
-        setMorningCoreChecked(cached.dailyCore.morning.completed);
-        setNightCoreChecked(cached.dailyCore.night.completed);
-      }
-      const built = buildInitialSets(cached, localSaved);
-      setExerciseSets(built.initialSetsState);
-      setCheckedExercises(built.initialChecked);
-      setNotes(built.notes);
-      setSyncStatus("LOCAL_ONLY");
-      setMessage("OFFLINE — Using cached workout protocol");
+    const targetData = cached?.day?.exercises?.length ? cached : buildDefaultTodayProtocol(todayDateKey);
+
+    setToday(targetData);
+    setUsingCachedProtocol(true);
+    setWorkoutError(null);
+    if (targetData.dailyCore) {
+      setMorningCoreChecked(targetData.dailyCore.morning.completed);
+      setNightCoreChecked(targetData.dailyCore.night.completed);
     }
+    const built = buildInitialSets(targetData, localSaved);
+    setExerciseSets(built.initialSetsState);
+    setCheckedExercises(built.initialChecked);
+    setNotes(built.notes);
+    setSyncStatus("LOCAL_ONLY");
+    setMessage("OFFLINE — Using cached workout protocol");
   };
 
   const loadTodayData = async () => {
     setWorkoutError(null);
     setIsTimeout(false);
     const controller = new AbortController();
-    const timeout = window.setTimeout(() => controller.abort(), 10000);
+    const timeout = window.setTimeout(() => controller.abort(), 3500);
     try {
       const response = await fetch("/api/workout/today", { signal: controller.signal });
       if (response.ok) {
         const data = (await response.json()) as TodayData;
-        cacheTodayProtocol(todayDateKey, data as unknown as Record<string, unknown>);
-        setCachedFallbackAvailable(true);
-        setToday(data);
-        setUsingCachedProtocol(false);
-        setWorkoutError(null);
+        if (data && data.day && Array.isArray(data.day.exercises)) {
+          cacheTodayProtocol(todayDateKey, data as unknown as Record<string, unknown>);
+          setCachedFallbackAvailable(true);
+          setToday(data);
+          setUsingCachedProtocol(false);
+          setWorkoutError(null);
 
-        if (data.dailyCore) {
-          setMorningCoreChecked(data.dailyCore.morning.completed);
-          setNightCoreChecked(data.dailyCore.night.completed);
-        }
+          if (data.dailyCore) {
+            setMorningCoreChecked(data.dailyCore.morning.completed);
+            setNightCoreChecked(data.dailyCore.night.completed);
+          }
 
-        const localSaved = loadLocalWorkoutState(todayDateKey, data.day?.id || "");
-        const built = buildInitialSets(data, localSaved);
-        setExerciseSets(built.initialSetsState);
-        setCheckedExercises(built.initialChecked);
-        setNotes(built.notes);
-        saveLocalWorkoutState(
-          todayDateKey,
-          data.day.id,
-          data.weekNumber || 1,
-          built.notes,
-          built.initialSetsState,
-          built.initialChecked,
-          localSaved?.syncStatus === "LOCAL_ONLY" || localSaved?.syncStatus === "SYNC_ERROR"
-            ? localSaved.syncStatus
-            : typeof navigator !== "undefined" && navigator.onLine
-            ? "SYNCED"
-            : "LOCAL_ONLY"
-        );
+          const localSaved = loadLocalWorkoutState(todayDateKey, data.day.id || "");
+          const built = buildInitialSets(data, localSaved);
+          setExerciseSets(built.initialSetsState);
+          setCheckedExercises(built.initialChecked);
+          setNotes(built.notes);
+          saveLocalWorkoutState(
+            todayDateKey,
+            data.day.id,
+            data.weekNumber || 1,
+            built.notes,
+            built.initialSetsState,
+            built.initialChecked,
+            localSaved?.syncStatus === "LOCAL_ONLY" || localSaved?.syncStatus === "SYNC_ERROR"
+              ? localSaved.syncStatus
+              : typeof navigator !== "undefined" && navigator.onLine
+              ? "SYNCED"
+              : "LOCAL_ONLY"
+          );
 
-        if (typeof navigator !== "undefined" && navigator.onLine && localSaved && localSaved.syncStatus !== "SYNCED") {
-          const res = await syncLocalWorkoutToServer(todayDateKey);
-          setSyncStatus(res.status);
+          if (typeof navigator !== "undefined" && navigator.onLine && localSaved && localSaved.syncStatus !== "SYNCED") {
+            const res = await syncLocalWorkoutToServer(todayDateKey);
+            setSyncStatus(res.status);
+          }
         }
       } else {
-        setWorkoutError("Forge could not load today's workout protocol.");
+        // If not ok (e.g. 401 or 500), keep current active protocol without breaking UI
         const cached = loadCachedTodayProtocol(todayDateKey) as TodayData | null;
         if (cached?.day) {
           setCachedFallbackAvailable(true);
@@ -475,7 +641,6 @@ export default function WorkoutPage() {
     } catch (err: any) {
       const isAbort = err?.name === "AbortError" || controller.signal.aborted;
       setIsTimeout(isAbort);
-      setWorkoutError("Forge could not load today's workout protocol.");
       const cached = loadCachedTodayProtocol(todayDateKey) as TodayData | null;
       if (cached?.day) {
         setCachedFallbackAvailable(true);

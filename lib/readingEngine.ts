@@ -221,16 +221,33 @@ export async function getReadingSystemStatus() {
     },
   }).catch(() => []);
 
-  // Current active book is the first one with status 'reading' or non-finished
-  const activeBook = books.find((b) => b.status === 'reading') || books.find((b) => b.status === 'queued') || books[0];
-  const queue = books.filter((b) => b.id !== activeBook?.id);
-  const finishedBooks = books.filter((b) => b.status === 'finished');
+  const effectiveBooks = books.length > 0 ? books : INITIAL_CURRICULUM.map((item, idx) => ({
+    id: `book-${idx + 1}`,
+    title: item.title,
+    author: item.author,
+    totalPages: item.totalPages,
+    startPage: 1,
+    currentPage: 0,
+    deadlineDays: item.deadlineDays,
+    category: item.category,
+    goals: item.goals,
+    competencyTags: item.competencyTags,
+    actionRecommendation: item.actionRecommendation,
+    status: idx === 0 ? 'reading' : 'queued',
+    order: item.order,
+    reflections: [],
+  }));
 
-  const pacing = activeBook ? calculateBookPacing(activeBook) : null;
+  // Current active book is the first one with status 'reading' or non-finished
+  const activeBook = effectiveBooks.find((b) => b.status === 'reading') || effectiveBooks.find((b) => b.status === 'queued') || effectiveBooks[0];
+  const queue = effectiveBooks.filter((b) => b.id !== activeBook?.id);
+  const finishedBooks = effectiveBooks.filter((b) => b.status === 'finished');
+
+  const pacing = activeBook ? calculateBookPacing(activeBook as any) : null;
   const deadline2027 = get2027DeadlineMetrics();
 
   // Competency Progress aggregation
-  const totalPagesRead = books.reduce((sum, b) => sum + (b.status === 'finished' ? b.totalPages : b.currentPage), 0);
+  const totalPagesRead = effectiveBooks.reduce((sum, b) => sum + (b.status === 'finished' ? b.totalPages : b.currentPage), 0);
   const totalReflectionsCount = await prisma.bookDailyReflection.count().catch(() => 0);
 
   return {

@@ -5,8 +5,8 @@
       "startDate": null,
       "deadline": null,
       "completedAt": null,
-      "activeUnitId": null,
-      "activeTopicId": null
+      "activeUnitId": "chemistry_u1",
+      "activeTopicId": "chemistry_u1_t1"
     },
     "BIOLOGY": {
       "status": "LOCKED",

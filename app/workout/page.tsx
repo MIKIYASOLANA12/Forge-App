@@ -863,7 +863,7 @@ export default function WorkoutPage() {
           </div>
           <div className="space-y-2">
             <span className="px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-rose-500/20 text-rose-300 border border-rose-500/40 inline-block">
-              {isTimeout ? "WORKOUT DATA TIMEOUT" : "⚠️ WORKOUT ENGINE ERROR"}
+              WORKOUT ENGINE ERROR
             </span>
             <h2 className="text-xl sm:text-2xl font-black text-white">
               {isTimeout ? "Connection Timed Out" : "Workout Protocol Offline"}
@@ -932,7 +932,7 @@ export default function WorkoutPage() {
             </div>
             <div>
               <div className="text-xs font-black uppercase tracking-wider text-rose-400">
-                {isTimeout ? "WORKOUT DATA TIMEOUT" : "⚠️ WORKOUT ENGINE ERROR"}
+                WORKOUT ENGINE ERROR
               </div>
               <div className="text-sm font-semibold">{workoutError}</div>
             </div>

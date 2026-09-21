@@ -1,64 +1,58 @@
-import { prisma } from '../lib/prisma';
+import { Prisma, PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
+
+const expectedColumns: Record<string, string[]> = {
+  WorkoutProgram: [],
+  WorkoutDay: ['dayOfWeek', 'location', 'targetBodyParts', 'intensityCategory', 'isRecovery'],
+  WorkoutExercise: [
+    'targetMuscle',
+    'targetSets',
+    'targetReps',
+    'targetDurationSeconds',
+    'equipment',
+    'startingWeightKg',
+    'exerciseVariant',
+    'safetyWarning',
+    'isTimed',
+  ],
+  WorkoutLog: ['submittedAt'],
+  ExerciseLog: ['checked', 'setDetails', 'clientId'],
+  DailyCoreLog: [],
+};
+
+const tableNames = Object.keys(expectedColumns);
 
 async function main() {
-  console.log('=== READ-ONLY DATABASE SCHEMA INSPECTION ===\n');
+  const columns = await prisma.$queryRaw<Array<{ table_name: string; column_name: string }>>`
+    SELECT table_name, column_name
+    FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name IN (${Prisma.join(tableNames)})
+    ORDER BY table_name, ordinal_position
+  `;
+  const existing = new Set(columns.map((column) => `${column.table_name}.${column.column_name}`));
 
-  const tablesToCheck = [
-    'WorkoutProgram',
-    'WorkoutDay',
-    'WorkoutExercise',
-    'WorkoutLog',
-    'ExerciseLog',
-    'DailyCoreLog'
-  ];
-
-  // 1. Check existing tables in public schema
-  const existingTables: any[] = await prisma.$queryRawUnsafe(`
-    SELECT table_name 
-    FROM information_schema.tables 
-    WHERE table_schema = 'public';
-  `);
-  const tableNames = new Set(existingTables.map((t: any) => t.table_name));
-  console.log('Existing public tables count:', tableNames.size);
-
-  // 2. For each table, inspect columns and row count
-  for (const tableName of tablesToCheck) {
-    const exists = tableNames.has(tableName);
-    console.log(`\n-----------------------------------------`);
-    console.log(`Table: "${tableName}" | Exists: ${exists}`);
-    
-    if (exists) {
-      const countResult: any[] = await prisma.$queryRawUnsafe(`SELECT count(*)::int as count FROM "${tableName}";`);
-      console.log(`Row count: ${countResult[0]?.count ?? 0}`);
-
-      const columns: any[] = await prisma.$queryRawUnsafe(`
-        SELECT column_name, data_type, is_nullable, column_default
-        FROM information_schema.columns 
-        WHERE table_schema = 'public' AND table_name = '${tableName}'
-        ORDER BY ordinal_position;
-      `);
-      console.log(`Columns in DB (${columns.length}):`);
-      for (const col of columns) {
-        console.log(`  - ${col.column_name} (${col.data_type}, nullable=${col.is_nullable}, default=${col.column_default})`);
-      }
-    } else {
-      console.log(`  Table does not exist in database!`);
+  console.log('TABLE | EXPECTED COLUMN | EXISTS?');
+  for (const [table, expected] of Object.entries(expectedColumns)) {
+    for (const column of expected) {
+      console.log(`${table} | ${column} | ${existing.has(`${table}.${column}`) ? 'YES' : 'NO'}`);
     }
   }
 
-  // 3. Also check if there are any other workout/exercise/core related tables with different casing
-  const allTables = Array.from(tableNames);
-  const workoutRelated = allTables.filter((t: string) => 
-    t.toLowerCase().includes('workout') || 
-    t.toLowerCase().includes('exercise') || 
-    t.toLowerCase().includes('core')
-  );
-  console.log('\nAll workout/exercise/core matching tables:', workoutRelated);
+  console.log('\nROW COUNTS');
+  for (const table of tableNames) {
+    const result = await prisma.$queryRawUnsafe<Array<{ count: bigint }>>(
+      `SELECT COUNT(*)::bigint AS count FROM "${table}"`
+    );
+    console.log(`${table} | ${result[0]?.count.toString() ?? '0'}`);
+  }
 }
 
 main()
-  .catch((e) => {
-    console.error('Inspection failed:', e);
+  .catch((error) => {
+    console.error(error);
+    process.exitCode = 1;
   })
   .finally(async () => {
     await prisma.$disconnect();

@@ -632,7 +632,13 @@ export default function WorkoutPage() {
           }
         }
       } else {
-        // If not ok (e.g. 401 or 500), keep current active protocol without breaking UI
+        const errText = await response.text().catch(() => "Workout data could not be loaded.");
+        let errMsg = "Workout data could not be loaded from server.";
+        try {
+          const jsonErr = JSON.parse(errText);
+          if (jsonErr?.error) errMsg = jsonErr.error;
+        } catch {}
+        setWorkoutError(errMsg);
         const cached = loadCachedTodayProtocol(todayDateKey) as TodayData | null;
         if (cached?.day) {
           setCachedFallbackAvailable(true);
@@ -641,6 +647,11 @@ export default function WorkoutPage() {
     } catch (err: any) {
       const isAbort = err?.name === "AbortError" || controller.signal.aborted;
       setIsTimeout(isAbort);
+      setWorkoutError(
+        isAbort
+          ? "Request timed out connecting to workout server."
+          : (err?.message || "Failed to connect to workout server.")
+      );
       const cached = loadCachedTodayProtocol(todayDateKey) as TodayData | null;
       if (cached?.day) {
         setCachedFallbackAvailable(true);
@@ -912,6 +923,39 @@ export default function WorkoutPage() {
 
   return (
     <div className="space-y-6 animate-fade-in pb-12">
+      {/* ── WORKOUT ENGINE ERROR BANNER ─────────────────────────────────────────── */}
+      {workoutError && (
+        <section className="rounded-2xl border border-rose-500/40 bg-rose-950/40 p-4 shadow-xl flex flex-wrap items-center justify-between gap-3 text-rose-200 animate-fade-in">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-rose-500/20 border border-rose-500/40 flex items-center justify-center text-rose-400 shrink-0">
+              <AlertCircle size={20} />
+            </div>
+            <div>
+              <div className="text-xs font-black uppercase tracking-wider text-rose-400">
+                {isTimeout ? "WORKOUT DATA TIMEOUT" : "⚠️ WORKOUT ENGINE ERROR"}
+              </div>
+              <div className="text-sm font-semibold">{workoutError}</div>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => void loadTodayData()}
+              className="px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-colors"
+            >
+              <RotateCcw size={14} /> Retry
+            </button>
+            {cachedFallbackAvailable && !usingCachedProtocol && (
+              <button
+                onClick={handleUseCachedWorkout}
+                className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-colors"
+              >
+                <Layers size={14} /> Use Cached Workout
+              </button>
+            )}
+          </div>
+        </section>
+      )}
+
       {/* ── CACHED OFFLINE WARNING BANNER ───────────────────────────────────────── */}
       {usingCachedProtocol && (
         <section className="rounded-2xl border border-amber-500/40 bg-amber-950/30 p-3.5 shadow-md flex items-center gap-2.5 text-amber-300 text-xs font-bold">

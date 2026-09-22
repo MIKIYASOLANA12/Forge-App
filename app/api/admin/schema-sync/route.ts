@@ -256,30 +256,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    if (new URL(req.url).searchParams.get('scope') === 'workout-day') {
-      await prisma.$executeRawUnsafe(
-        'ALTER TABLE "WorkoutDay" ADD COLUMN IF NOT EXISTS "dayOfWeek" INTEGER;'
-      );
-      const verification: Array<{ column_name: string; data_type: string; is_nullable: string }> =
-        await prisma.$queryRawUnsafe(`
-          SELECT column_name, data_type, is_nullable
-          FROM information_schema.columns
-          WHERE table_schema = 'public'
-            AND table_name = 'WorkoutDay'
-            AND column_name = 'dayOfWeek';
-        `);
-      const rowCount: Array<{ count: number }> = await prisma.$queryRawUnsafe(
-        'SELECT count(*)::int AS count FROM "WorkoutDay";'
-      );
-
-      return NextResponse.json({
-        success: true,
-        applied: true,
-        column: verification[0] || null,
-        workoutDayRowCount: rowCount[0]?.count ?? null,
-      });
-    }
-
     // 1. Record before state
     const beforeInspection = await inspectSchemaState();
 

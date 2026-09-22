@@ -65,56 +65,80 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'workoutDayId and exerciseLogs are required' }, { status: 400 });
     }
 
-    // Ensure WorkoutDay exists in DB
-    let workoutDay = await prisma.workoutDay.findUnique({ where: { id: workoutDayId } });
-    if (!workoutDay) {
-      const dayNum = parseInt(workoutDayId.replace('day-', ''), 10);
-      const routine = getScheduledRoutineForDayOfWeek(isNaN(dayNum) ? windowInfo.startAddis.getDay() : dayNum);
-      workoutDay = await prisma.workoutDay.create({
-        data: {
-          id: workoutDayId,
-          type: routine.dayName,
-          dayOfWeek: routine.dayOfWeek,
-          location: routine.location,
-          targetBodyParts: routine.targetBodyParts,
-          isRecovery: Boolean(routine.isRecovery),
-        },
-      });
-    }
+    const result = await prisma.$transaction(async (tx) => {
+      // Serialize the execution day so retries/double-clicks cannot create a second session.
+      await tx.$queryRaw`SELECT id FROM "WorkoutDay" WHERE id = ${workoutDayId} FOR UPDATE`;
 
-    let workoutLog = await prisma.workoutLog.findFirst({
-      where: {
-        workoutDayId: workoutDay.id,
-        completedAt: { gte: windowInfo.startUtc, lte: windowInfo.endUtc },
-      },
-      include: { exerciseLogs: true },
-    });
+      let workoutDay = await tx.workoutDay.findUnique({ where: { id: workoutDayId } });
+      if (!workoutDay) {
+        const dayNum = parseInt(workoutDayId.replace('day-', ''), 10);
+        const routine = getScheduledRoutineForDayOfWeek(isNaN(dayNum) ? windowInfo.startAddis.getDay() : dayNum);
+        workoutDay = await tx.workoutDay.create({
+          data: {
+            id: workoutDayId,
+            type: routine.dayName,
+            dayOfWeek: routine.dayOfWeek,
+            location: routine.location,
+            targetBodyParts: routine.targetBodyParts,
+            isRecovery: Boolean(routine.isRecovery),
+          },
+        });
+      }
 
-    // After cutoff: still persist sets that were recorded on-device so history is not lost.
-    const lateHistoricalSync = windowInfo.isClosed && !workoutLog;
-
-    if (!workoutLog) {
-      workoutLog = await prisma.workoutLog.create({
-        data: {
+      let workoutLog = await tx.workoutLog.findFirst({
+        where: {
           workoutDayId: workoutDay.id,
-          weekNumber: Number(weekNumber) || 1,
-          notes: notes?.trim() || null,
+          completedAt: { gte: windowInfo.startUtc, lte: windowInfo.endUtc },
         },
         include: { exerciseLogs: true },
       });
-    }
 
-    let totalXpEarned = 0;
-    const canAwardXp = !windowInfo.isClosed;
+      if (sessionSubmitted && windowInfo.isClosed) {
+        return {
+          locked: true,
+          alreadyCompleted: false,
+          missed: true,
+          message: 'Today\'s workout is missed and locked after the cutoff.',
+          workoutLogId: workoutLog?.id || null,
+          xpEarned: 0,
+        };
+      }
 
-    for (const item of exerciseLogs) {
+      if (workoutLog?.submittedAt) {
+        return {
+          locked: true,
+          alreadyCompleted: true,
+          missed: false,
+          message: 'Today\'s workout has already been completed.',
+          workoutLogId: workoutLog.id,
+          xpEarned: 0,
+        };
+      }
+
+      const lateHistoricalSync = windowInfo.isClosed && !workoutLog;
+
+      if (!workoutLog) {
+        workoutLog = await tx.workoutLog.create({
+          data: {
+            workoutDayId: workoutDay.id,
+            weekNumber: Number(weekNumber) || 1,
+            notes: notes?.trim() || null,
+          },
+          include: { exerciseLogs: true },
+        });
+      }
+
+      let totalXpEarned = 0;
+      const canAwardXp = !windowInfo.isClosed;
+
+      for (const item of exerciseLogs) {
       if (!item.exerciseId) continue;
 
       // Ensure exercise exists in DB
-      let exercise = await prisma.workoutExercise.findUnique({ where: { id: item.exerciseId } });
+      let exercise = await tx.workoutExercise.findUnique({ where: { id: item.exerciseId } });
       if (!exercise) {
         const muscleInfo = getExerciseMuscleInfo(item.exerciseName || item.name || item.exerciseId);
-        exercise = await prisma.workoutExercise.create({
+        exercise = await tx.workoutExercise.create({
           data: {
             id: item.exerciseId,
             workoutDayId: workoutDay.id,
@@ -138,7 +162,7 @@ export async function POST(request: NextRequest) {
 
       if (existingExerciseLog) {
         const newlyChecked = checked && !existingExerciseLog.checked;
-        await prisma.exerciseLog.update({
+        await tx.exerciseLog.update({
           where: { id: existingExerciseLog.id },
           data: {
             setsCompleted,
@@ -153,7 +177,7 @@ export async function POST(request: NextRequest) {
           totalXpEarned += Math.max(1, setsCompleted) * Math.max(1, repsCompleted) * 2;
         }
       } else {
-        await prisma.exerciseLog.create({
+        await tx.exerciseLog.create({
           data: {
             workoutLogId: workoutLog.id,
             exerciseId: exercise.id,
@@ -172,39 +196,53 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    if (sessionSubmitted && !windowInfo.isClosed && !workoutLog.submittedAt) {
-      await prisma.workoutLog.update({
+      if (sessionSubmitted && !windowInfo.isClosed && !workoutLog.submittedAt) {
+        await tx.workoutLog.update({
         where: { id: workoutLog.id },
         data: {
           submittedAt: new Date(),
           notes: notes?.trim() || workoutLog.notes,
         },
       });
-    } else if (notes?.trim()) {
-      await prisma.workoutLog.update({
+      } else if (notes?.trim()) {
+        await tx.workoutLog.update({
         where: { id: workoutLog.id },
         data: { notes: notes.trim() },
       });
+      }
+
+      if (totalXpEarned > 0) {
+        await tx.userProfile.update({
+          where: { id: 'singleton' },
+          data: { totalXp: { increment: totalXpEarned } },
+        });
+      }
+
+      return {
+        locked: false,
+        alreadyCompleted: false,
+        missed: false,
+        workoutLogId: workoutLog.id,
+        xpEarned: totalXpEarned,
+        historicalOnly: Boolean(lateHistoricalSync),
+      };
+    });
+
+    if (result.locked) {
+      return NextResponse.json(result, { status: 200 });
     }
 
-    if (totalXpEarned > 0) {
-      await prisma.userProfile.update({
-        where: { id: 'singleton' },
-        data: {
-          totalXp: { increment: totalXpEarned },
-        },
-      });
-
-      await recordProgressActivity(totalXpEarned).catch(() => {});
+    if (result.xpEarned > 0) {
+      await recordProgressActivity(result.xpEarned).catch(() => {});
     }
 
     return NextResponse.json({
       success: true,
-      workoutLogId: workoutLog.id,
-      xpEarned: totalXpEarned,
+      workoutLogId: result.workoutLogId,
+      xpEarned: result.xpEarned,
       syncedAt: new Date().toISOString(),
-      historicalOnly: Boolean(lateHistoricalSync),
-      message: lateHistoricalSync
+      historicalOnly: result.historicalOnly,
+      message: result.historicalOnly
         ? 'Historical sets preserved after cutoff (not counted as a new submission)'
         : 'Offline workout synchronized successfully',
     });

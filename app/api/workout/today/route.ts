@@ -50,7 +50,7 @@ export async function GET(req: NextRequest) {
       Date.UTC(windowInfo.startAddis.getFullYear(), windowInfo.startAddis.getMonth(), windowInfo.startAddis.getDate())
     );
 
-    const [program, todayLog, morningCoreLog, nightCoreLog] = await Promise.all([
+    const [program, todayLog, morningCoreLog, nightCoreLog, notificationPreference] = await Promise.all([
       prisma.workoutProgram.findUnique({ where: { id: 'singleton' } }).catch(() => null),
       prisma.workoutLog.findFirst({
         where: { completedAt: { gte: windowInfo.startUtc, lte: windowInfo.endUtc } },
@@ -62,6 +62,7 @@ export async function GET(req: NextRequest) {
       prisma.dailyCoreLog.findUnique({
         where: { date_slot: { date: normalizedCoreDate, slot: 'NIGHT' } },
       }).catch(() => null),
+      prisma.notificationPreference.findUnique({ where: { id: 'singleton' } }).catch(() => null),
     ]);
 
     const week = program ? getCurrentWeek(program.startDate) : 1;
@@ -258,6 +259,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({
       currentDayName,
       currentDateFormatted,
+      wakeTime: notificationPreference?.wakeTime || '02:24',
       openTimeFormatted: '05:00 AM',
       closeTimeFormatted: '09:28 PM',
       closeTimestamp: windowInfo.closeUtc.getTime(),
@@ -283,6 +285,7 @@ export async function GET(req: NextRequest) {
         ? {
             id: todayLog.id,
             completedAt: todayLog.completedAt,
+            submittedAt: todayLog.submittedAt,
             type: todayRoutine.targetBodyParts,
             notes: todayLog.notes,
           }

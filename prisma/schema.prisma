@@ -314,7 +314,7 @@ model NotificationPreference {
   habitReminderAt    String  @default("20:00")
   streakWarningAt    String  @default("21:00")
   planReadyAt        String  @default("07:00")
-  wakeTime           String  @default("04:02") // 04:02 AM Africa/Addis_Ababa
+  wakeTime           String  @default("02:24") // 02:24 AM Africa/Addis_Ababa
   sleepTime          String  @default("23:00") // 11:00 PM Africa/Addis_Ababa
   voiceCallsEnabled  Boolean @default(true)
   phoneNumber        String?

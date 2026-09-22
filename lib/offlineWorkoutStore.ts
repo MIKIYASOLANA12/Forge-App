@@ -220,7 +220,7 @@ export function buildSyncExercisePayload(
 export async function syncLocalWorkoutToServer(
   dateKey: string,
   options?: { sessionSubmitted?: boolean }
-): Promise<{ success: boolean; status: OfflineSyncStatus; message?: string; xpEarned?: number }> {
+): Promise<{ success: boolean; status: OfflineSyncStatus; message?: string; xpEarned?: number; locked?: boolean; alreadyCompleted?: boolean; missed?: boolean }> {
   const localState = loadLocalWorkoutState(dateKey, '');
   if (!localState) {
     return { success: true, status: 'SYNCED', message: 'No unsynced local data' };
@@ -267,6 +267,17 @@ export async function syncLocalWorkoutToServer(
         'SYNCED',
         { sessionSubmitted: options?.sessionSubmitted ?? localState.sessionSubmitted }
       );
+      if (data.locked) {
+        return {
+          success: false,
+          status: 'SYNCED',
+          message: data.message || 'Workout is locked',
+          locked: true,
+          alreadyCompleted: Boolean(data.alreadyCompleted),
+          missed: Boolean(data.missed),
+          xpEarned: 0,
+        };
+      }
       return { success: true, status: 'SYNCED', message: 'Synchronized with cloud', xpEarned: data.xpEarned };
     }
 

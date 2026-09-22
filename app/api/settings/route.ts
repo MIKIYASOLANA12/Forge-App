@@ -11,7 +11,7 @@ const shape = (profile: any, pref: any) => ({
   targetProtein: profile?.targetProtein || 150,
   targetCarbs: profile?.targetCarbs || 300,
   targetFat: profile?.targetFat || 80,
-  wakeTime: pref?.wakeTime || '04:02',
+  wakeTime: pref?.wakeTime || '02:24',
   sleepTime: pref?.sleepTime || '23:00',
   voiceCallsEnabled: pref?.voiceCallsEnabled ?? true,
   phoneNumber: pref?.phoneNumber || '',

@@ -147,6 +147,7 @@ type DailyCoreState = {
 type TodayData = {
   currentDayName?: string;
   currentDateFormatted?: string;
+  wakeTime?: string;
   completedToday: boolean;
   targetBodyParts?: string;
   focusBadges?: string[];
@@ -159,6 +160,7 @@ type TodayData = {
   todayLog: {
     id: string;
     completedAt: string;
+    submittedAt?: string | null;
     type: string;
     notes: string | null;
   } | null;
@@ -690,9 +692,11 @@ export default function WorkoutPage() {
   }, [rest]);
 
   const loggingLocked = Boolean((today?.isClosed || today?.isMissed || today?.missedToday) && !manualOverride);
+  const completionLocked = Boolean(today?.completedToday || today?.todayLog?.submittedAt);
+  const editingLocked = loggingLocked || completionLocked;
 
   const handleUpdateSet = (exerciseId: string, setIndex: number, field: keyof SetEntry, value: any) => {
-    if (loggingLocked) return;
+    if (editingLocked) return;
     setExerciseSets((prev) => {
       const currentSets = prev[exerciseId] ? [...prev[exerciseId]] : [];
       if (currentSets[setIndex]) {
@@ -705,7 +709,7 @@ export default function WorkoutPage() {
   };
 
   const handleToggleSetComplete = (exerciseId: string, setIndex: number) => {
-    if (loggingLocked) return;
+    if (editingLocked) return;
     setExerciseSets((prev) => {
       const currentSets = prev[exerciseId] ? [...prev[exerciseId]] : [];
       if (currentSets[setIndex]) {
@@ -723,7 +727,7 @@ export default function WorkoutPage() {
   };
 
   const handleToggleCheckIn = (exerciseId: string) => {
-    if (loggingLocked) return;
+    if (editingLocked) return;
     const isNowChecked = !checkedExercisesRef.current[exerciseId];
     const updatedChecked = { ...checkedExercisesRef.current, [exerciseId]: isNowChecked };
     setCheckedExercises(updatedChecked);
@@ -739,7 +743,7 @@ export default function WorkoutPage() {
   };
 
   const handleAddSet = (exerciseId: string) => {
-    if (loggingLocked) return;
+    if (editingLocked) return;
     setExerciseSets((prev) => {
       const currentSets = prev[exerciseId] ? [...prev[exerciseId]] : [];
       const nextSetNum = currentSets.length + 1;
@@ -760,7 +764,7 @@ export default function WorkoutPage() {
   };
 
   const handleRemoveSet = (exerciseId: string) => {
-    if (loggingLocked) return;
+    if (editingLocked) return;
     setExerciseSets((prev) => {
       const currentSets = prev[exerciseId] ? [...prev[exerciseId]] : [];
       if (currentSets.length > 1) {
@@ -786,7 +790,7 @@ export default function WorkoutPage() {
   };
 
   const finishSession = async () => {
-    if (!today || loggingLocked) return;
+    if (!today || editingLocked) return;
     setSaving(true);
 
     const activeList = getDisplayedExercises();
@@ -810,7 +814,10 @@ export default function WorkoutPage() {
     try {
       const res = await syncLocalWorkoutToServer(todayDateKey, { sessionSubmitted: true });
       setSyncStatus(res.status);
-      if (res.success) {
+      if (res.locked) {
+        setMessage(`🔒 ${res.message || "Today's workout is locked"}`);
+        await loadTodayData();
+      } else if (res.success) {
         setMessage(`🎉 Workout submitted & synced${res.xpEarned ? ` (+${res.xpEarned} XP)` : ""}`);
         await loadTodayData();
         await loadHistory();
@@ -1494,18 +1501,38 @@ export default function WorkoutPage() {
             )}
 
             <div className="flex flex-wrap items-center justify-between gap-4 pt-2">
-              <div className="text-xs text-slate-400">
-                Cutoff: <strong className="text-white">09:28 PM</strong> Ethiopia Time.
+              <div className="text-xs text-slate-400 space-y-1">
+                <div>Wake time: <strong className="text-white">{today.wakeTime || "02:24 AM"}</strong></div>
+                <div>Workout unlock: <strong className="text-white">05:00 AM</strong></div>
+                <div>Workout cutoff: <strong className="text-white">09:28 PM</strong></div>
               </div>
 
-              <button
-                onClick={finishSession}
-                disabled={saving}
-                className="btn btn-primary font-extrabold px-6 py-2.5 rounded-xl flex items-center gap-2 shadow-xl"
-              >
-                {saving ? <LoaderCircle size={16} className="animate-spin" /> : <Award size={16} />}
-                Complete & Finish Session
-              </button>
+              {today.completedToday ? (
+                <div className="rounded-xl border border-emerald-500/40 bg-emerald-950/30 px-5 py-3 text-sm font-black text-emerald-300">
+                  ✅ WORKOUT COMPLETED<br />
+                  <span className="text-xs font-bold text-emerald-200/80">🔒 TODAY'S WORKOUT LOCKED</span>
+                  <span className="mt-1 block text-xs font-semibold text-slate-300">Today's workout has already been recorded.</span>
+                  {today.todayLog?.completedAt && (
+                    <span className="mt-1 block text-xs font-semibold text-slate-400">
+                      Completed at: {new Date(today.todayLog.completedAt).toLocaleString("en-US", { timeZone: "Africa/Addis_Ababa" })}
+                    </span>
+                  )}
+                </div>
+              ) : today.isMissed ? (
+                <div className="rounded-xl border border-rose-500/40 bg-rose-950/30 px-5 py-3 text-sm font-black text-rose-300">
+                  ❌ MISSED / LOCKED
+                  <span className="mt-1 block text-xs font-semibold text-slate-300">The cutoff passed. This workout cannot be backdated.</span>
+                </div>
+              ) : (
+                <button
+                  onClick={finishSession}
+                  disabled={saving || editingLocked}
+                  className="btn btn-primary font-extrabold px-6 py-2.5 rounded-xl flex items-center gap-2 shadow-xl"
+                >
+                  {saving ? <LoaderCircle size={16} className="animate-spin" /> : <Award size={16} />}
+                  Complete & Finish Session
+                </button>
+              )}
             </div>
           </section>
         </div>

@@ -225,17 +225,6 @@ async function inspectSchemaState() {
   };
 }
 
-async function getWorkoutRowCounts(): Promise<Record<string, number>> {
-  const counts: Record<string, number> = {};
-  for (const table of ['WorkoutProgram', 'WorkoutDay', 'WorkoutExercise', 'WorkoutLog', 'ExerciseLog']) {
-    const result: Array<{ count: number }> = await prisma.$queryRawUnsafe(
-      `SELECT count(*)::int AS count FROM "${table}";`
-    );
-    counts[table] = result[0]?.count ?? 0;
-  }
-  return counts;
-}
-
 // GET: Read-only Introspection & Schema Drift Report
 export async function GET(req: NextRequest) {
   try {
@@ -265,36 +254,6 @@ export async function POST(req: NextRequest) {
   try {
     if (!(await isAuthorized(req))) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    if (new URL(req.url).searchParams.get('scope') === 'workout-columns') {
-      const beforeCounts = await getWorkoutRowCounts();
-      const statements = [
-        'ALTER TABLE "WorkoutDay" ADD COLUMN IF NOT EXISTS "location" TEXT;',
-        'ALTER TABLE "WorkoutDay" ADD COLUMN IF NOT EXISTS "targetBodyParts" TEXT;',
-        'ALTER TABLE "WorkoutDay" ADD COLUMN IF NOT EXISTS "intensityCategory" TEXT;',
-        'ALTER TABLE "WorkoutDay" ADD COLUMN IF NOT EXISTS "isRecovery" BOOLEAN NOT NULL DEFAULT false;',
-        'ALTER TABLE "WorkoutExercise" ADD COLUMN IF NOT EXISTS "targetMuscle" TEXT;',
-        'ALTER TABLE "WorkoutExercise" ADD COLUMN IF NOT EXISTS "targetSets" INTEGER;',
-        'ALTER TABLE "WorkoutExercise" ADD COLUMN IF NOT EXISTS "targetReps" TEXT;',
-        'ALTER TABLE "WorkoutExercise" ADD COLUMN IF NOT EXISTS "targetDurationSeconds" INTEGER;',
-        'ALTER TABLE "WorkoutExercise" ADD COLUMN IF NOT EXISTS "equipment" TEXT;',
-        'ALTER TABLE "WorkoutExercise" ADD COLUMN IF NOT EXISTS "startingWeightKg" DOUBLE PRECISION;',
-        'ALTER TABLE "WorkoutExercise" ADD COLUMN IF NOT EXISTS "exerciseVariant" TEXT;',
-        'ALTER TABLE "WorkoutExercise" ADD COLUMN IF NOT EXISTS "safetyWarning" TEXT;',
-        'ALTER TABLE "WorkoutExercise" ADD COLUMN IF NOT EXISTS "isTimed" BOOLEAN NOT NULL DEFAULT false;',
-      ];
-      for (const sql of statements) await prisma.$executeRawUnsafe(sql);
-      const afterCounts = await getWorkoutRowCounts();
-      const columns = await prisma.$queryRawUnsafe<Array<{ table_name: string; column_name: string }>>(`
-        SELECT table_name, column_name
-        FROM information_schema.columns
-        WHERE table_schema = 'public'
-          AND ((table_name = 'WorkoutDay' AND column_name IN ('location', 'targetBodyParts', 'intensityCategory', 'isRecovery'))
-            OR (table_name = 'WorkoutExercise' AND column_name IN ('targetMuscle', 'targetSets', 'targetReps', 'targetDurationSeconds', 'equipment', 'startingWeightKg', 'exerciseVariant', 'safetyWarning', 'isTimed')))
-        ORDER BY table_name, column_name;
-      `);
-      return NextResponse.json({ success: true, beforeCounts, afterCounts, columns });
     }
 
     // 1. Record before state

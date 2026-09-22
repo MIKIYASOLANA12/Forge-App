@@ -3,9 +3,13 @@ import { Prisma, PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 const expectedColumns: Record<string, string[]> = {
-  WorkoutProgram: [],
-  WorkoutDay: ['dayOfWeek', 'location', 'targetBodyParts', 'intensityCategory', 'isRecovery'],
+  WorkoutProgram: ['id', 'startDate', 'currentWeek'],
+  WorkoutDay: ['id', 'type', 'dayOfWeek', 'location', 'targetBodyParts', 'intensityCategory', 'isRecovery'],
   WorkoutExercise: [
+    'id',
+    'workoutDayId',
+    'name',
+    'order',
     'targetMuscle',
     'targetSets',
     'targetReps',
@@ -16,9 +20,9 @@ const expectedColumns: Record<string, string[]> = {
     'safetyWarning',
     'isTimed',
   ],
-  WorkoutLog: ['submittedAt'],
-  ExerciseLog: ['checked', 'setDetails', 'clientId'],
-  DailyCoreLog: [],
+  WorkoutLog: ['id', 'workoutDayId', 'completedAt', 'weekNumber', 'notes', 'submittedAt'],
+  ExerciseLog: ['id', 'workoutLogId', 'exerciseId', 'setsCompleted', 'repsCompleted', 'weightKg', 'checked', 'setDetails', 'clientId'],
+  DailyCoreLog: ['id', 'date', 'slot', 'completed', 'exercisesJson', 'completedAt', 'xpEarned', 'createdAt', 'updatedAt'],
 };
 
 const tableNames = Object.keys(expectedColumns);
@@ -33,10 +37,10 @@ async function main() {
   `;
   const existing = new Set(columns.map((column) => `${column.table_name}.${column.column_name}`));
 
-  console.log('TABLE | EXPECTED COLUMN | EXISTS?');
+  console.log('TABLE | COLUMN | Prisma expects | DB exists');
   for (const [table, expected] of Object.entries(expectedColumns)) {
     for (const column of expected) {
-      console.log(`${table} | ${column} | ${existing.has(`${table}.${column}`) ? 'YES' : 'NO'}`);
+      console.log(`${table} | ${column} | YES | ${existing.has(`${table}.${column}`) ? 'YES' : 'NO'}`);
     }
   }
 

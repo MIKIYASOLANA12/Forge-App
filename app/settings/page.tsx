@@ -39,6 +39,8 @@ const dateInput = (value: string) => new Date(value).toISOString().slice(0, 10);
 
 export default function SettingsPage() {
   const [settings, setSettings] = useState<Settings | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [telegramStatus, setTelegramStatus] = useState<TelegramStatus>({ linked: false });
   const [examDate, setExamDate] = useState("");
   const [editing, setEditing] = useState(false);
@@ -47,14 +49,30 @@ export default function SettingsPage() {
   const [message, setMessage] = useState("");
   const [telegramMsg, setTelegramMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
+  const loadSettings = async () => {
+    setLoading(true);
+    setLoadError(null);
+
+    try {
+      const res = await fetch("/api/settings");
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data?.error || `Settings request failed (${res.status})`);
+      }
+
+      setSettings(data as Settings);
+      setExamDate(dateInput(data.examDate));
+    } catch (error) {
+      console.error("Failed to load settings", error);
+      setLoadError(error instanceof Error ? error.message : "Unable to load settings");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    fetch("/api/settings")
-      .then((res) => res.json())
-      .then((data: Settings) => {
-        setSettings(data);
-        setExamDate(dateInput(data.examDate));
-      })
-      .catch(() => {});
+    const loadTimer = window.setTimeout(() => void loadSettings(), 0);
 
     fetch("/api/auth/me")
       .then((res) => (res.ok ? res.json() : null))
@@ -69,6 +87,8 @@ export default function SettingsPage() {
         }
       })
       .catch(() => {});
+
+    return () => window.clearTimeout(loadTimer);
   }, []);
 
   const saveExamDate = async () => {
@@ -115,10 +135,26 @@ export default function SettingsPage() {
     }
   };
 
-  if (!settings) {
+  if (loading) {
     return (
       <div className="flex items-center gap-2 text-sm text-[var(--text-muted)] p-6">
         <LoaderCircle size={16} className="animate-spin" /> Loading settings...
+      </div>
+    );
+  }
+
+  if (loadError || !settings) {
+    return (
+      <div className="flex max-w-xl flex-col gap-4 p-6">
+        <div className="flex items-center gap-2 text-sm font-semibold text-[var(--danger)]">
+          <AlertTriangle size={18} /> Unable to load settings
+        </div>
+        <p className="text-sm text-[var(--text-secondary)]">
+          {loadError || "The settings response did not contain any settings."}
+        </p>
+        <button className="btn btn-primary btn-sm self-start" onClick={() => void loadSettings()}>
+          Try again
+        </button>
       </div>
     );
   }

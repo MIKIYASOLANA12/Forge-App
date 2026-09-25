@@ -55,10 +55,23 @@ export default function SettingsPage() {
 
     try {
       const res = await fetch("/api/settings");
-      const data = await res.json();
+      const body = await res.text();
+      let data: Partial<Settings> & { error?: string } = {};
+
+      if (body) {
+        try {
+          data = JSON.parse(body);
+        } catch {
+          throw new Error(`Settings request returned invalid JSON (${res.status})`);
+        }
+      }
 
       if (!res.ok) {
         throw new Error(data?.error || `Settings request failed (${res.status})`);
+      }
+
+      if (!data.examDate || !data.planStartDate) {
+        throw new Error("Settings response was missing required fields");
       }
 
       setSettings(data as Settings);

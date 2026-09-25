@@ -19,58 +19,68 @@ const shape = (profile: any, pref: any) => ({
 });
 
 export async function GET(req: NextRequest) {
-  const session = await getSessionUserFromRequest(req);
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  try {
+    const session = await getSessionUserFromRequest(req);
+    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const [profile, pref] = await Promise.all([
-    prisma.userProfile.findUnique({ where: { id: 'singleton' } }),
-    prisma.notificationPreference.findUnique({ where: { id: 'singleton' } }),
-  ]);
+    const [profile, pref] = await Promise.all([
+      prisma.userProfile.findUnique({ where: { id: 'singleton' } }),
+      prisma.notificationPreference.findUnique({ where: { id: 'singleton' } }),
+    ]);
 
-  if (!profile) return NextResponse.json({ error: 'Profile not found' }, { status: 404 });
-  return NextResponse.json(shape(profile, pref));
+    if (!profile) return NextResponse.json({ error: 'Profile not found' }, { status: 404 });
+    return NextResponse.json(shape(profile, pref));
+  } catch (error) {
+    console.error('[GET /api/settings] Failed to load settings', error);
+    return NextResponse.json({ error: 'Failed to load settings' }, { status: 500 });
+  }
 }
 
 export async function PATCH(request: NextRequest) {
-  const session = await getSessionUserFromRequest(request);
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  try {
+    const session = await getSessionUserFromRequest(request);
+    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const body = await request.json();
-  const profileUpdates: any = {};
-  const prefUpdates: any = {};
+    const body = await request.json();
+    const profileUpdates: any = {};
+    const prefUpdates: any = {};
 
-  if (body.examDate && !Number.isNaN(new Date(body.examDate).getTime())) {
-    profileUpdates.examDate = new Date(body.examDate);
+    if (body.examDate && !Number.isNaN(new Date(body.examDate).getTime())) {
+      profileUpdates.examDate = new Date(body.examDate);
+    }
+
+    if (body.wakeTime && typeof body.wakeTime === 'string') {
+      prefUpdates.wakeTime = body.wakeTime.trim();
+    }
+
+    if (body.sleepTime && typeof body.sleepTime === 'string') {
+      prefUpdates.sleepTime = body.sleepTime.trim();
+    }
+
+    if (body.phoneNumber !== undefined) {
+      prefUpdates.phoneNumber = body.phoneNumber?.trim() || null;
+    }
+
+    if (body.voiceCallsEnabled !== undefined) {
+      prefUpdates.voiceCallsEnabled = Boolean(body.voiceCallsEnabled);
+    }
+
+    const [updatedProfile, updatedPref] = await Promise.all([
+      Object.keys(profileUpdates).length > 0
+        ? prisma.userProfile.update({ where: { id: 'singleton' }, data: profileUpdates })
+        : prisma.userProfile.findUnique({ where: { id: 'singleton' } }),
+      Object.keys(prefUpdates).length > 0
+        ? prisma.notificationPreference.upsert({
+            where: { id: 'singleton' },
+            create: { id: 'singleton', ...prefUpdates },
+            update: prefUpdates,
+          })
+        : prisma.notificationPreference.findUnique({ where: { id: 'singleton' } }),
+    ]);
+
+    return NextResponse.json(shape(updatedProfile, updatedPref));
+  } catch (error) {
+    console.error('[PATCH /api/settings] Failed to update settings', error);
+    return NextResponse.json({ error: 'Failed to update settings' }, { status: 500 });
   }
-
-  if (body.wakeTime && typeof body.wakeTime === 'string') {
-    prefUpdates.wakeTime = body.wakeTime.trim();
-  }
-
-  if (body.sleepTime && typeof body.sleepTime === 'string') {
-    prefUpdates.sleepTime = body.sleepTime.trim();
-  }
-
-  if (body.phoneNumber !== undefined) {
-    prefUpdates.phoneNumber = body.phoneNumber?.trim() || null;
-  }
-
-  if (body.voiceCallsEnabled !== undefined) {
-    prefUpdates.voiceCallsEnabled = Boolean(body.voiceCallsEnabled);
-  }
-
-  const [updatedProfile, updatedPref] = await Promise.all([
-    Object.keys(profileUpdates).length > 0
-      ? prisma.userProfile.update({ where: { id: 'singleton' }, data: profileUpdates })
-      : prisma.userProfile.findUnique({ where: { id: 'singleton' } }),
-    Object.keys(prefUpdates).length > 0
-      ? prisma.notificationPreference.upsert({
-          where: { id: 'singleton' },
-          create: { id: 'singleton', ...prefUpdates },
-          update: prefUpdates,
-        })
-      : prisma.notificationPreference.findUnique({ where: { id: 'singleton' } }),
-  ]);
-
-  return NextResponse.json(shape(updatedProfile, updatedPref));
 }

@@ -32,8 +32,8 @@ function runTests() {
     }
   }
 
-  // Test 3: Gym days have Home Substitutes (Wed=3, Fri=5, Sat=6)
-  const gymDays = [3, 5, 6];
+  // Test 3: Gym days have Home Substitutes (Fri=5, Sat=6)
+  const gymDays = [5, 6];
   for (const dayNum of gymDays) {
     const routine = WEEKLY_WORKOUT_SCHEDULE[dayNum];
     if (!routine.homeSubstitute) {
@@ -55,9 +55,9 @@ function runTests() {
   // Verify daily alternation
   const sunCore = getCoreRoutineForDayOfWeek(0); // Sunday: Core A
   const monCore = getCoreRoutineForDayOfWeek(1); // Monday: Core B
-  const wedCore = getCoreRoutineForDayOfWeek(3); // Wednesday: Core B
-  const friCore = getCoreRoutineForDayOfWeek(5); // Friday: Core A
-  const satCore = getCoreRoutineForDayOfWeek(6); // Saturday: Core B
+  const wedCore = getCoreRoutineForDayOfWeek(3); // Wednesday: Core A
+  const friCore = getCoreRoutineForDayOfWeek(5); // Friday: Core B
+  const satCore = getCoreRoutineForDayOfWeek(6); // Saturday: Core A
   console.log(`Core Rotations -> Sun: ${sunCore?.type}, Mon: ${monCore?.type}, Wed: ${wedCore?.type}, Fri: ${friCore?.type}, Sat: ${satCore?.type}`);
 
   // Test 5: Deload Week

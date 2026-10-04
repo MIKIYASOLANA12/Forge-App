@@ -58,18 +58,18 @@ async function runWorkoutTests() {
   assert(tueExNames.includes('Pull-Ups'), 'Tuesday must include optional Pull-Ups');
   console.log('✓ Tuesday (HOME: Biceps + Back + Optional Pull-ups) matches exact prescription');
 
-  // Wednesday: GYM - Chest + Shoulders
+  // Wednesday: HOME - Chest + Shoulders
   const wed = getScheduledRoutineForDayOfWeek(3);
   assert.strictEqual(wed.dayName, 'Wednesday');
-  assert.strictEqual(wed.location, 'GYM');
+  assert.strictEqual(wed.location, 'HOME');
   assert.strictEqual(wed.targetBodyParts, 'Chest + Shoulders');
   const wedExNames = wed.exercises.map(e => e.name);
-  assert(wedExNames.includes('Bench Press'), 'Wednesday must include Bench Press');
-  assert(wedExNames.includes('Incline Dumbbell Press'), 'Wednesday must include Incline DB Press');
-  assert(wedExNames.includes('Lateral Raise'), 'Wednesday must include Lateral Raise');
-  assert(wedExNames.includes('Overhead Press'), 'Wednesday must include Overhead Press');
-  assert(wedExNames.includes('Rear-Delt Exercise'), 'Wednesday must include Rear-Delt Exercise');
-  console.log('✓ Wednesday (GYM: Chest + Shoulders) matches exact prescription');
+  assert(wedExNames.includes('Feet-Elevated Push-ups'), 'Wednesday must include Feet-Elevated Push-ups');
+  assert(wedExNames.includes('Push-up Progression'), 'Wednesday must include Push-up Progression');
+  assert(wedExNames.includes('Jar Lateral Raise'), 'Wednesday must include Jar Lateral Raise');
+  assert(wedExNames.includes('Pike Push-ups'), 'Wednesday must include Pike Push-ups');
+  assert(wedExNames.includes('Rear-Delt Fly'), 'Wednesday must include Rear-Delt Fly');
+  console.log('✓ Wednesday (HOME: Chest + Shoulders) matches exact prescription');
 
   // Thursday: HOME - Active Recovery
   const thu = getScheduledRoutineForDayOfWeek(4);
@@ -82,31 +82,34 @@ async function runWorkoutTests() {
   assert(thuExNames.includes('Plank'), 'Thursday must include Plank');
   console.log('✓ Thursday (HOME: Active Recovery) matches exact prescription');
 
-  // Friday: GYM - Back + Biceps
+  // Friday: GYM - Chest + Shoulders + Biceps
   const fri = getScheduledRoutineForDayOfWeek(5);
   assert.strictEqual(fri.dayName, 'Friday');
   assert.strictEqual(fri.location, 'GYM');
-  assert.strictEqual(fri.targetBodyParts, 'Back + Biceps');
+  assert.strictEqual(fri.targetBodyParts, 'Chest + Shoulders + Biceps');
   const friExNames = fri.exercises.map(e => e.name);
-  assert(friExNames.includes('Pull-ups OR Lat Pulldown'), 'Friday must include Pull-ups OR Lat Pulldown');
-  assert(friExNames.includes('Barbell Row'), 'Friday must include Barbell Row');
-  assert(friExNames.includes('Seated Cable Row'), 'Friday must include Seated Cable Row');
+  assert(friExNames.includes('Bench Press'), 'Friday must include Bench Press');
+  assert(friExNames.includes('Incline Dumbbell Press'), 'Friday must include Incline DB Press');
+  assert(friExNames.includes('Lateral Raise'), 'Friday must include Lateral Raise');
+  assert(friExNames.includes('Overhead Press'), 'Friday must include Overhead Press');
   assert(friExNames.includes('Biceps Curl'), 'Friday must include Biceps Curl');
   assert(friExNames.includes('Hammer Curl'), 'Friday must include Hammer Curl');
-  console.log('✓ Friday (GYM: Back + Biceps) matches exact prescription');
+  console.log('✓ Friday (GYM: Chest + Shoulders + Biceps) matches exact prescription');
 
-  // Saturday: GYM - Triceps + Arms + Forearms
+  // Saturday: GYM - Back + Triceps + Forearms
   const sat = getScheduledRoutineForDayOfWeek(6);
   assert.strictEqual(sat.dayName, 'Saturday');
   assert.strictEqual(sat.location, 'GYM');
-  assert.strictEqual(sat.targetBodyParts, 'Triceps + Arms + Forearms');
+  assert.strictEqual(sat.targetBodyParts, 'Back + Triceps + Forearms');
   const satExNames = sat.exercises.map(e => e.name);
+  assert(satExNames.includes('Pull-ups OR Lat Pulldown'), 'Saturday must include Pull-ups OR Lat Pulldown');
+  assert(satExNames.includes('Barbell Row'), 'Saturday must include Barbell Row');
+  assert(satExNames.includes('Seated Cable Row'), 'Saturday must include Seated Cable Row');
   assert(satExNames.includes('Dips'), 'Saturday must include Dips');
   assert(satExNames.includes('Rope Pushdown'), 'Saturday must include Rope Pushdown');
   assert(satExNames.includes('Overhead Triceps Extension'), 'Saturday must include Overhead Triceps Extension');
   assert(satExNames.includes('Wrist Curls'), 'Saturday must include Wrist Curls');
-  assert(satExNames.includes('Hammer Curls'), 'Saturday must include Hammer Curls');
-  console.log('✓ Saturday (GYM: Triceps + Arms + Forearms) matches exact prescription');
+  console.log('✓ Saturday (GYM: Back + Triceps + Forearms) matches exact prescription');
 
   // 2. CORE A / CORE B ALTERNATING SCHEDULE VERIFICATION
   console.log('\n--- 2. Testing Core A / Core B Rotation ---');

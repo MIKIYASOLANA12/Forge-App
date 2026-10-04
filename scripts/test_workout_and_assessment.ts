@@ -58,15 +58,13 @@ async function runTests() {
   assert(towelRow, 'Tuesday must include Towel Row');
   assert(towelRow.safetyWarning && towelRow.safetyWarning.includes('SAFETY INSTRUCTION'));
 
-  // Wednesday (3): Gym Chest & Shoulders
+  // Wednesday (3): Home Chest & Shoulders
   const wed = getScheduledRoutineForDayOfWeek(3);
-  assert.strictEqual(wed.location, 'GYM');
+  assert.strictEqual(wed.location, 'HOME');
   const wedDate = new Date(2026, 8, 23); // Wednesday
-  assert.strictEqual(isGymDay(wedDate), true);
+  assert.strictEqual(isGymDay(wedDate), false);
   assert(wed.targetBodyParts.includes('Chest'));
   assert(wed.targetBodyParts.includes('Shoulders'));
-  const bench = wed.exercises.find((e: WorkoutExerciseDefinition) => e.name.toLowerCase().includes('bench press'));
-  assert(bench && bench.startingWeightKg === 35, 'Wednesday Bench Press starting weight must be 35kg');
 
   // Thursday (4): Home Active Recovery
   const thu = getScheduledRoutineForDayOfWeek(4);
@@ -75,22 +73,28 @@ async function runTests() {
   const thuDate = new Date(2026, 8, 24); // Thursday
   assert.strictEqual(isGymDay(thuDate), false);
 
-  // Friday (5): Gym Back & Biceps + Pull-up vs Lat Pulldown
+  // Friday (5): Gym Chest, Shoulders & Biceps
   const fri = getScheduledRoutineForDayOfWeek(5);
   assert.strictEqual(fri.location, 'GYM');
   const friDate = new Date(2026, 8, 25); // Friday
   assert.strictEqual(isGymDay(friDate), true);
-  const pullUpEx = fri.exercises.find((e: WorkoutExerciseDefinition) => e.name.toLowerCase().includes('pull-up') || e.name.toLowerCase().includes('lat pulldown'));
-  assert(pullUpEx, 'Friday must have Pull-ups / Lat Pulldown variant');
-  assert(pullUpEx.variants && pullUpEx.variants.length >= 2);
+  assert(fri.targetBodyParts.includes('Chest'));
+  assert(fri.targetBodyParts.includes('Shoulders'));
+  assert(fri.targetBodyParts.includes('Biceps'));
+  const bench = fri.exercises.find((e: WorkoutExerciseDefinition) => e.name.toLowerCase().includes('bench press'));
+  assert(bench && bench.startingWeightKg === 35, 'Friday Bench Press starting weight must be 35kg');
 
-  // Saturday (6): Gym Triceps, Arms & Forearms
+  // Saturday (6): Gym Back, Triceps & Forearms
   const sat = getScheduledRoutineForDayOfWeek(6);
   assert.strictEqual(sat.location, 'GYM');
   const satDate = new Date(2026, 8, 26); // Saturday
   assert.strictEqual(isGymDay(satDate), true);
+  assert(sat.targetBodyParts.includes('Back'));
   assert(sat.targetBodyParts.includes('Triceps'));
   assert(sat.targetBodyParts.includes('Forearms'));
+  const pullUpEx = sat.exercises.find((e: WorkoutExerciseDefinition) => e.name.toLowerCase().includes('pull-up') || e.name.toLowerCase().includes('lat pulldown'));
+  assert(pullUpEx, 'Saturday must have Pull-ups / Lat Pulldown variant');
+  assert(pullUpEx.variants && pullUpEx.variants.length >= 2);
 
   console.log('✓ Test 2 Passed: Full 7-day schedule, locations, starting weights, and safety warnings verified');
 

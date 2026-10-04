@@ -109,12 +109,12 @@ export function toAddisDateString(date: Date): string {
 
 /**
  * Workout Protocol Schedule:
- * GYM Days: Wednesday (3), Friday (5), Saturday (6)
- * HOME Days: Sunday (0), Monday (1), Tuesday (2), Thursday (4)
+ * GYM Days: Friday (5), Saturday (6)
+ * HOME Days: Sunday (0), Monday (1), Tuesday (2), Wednesday (3), Thursday (4)
  */
 export function isGymDay(date: Date): boolean {
   const parts = getAddisTimeComponents(date);
-  return parts.dayOfWeek === 3 || parts.dayOfWeek === 5 || parts.dayOfWeek === 6;
+  return parts.dayOfWeek === 5 || parts.dayOfWeek === 6;
 }
 
 export function getWorkoutLocationForAddisDate(date: Date): 'GYM' | 'HOME' {
